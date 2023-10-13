@@ -1,0 +1,26 @@
+function main(int a,int b) int{
+
+    let a:int=4;
+    let c:int=4;
+    let b:int=6;
+    let k:int=a b + 2 /;
+    # k;
+
+    function min(int a) char{
+        
+    }
+    
+}
+
+function giveInt()int{
+    return 5;
+}
+
+let m:float=5.67f;
+
+
+function multNum(int a,float b)
+float
+{
+    let prod:float=a*b;
+}
