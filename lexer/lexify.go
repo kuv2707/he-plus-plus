@@ -2,15 +2,13 @@ package lexer
 
 import (
 	"bytes"
-	// "fmt"
+	_"fmt"
 	"os"
 	"strings"
+	"toylingo/utils"
 )
 
-type Node struct {
-	Val  TokenType
-	Next *Node
-}
+
 
 func Lexify(path string) *Node {
 
@@ -19,7 +17,7 @@ func Lexify(path string) *Node {
 		panic(err)
 	}
 
-	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">"}
+	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">","!"}
 	for i := 0; i < len(toPad); i++ {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(toPad[i]), []byte(" "+toPad[i]+" "))
 	}
@@ -44,7 +42,7 @@ func Lexify(path string) *Node {
 	}
 
 
-	tokens := &Node{TokenType{}, nil}
+	tokens := &Node{TokenType{"start",""}, nil}
 	ret := tokens
 	temp := ""
 	for i := 0; i < len(filecontent); i++ {
@@ -71,7 +69,7 @@ func Lexify(path string) *Node {
 
 	//coalesce multicharacter operators into one
 	for node := ret; node != nil; node = node.Next {
-		if node.Val.Type == "OPERATOR" && node.Next != nil && node.Next.Val.Type == "OPERATOR" {
+		if utils.IsOneOf(node.Val.Ref,"<>=") && node.Next != nil && node.Next.Val.Ref == "=" {
 			node.Val.Ref = node.Val.Ref + node.Next.Val.Ref
 			node.Next = node.Next.Next
 		}
@@ -110,6 +108,8 @@ func addToken(temp string, tokens *Node) bool {
 		tokens.Next = &Node{TokenType{"SEMICOLON", ""}, nil}
 	case dict["LET"]:
 		tokens.Next = &Node{TokenType{"LET", ""}, nil}
+	case dict["IF"]:
+		tokens.Next = &Node{TokenType{"IF", ""}, nil}
 	case dict["DOT"]:
 		tokens.Next = &Node{TokenType{"DOT", ""}, nil}
 
@@ -122,7 +122,7 @@ func addToken(temp string, tokens *Node) bool {
 	case dict["BOOLEAN"]:
 		tokens.Next = &Node{TokenType{"DATATYPE", "BOOLEAN"}, nil}
 	default:
-		if isNumber(temp) {
+		if utils.IsNumber(temp) {
 			tokens.Next = &Node{TokenType{"NUMBER", temp}, nil}
 		} else if isOperator(temp) {
 			tokens.Next = &Node{TokenType{"OPERATOR", temp}, nil}
@@ -134,21 +134,10 @@ func addToken(temp string, tokens *Node) bool {
 	return true
 }
 
-func isNumber(temp string) bool {
-	for i := 0; i < len(temp); i++ {
-		if temp[i] < '0' || temp[i] > '9' {
-			return false
-		}
-	}
-	return true
-}
+
 
 func isOperator(temp string) bool {
-	operators := "=+-*/<>#"
-	for i := 0; i < len(operators); i++ {
-		if temp == string(operators[i]) {
-			return true
-		}
-	}
-	return false
+	operators := "=+-*/<>#!"
+	return utils.IsOneOf(temp,operators)
 }
+

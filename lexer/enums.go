@@ -5,6 +5,11 @@ type TokenType struct{
 	Ref string //like int,float etc for DATATYPE
 }
 
+type Node struct {
+	Val  TokenType
+	Next *Node
+}
+
 var dict=map[string]string{
 	"SCOPE_START":"{",
 	"SCOPE_END":"}",
@@ -18,4 +23,7 @@ var dict=map[string]string{
 	"DOT":".",
 	"OPEN_PAREN":"(",
 	"CLOSE_PAREN":")",
+	"IF":"if",
 }
+
+
