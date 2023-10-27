@@ -53,19 +53,19 @@ func executeAddition(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(int) + right.value.(int)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) + right.value.(float32)}
 	} else if left.datatype == DATA_TYPES["STRING"] && right.datatype == DATA_TYPES["STRING"] {
 		return Variable{"", DATA_TYPES["STRING"], left.value.(string) + right.value.(string)}
 	} else {
 		//todo
-		return Variable{"", DATA_TYPES["NUMBER"], 0}
+		return Variable{"", DATA_TYPES["STRING"], utils.StringVal(left.value)+utils.StringVal(right.value)}
 	}
 }
 func executeSubtraction(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(int) - right.value.(int)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) - right.value.(float32)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["NUMBER"], 0}
@@ -75,7 +75,7 @@ func executeMultiplication(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(int) * right.value.(int)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) * right.value.(float32)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["NUMBER"], 0}
@@ -85,7 +85,7 @@ func executeDivision(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(int) / right.value.(int)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) / right.value.(float32)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["NUMBER"], 0}
@@ -95,7 +95,7 @@ func executeGreaterThan(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["BOOL"], left.value.(int) > right.value.(int)}
+		return Variable{"", DATA_TYPES["BOOL"], left.value.(float32) > right.value.(float32)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["BOOL"], false}
@@ -105,7 +105,7 @@ func executeLessThan(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["BOOL"], left.value.(int) < right.value.(int)}
+		return Variable{"", DATA_TYPES["BOOL"], left.value.(float32) < right.value.(float32)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["BOOL"], false}
@@ -115,22 +115,17 @@ func executeLessThan(node *parser.TreeNode, env Environment) Variable {
 func executeEquals(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
-	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["BOOL"], left.value.(int) == right.value.(int)}
-	} else {
-		//todo
-		return Variable{"", DATA_TYPES["BOOL"], false}
-	}
+	return Variable{"",DATA_TYPES["BOOL"],utils.StringVal(left.value)==utils.StringVal(right.value)}
 }
 
 func executePrimary(node *parser.TreeNode, env Environment) Variable {
 	if node.Description == "true" || node.Description == "false" {
 		return Variable{"", DATA_TYPES["BOOL"], node.Description == "true"}
 	} else if utils.IsNumber(node.Description) {
-		return Variable{"", DATA_TYPES["NUMBER"], utils.StringToInt(node.Description)}
+		return Variable{"", DATA_TYPES["NUMBER"], utils.StringToNumber(node.Description)}
 	} else {
-		if utils.InQuotes(node.Description){
-			return Variable{"",DATA_TYPES["STRING"],node.Description}
+		if utils.ValidVariableName(node.Description){
+			return Variable{"",DATA_TYPES["STRING"],node.Description[1:len(node.Description)-1]}
 		} else{
 
 			return env.variables[node.Description]
@@ -140,6 +135,8 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 
 func executePrint(node *parser.TreeNode, env Environment) Variable {
 	val := executeOperator(node.Children[0], env)
-	fmt.Println(val.value)
+	yellow := "\033[33m"
+	reset := "\033[0m"
+	fmt.Println(yellow,val.value,reset)
 	return val
 }

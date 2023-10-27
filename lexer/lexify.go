@@ -8,8 +8,6 @@ import (
 	"toylingo/utils"
 )
 
-
-
 func Lexify(path string) *Node {
 
 	filecontent, err := os.ReadFile(path)
@@ -17,32 +15,33 @@ func Lexify(path string) *Node {
 		panic(err)
 	}
 
-	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">","!"}
+	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!"}
 	for i := 0; i < len(toPad); i++ {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(toPad[i]), []byte(" "+toPad[i]+" "))
 	}
 	filecontent = append(filecontent, []byte(" ")...)
 
-	stringliterals:=make([]string,0)
+	stringliterals := make([]string, 0)
 	//placeholder for strings
-	for i:=0;i<len(filecontent);i++{
-		if(filecontent[i]=='`'){
-			for j:=i+1;j<len(filecontent);j++{
-				if(filecontent[j]=='`'){
-					str:=string(filecontent[i:j+1])
-					stringliterals=append(stringliterals,str)
-					// fmt.Println("string ",str)
+	for i := 0; i < len(filecontent); i++ {
+		if filecontent[i] == '`' {
+			for j := i + 1; j < len(filecontent); j++ {
+				if filecontent[j] == '`' {
+					str := string(filecontent[i : j+1])
+					stringliterals = append(stringliterals, str)
+					i = j+1
 					break
 				}
 			}
 		}
 	}
-	for i:=0;i<len(stringliterals);i++{
-		filecontent=bytes.ReplaceAll(filecontent,[]byte(stringliterals[i]),[]byte(" __STR__ "))
+	for i := 0; i < len(stringliterals); i++ {
+		filecontent = bytes.ReplaceAll(filecontent, []byte(stringliterals[i]), []byte(" __STR__ "))
 	}
 
-
-	tokens := &Node{TokenType{"start",""}, nil}
+	// fmt.Println(string(filecontent))
+	// fmt.Println(stringliterals)
+	tokens := &Node{TokenType{"start", ""}, nil}
 	ret := tokens
 	temp := ""
 	for i := 0; i < len(filecontent); i++ {
@@ -69,19 +68,19 @@ func Lexify(path string) *Node {
 
 	//coalesce multicharacter operators into one
 	for node := ret; node != nil; node = node.Next {
-		if utils.IsOneOf(node.Val.Ref,"<>=") && node.Next != nil && node.Next.Val.Ref == "=" {
+		if utils.IsOneOf(node.Val.Ref, "<>=") && node.Next != nil && node.Next.Val.Ref == "=" {
 			node.Val.Ref = node.Val.Ref + node.Next.Val.Ref
 			node.Next = node.Next.Next
 		}
 	}
 
 	//replace placeholder for strings
-	count:=0
+	count := 0
 	for node := ret; node != nil; node = node.Next {
-		if node.Val.Type == "IDENTIFIER" && node.Val.Ref=="__STR__" {
+		if node.Val.Type == "IDENTIFIER" && node.Val.Ref == "__STR__" {
 			node.Val.Ref = stringliterals[count]
 			count++
-			node.Val.Type="STRING_LITERAL"
+			node.Val.Type = "STRING_LITERAL"
 
 		}
 	}
@@ -90,7 +89,7 @@ func Lexify(path string) *Node {
 }
 
 func addToken(temp string, tokens *Node) bool {
-	if temp == " " || temp == "\n" || temp == "\t" || temp == "" {
+	if temp == " " || temp == "\n" || temp == "\t" || temp == "" || temp == "\r" {
 		return false
 	}
 	switch strings.Trim(temp, " ") {
@@ -99,9 +98,9 @@ func addToken(temp string, tokens *Node) bool {
 	case dict["SCOPE_END"]:
 		tokens.Next = &Node{TokenType{"SCOPE_END", ""}, nil}
 	case dict["OPEN_PAREN"]:
-		tokens.Next = &Node{TokenType{"OPEN_PAREN", ""}, nil}
+		tokens.Next = &Node{TokenType{"OPEN_PAREN", "("}, nil}
 	case dict["CLOSE_PAREN"]:
-		tokens.Next = &Node{TokenType{"CLOSE_PAREN", ""}, nil}
+		tokens.Next = &Node{TokenType{"CLOSE_PAREN", ")"}, nil}
 	case dict["COLON"]:
 		tokens.Next = &Node{TokenType{"COLON", ""}, nil}
 	case dict["SEMICOLON"]:
@@ -134,10 +133,7 @@ func addToken(temp string, tokens *Node) bool {
 	return true
 }
 
-
-
 func isOperator(temp string) bool {
 	operators := "=+-*/<>#!"
-	return utils.IsOneOf(temp,operators)
+	return utils.IsOneOf(temp, operators)
 }
-

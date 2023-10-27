@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 	"toylingo/lexer"
-	"toylingo/utils"
+	_ "toylingo/utils"
 )
 
 type TreeNode struct {
@@ -13,7 +13,7 @@ type TreeNode struct {
 	Properties  map[string]*TreeNode
 }
 
-var COMPONENTS = []string{"IF", "ELSE IF", "ELSE", "FUNCTION","SCOPE_END"}
+var KEYWORDS = []string{"IF", "ELSE IF", "ELSE", "FUNCTION", "SCOPE_END", "LET"}
 
 func makeTreeNode(label string, children []*TreeNode, description string) *TreeNode {
 	return &TreeNode{label, description, children, make(map[string]*TreeNode)}
@@ -58,13 +58,8 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 			return
 		} else {
 			for j := i + 1; j < len(tokensArr); j++ {
-				if utils.IsOneOfArr(tokensArr[j].Type, COMPONENTS) {
-					i = j - 1
-					break
-				}
-
 				if tokensArr[j].Type == "SEMICOLON" {
-					treeNode.Children = append(treeNode.Children, parseExpression(tokensArr[i+1:j]))
+					treeNode.Children = append(treeNode.Children, parseExpression(tokensArr[i:j]))
 					i = j
 					break
 				}
@@ -81,7 +76,7 @@ func (treeNode *TreeNode) PrintTree(space string) {
 	fmt.Println(space + treeNode.Description)
 	fmt.Println(space + treeNode.Label)
 	if treeNode.Label == "if" {
-		fmt.Println(space+"if block condition:")
+		fmt.Println(space + "if block condition:")
 		treeNode.Properties["condition"].PrintTree(space + "      ")
 	}
 	fmt.Println(space + "children: [")
@@ -98,10 +93,15 @@ func parseExpression(tokens []lexer.TokenType) *TreeNode {
 	return parseEquality(tokens)
 }
 func parseEquality(tokens []lexer.TokenType) *TreeNode {
+	// printTokensArr(tokens)
 	// fmt.Println("equality", tokens)
 	//get index of equality operator
 	eqIndex := -1
 	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			i+=seekClosingParen(tokens[i+1:])
+			continue
+		}
 		if tokens[i].Ref == "=" {
 			eqIndex = i
 			break
@@ -123,12 +123,17 @@ func parseComparison(tokens []lexer.TokenType) *TreeNode {
 	compIndex := -1
 	compOp := ""
 	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			i+=seekClosingParen(tokens[i+1:])
+			continue
+		}
 		if tokens[i].Ref == "==" || tokens[i].Ref == "!=" || tokens[i].Ref == "<=" || tokens[i].Ref == ">=" || tokens[i].Ref == "<" || tokens[i].Ref == ">" {
 			compIndex = i
 			compOp = tokens[i].Ref
 			break
 		}
 	}
+	//it is malformed expression if compindex is =0
 	if compIndex > 0 {
 
 		left := parseTerm(tokens[:compIndex])
@@ -149,6 +154,10 @@ func parseTerm(tokens []lexer.TokenType) *TreeNode {
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			i+=seekClosingParen(tokens[i+1:])
+			continue
+		}
 		if tokens[i].Ref == "+" || tokens[i].Ref == "-" {
 			opIndex = i
 			op = tokens[i].Ref
@@ -172,6 +181,10 @@ func parseFactor(tokens []lexer.TokenType) *TreeNode {
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			i+=seekClosingParen(tokens[i+1:])
+			continue
+		}
 		if tokens[i].Ref == "*" || tokens[i].Ref == "/" {
 			opIndex = i
 			op = tokens[i].Ref
@@ -194,6 +207,10 @@ func parseUnary(tokens []lexer.TokenType) *TreeNode {
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			i+=seekClosingParen(tokens[i+1:])
+			continue
+		}
 		if tokens[i].Ref == "!" || tokens[i].Ref == "-" || tokens[i].Ref == "#" {
 			opIndex = i
 			op = tokens[i].Ref
@@ -210,6 +227,34 @@ func parseUnary(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
-	// fmt.Println("prim",len(tokens))
-	return makeTreeNode("primary", nil, tokens[0].Ref)
+	// fmt.Println("prim", (tokens))
+	if tokens[0].Type == "OPEN_PAREN" {
+		return parseExpression(tokens[1:len(tokens)-1])
+	}else{
+		return makeTreeNode("primary", nil, tokens[0].Ref)
+
+	}
+}
+
+func printTokensArr(tokens []lexer.TokenType) {
+	for i := 0; i < len(tokens); i++ {
+		fmt.Print(tokens[i].Ref, " ")
+	}
+	fmt.Println()
+}
+
+func seekClosingParen(tokens []lexer.TokenType)int{
+	// fmt.Println("seeking for ",tokens)
+	balance:=1
+	for i:=0;i<len(tokens);i++{
+		if tokens[i].Ref=="("{
+			balance++
+		} else if tokens[i].Ref==")"{
+			balance--
+		}
+		if balance==0{
+			return i
+		}
+	}
+	panic("unbalanced parentheses")
 }
