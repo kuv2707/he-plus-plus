@@ -1,5 +1,5 @@
-let a=3;
-let b=8;
+b=8;
+a=6;
 # a;
 # b;
 
@@ -7,15 +7,15 @@ a=a+b;
 b=a-b;
 a=a-b;
 # a;
-# b;
+# b;//fuckoff
 
 let x=`hello`;
 let y=`world`;
 let z=x+y;
-# ((6+5)+x+(2+3));
+# (6+5+x+2+3);
 
-if( z == `helloworld`){
+if( (z == `helloworld`) ){
     #(`hello world`);
+}else{
+    #(`hello`);
 }
-
-#(a==80);

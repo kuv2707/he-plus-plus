@@ -24,6 +24,8 @@ var dict=map[string]string{
 	"OPEN_PAREN":"(",
 	"CLOSE_PAREN":")",
 	"IF":"if",
+	"ELSE IF":"elseif",
+	"ELSE":"else",
 }
 
 

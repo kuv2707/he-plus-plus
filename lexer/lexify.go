@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"bytes"
-	_"fmt"
 	"os"
 	"strings"
 	"toylingo/utils"
@@ -15,12 +14,34 @@ func Lexify(path string) *Node {
 		panic(err)
 	}
 
-	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!"}
-	for i := 0; i < len(toPad); i++ {
-		filecontent = bytes.ReplaceAll(filecontent, []byte(toPad[i]), []byte(" "+toPad[i]+" "))
+	//replace comments with spaces
+	for i := 0; i < len(filecontent); i++ {
+		if string(filecontent[i:i+2]) == "//" {
+			for j := i; j < len(filecontent); j++ {
+				if filecontent[j] == '\n' {
+					i = j
+					break
+				}
+				filecontent[j] = ' '
+			}
+		}
 	}
-	filecontent = append(filecontent, []byte(" ")...)
 
+	//decompose template strings into (strings)
+	for i := 0; i < len(filecontent); i++ {
+		if filecontent[i] == '$' {
+			if filecontent[i+1] == '{' {
+				for j := i + 2; j < len(filecontent); j++ {
+					if filecontent[j] == '}' {
+						expr := string(filecontent[i+2 : j])
+						filecontent = bytes.ReplaceAll(filecontent, []byte("${"+expr+"}"), []byte("`+("+expr+")+`"))
+						break
+					}
+				}
+			}
+		}
+	}
+	// fmt.Println(string(filecontent))
 	stringliterals := make([]string, 0)
 	//placeholder for strings
 	for i := 0; i < len(filecontent); i++ {
@@ -29,7 +50,7 @@ func Lexify(path string) *Node {
 				if filecontent[j] == '`' {
 					str := string(filecontent[i : j+1])
 					stringliterals = append(stringliterals, str)
-					i = j+1
+					i = j + 1
 					break
 				}
 			}
@@ -38,6 +59,12 @@ func Lexify(path string) *Node {
 	for i := 0; i < len(stringliterals); i++ {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(stringliterals[i]), []byte(" __STR__ "))
 	}
+
+	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!"}
+	for i := 0; i < len(toPad); i++ {
+		filecontent = bytes.ReplaceAll(filecontent, []byte(toPad[i]), []byte(" "+toPad[i]+" "))
+	}
+	filecontent = append(filecontent, []byte(" ")...)
 
 	// fmt.Println(string(filecontent))
 	// fmt.Println(stringliterals)
@@ -68,7 +95,7 @@ func Lexify(path string) *Node {
 
 	//coalesce multicharacter operators into one
 	for node := ret; node != nil; node = node.Next {
-		if utils.IsOneOf(node.Val.Ref, "<>=") && node.Next != nil && node.Next.Val.Ref == "=" {
+		if utils.IsOneOf(node.Val.Ref, "<>=!") && node.Next != nil && node.Next.Val.Ref == "=" {
 			node.Val.Ref = node.Val.Ref + node.Next.Val.Ref
 			node.Next = node.Next.Next
 		}
@@ -94,23 +121,27 @@ func addToken(temp string, tokens *Node) bool {
 	}
 	switch strings.Trim(temp, " ") {
 	case dict["SCOPE_START"]:
-		tokens.Next = &Node{TokenType{"SCOPE_START", ""}, nil}
+		tokens.Next = &Node{TokenType{"SCOPE_START", "{"}, nil}
 	case dict["SCOPE_END"]:
-		tokens.Next = &Node{TokenType{"SCOPE_END", ""}, nil}
+		tokens.Next = &Node{TokenType{"SCOPE_END", "}"}, nil}
 	case dict["OPEN_PAREN"]:
 		tokens.Next = &Node{TokenType{"OPEN_PAREN", "("}, nil}
 	case dict["CLOSE_PAREN"]:
 		tokens.Next = &Node{TokenType{"CLOSE_PAREN", ")"}, nil}
 	case dict["COLON"]:
-		tokens.Next = &Node{TokenType{"COLON", ""}, nil}
+		tokens.Next = &Node{TokenType{"COLON", ":"}, nil}
 	case dict["SEMICOLON"]:
-		tokens.Next = &Node{TokenType{"SEMICOLON", ""}, nil}
+		tokens.Next = &Node{TokenType{"SEMICOLON", ";"}, nil}
 	case dict["LET"]:
-		tokens.Next = &Node{TokenType{"LET", ""}, nil}
+		tokens.Next = &Node{TokenType{"LET", "let"}, nil}
 	case dict["IF"]:
-		tokens.Next = &Node{TokenType{"IF", ""}, nil}
+		tokens.Next = &Node{TokenType{"IF", "if"}, nil}
+	case dict["ELSE IF"]:
+		tokens.Next = &Node{TokenType{"ELSE IF", "elif"}, nil}
+	case dict["ELSE"]:
+		tokens.Next = &Node{TokenType{"ELSE", "else"}, nil}
 	case dict["DOT"]:
-		tokens.Next = &Node{TokenType{"DOT", ""}, nil}
+		tokens.Next = &Node{TokenType{"DOT", "."}, nil}
 
 	case dict["INTEGER"]:
 		tokens.Next = &Node{TokenType{"DATATYPE", "INTEGER"}, nil}

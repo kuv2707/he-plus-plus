@@ -38,6 +38,8 @@ func executeOperator(node *parser.TreeNode, env Environment) Variable {
 		return res
 	} else if node.Description == "<=" {
 	} else if node.Description == ">=" {
+	} else if node.Description == "!"{
+		
 	}
 	return Variable{"", DATA_TYPES["NULL"], "NULL"}
 }
@@ -77,7 +79,7 @@ func executeMultiplication(node *parser.TreeNode, env Environment) Variable {
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
 		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) * right.value.(float32)}
 	} else {
-		//todo
+		//todo multiplying strings
 		return Variable{"", DATA_TYPES["NUMBER"], 0}
 	}
 }
@@ -124,7 +126,13 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 	} else if utils.IsNumber(node.Description) {
 		return Variable{"", DATA_TYPES["NUMBER"], utils.StringToNumber(node.Description)}
 	} else {
-		if utils.ValidVariableName(node.Description){
+		if !utils.ValidVariableName(node.Description){
+			// evaluatedStr:=""
+			for i:=1;i<len(node.Description)-1;i++{
+				if node.Description[i]=='$' && node.Description[i+1]=='{'{
+
+				}
+			}
 			return Variable{"",DATA_TYPES["STRING"],node.Description[1:len(node.Description)-1]}
 		} else{
 
