@@ -26,6 +26,8 @@ var dict=map[string]string{
 	"IF":"if",
 	"ELSE IF":"elseif",
 	"ELSE":"else",
+	"LOOP":"loop",
+	"BREAK":"break",
 }
 
 

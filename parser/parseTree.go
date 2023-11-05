@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"toylingo/lexer"
 	"toylingo/utils"
-	_ "toylingo/utils"
 )
 
 type TreeNode struct {
@@ -47,12 +46,13 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 			condNode := makeTreeNode(tokensArr[i].Type, make([]*TreeNode, 0), "conditional_block")
 			count := 0
 			for (i < len(tokensArr)) && (tokensArr[i].Type == "IF" || tokensArr[i].Type == "ELSE IF" || tokensArr[i].Type == "ELSE") {
-				is_else:=tokensArr[i].Type == "ELSE"
+				is_else := tokensArr[i].Type == "ELSE"
+				fmt.Println("is else", is_else)
 				if !(is_else) {
 					for j := i + 1; j < len(tokensArr); j++ {
 						if tokensArr[j].Type == "SCOPE_START" {
 							condNode.Properties["condition"+fmt.Sprint(count)] = parseExpression(tokensArr[i+1 : j])
-							i = j-1
+							i = j - 1
 							count++
 							break
 						}
@@ -62,19 +62,34 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 				scp := parseScope(tokensArr)
 				// scp.PrintTree("/")
 				condNode.Children = append(condNode.Children, scp)
-				if (is_else) {
+				if is_else {
+					fmt.Println(tokensArr[i])
 					break
 				}
 				i++
 			}
 			treeNode.Children = append(treeNode.Children, condNode)
+		} else if tokensArr[i].Type == "LOOP" {
+			loopnode := makeTreeNode("LOOP", make([]*TreeNode, 0), "loop")
+			for j := i + 1; j < len(tokensArr); j++ {
+				if tokensArr[j].Type == "SCOPE_START" {
+					loopnode.Properties["condition"] = parseExpression(tokensArr[i+1 : j])
+					i = j - 1
+					break
+				}
+			}
+			i++
+			scp := parseScope(tokensArr)
+			loopnode.Children = append(loopnode.Children, scp)
+			treeNode.Children = append(treeNode.Children, loopnode)
+
+		} else if tokensArr[i].Type == "BREAK" {
+			treeNode.Children = append(treeNode.Children, makeTreeNode("BREAK", nil, "break"))
 		} else if tokensArr[i].Type == "SCOPE_START" {
 			// fmt.Println("scope start")
 			scope := parseScope(tokensArr)
 			treeNode.Children = append(treeNode.Children, scope)
 		} else if tokensArr[i].Type == "SCOPE_END" {
-
-			// fmt.Println("scope end")
 			return
 		} else {
 			for j := i + 1; j < len(tokensArr); j++ {
@@ -91,32 +106,26 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 }
 
 func parseScope(tokensArr []lexer.TokenType) *TreeNode {
-	// fmt.Println("scope start")
-	// printTokensArr(tokensArr[i:])
 	scopeNode := makeTreeNode("scope", make([]*TreeNode, 0), "scope")
-
 	i++
-	// fmt.Println("calling parsetree")
 	ParseTree(tokensArr, scopeNode)
-	// fmt.Println("back from parsetree")
-
 	return scopeNode
 }
 
 func (treeNode *TreeNode) PrintTree(space string) {
+	color:=utils.GetRandomColor()
+	fmt.Print(color)
 	fmt.Println(space + "{")
 	space += "  "
 	fmt.Println(space + "desc:" + treeNode.Description)
 	fmt.Println(space + "label:" + treeNode.Label)
-	// if treeNode.Label == "IF" {
-	// 	fmt.Println(space + "if block condition:")
-	// 	treeNode.Properties["condition0"].PrintTree(space + "      ")
-	// }
-	fmt.Println(space + "children: [")
+	fmt.Println(space + "children:\n"+space+"[")
 	for _, child := range treeNode.Children {
 
-		child.PrintTree(space + "  ")
+		child.PrintTree(space + utils.ONETAB)
+		fmt.Print(utils.Colors["RESET"])
 	}
+	fmt.Print(color)
 	fmt.Println(space + "]\n" + space[0:len(space)-2] + "}")
 
 }
@@ -140,9 +149,8 @@ func parseEquality(tokens []lexer.TokenType) *TreeNode {
 			break
 		}
 	}
-	//varname is tokens[eqIndex-1]
 	if eqIndex == -1 {
-		return parseComparison(tokens)
+		return parseLogic(tokens)
 	} else {
 		right := parseEquality(tokens[eqIndex+1:])
 		left := makeTreeNode(tokens[eqIndex-1].Ref, nil, "varname")
@@ -150,9 +158,35 @@ func parseEquality(tokens []lexer.TokenType) *TreeNode {
 		return node
 	}
 }
+
+func parseLogic(tokens []lexer.TokenType) *TreeNode {
+	// printTokensArr(tokens)
+	// fmt.Println("logic", tokens)
+	//get index of equality operator
+	logicIndex := -1
+	logicOp := ""
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			i += seekClosingParen(tokens[i+1:])
+			continue
+		}
+		if tokens[i].Ref == "&&" || tokens[i].Ref == "||" {
+			logicIndex = i
+			logicOp = tokens[i].Ref
+			break
+		}
+	}
+	if logicIndex == -1 {
+		return parseComparison(tokens)
+	} else {
+		right := parseLogic(tokens[logicIndex+1:])
+		left := parseComparison(tokens[:logicIndex])
+		node := makeTreeNode("operator", []*TreeNode{left, right}, logicOp)
+		return node
+	}
+}
+
 func parseComparison(tokens []lexer.TokenType) *TreeNode {
-	// fmt.Println("comparison", tokens)
-	//find index of first comp operator < > <= >=
 	compIndex := -1
 	compOp := ""
 	for i := 0; i < len(tokens); i++ {
@@ -166,7 +200,6 @@ func parseComparison(tokens []lexer.TokenType) *TreeNode {
 			break
 		}
 	}
-	//it is malformed expression if compindex is =0
 	if compIndex > 0 {
 
 		left := parseTerm(tokens[:compIndex])
@@ -183,7 +216,6 @@ func parseComparison(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parseTerm(tokens []lexer.TokenType) *TreeNode {
-	// fmt.Println("term", tokens)
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
@@ -210,7 +242,6 @@ func parseTerm(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parseFactor(tokens []lexer.TokenType) *TreeNode {
-	// fmt.Println("factor", tokens)
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
@@ -260,10 +291,10 @@ func parseUnary(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
-	// fmt.Println("prim", (tokens))
 	if tokens[0].Type == "OPEN_PAREN" {
 		return parseExpression(tokens[1 : len(tokens)-1])
 	} else {
+
 		return makeTreeNode("primary", nil, tokens[0].Ref)
 
 	}
@@ -277,7 +308,6 @@ func printTokensArr(tokens []lexer.TokenType) {
 }
 
 func seekClosingParen(tokens []lexer.TokenType) int {
-	// fmt.Println("seeking for ",tokens)
 	balance := 1
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Ref == "(" {

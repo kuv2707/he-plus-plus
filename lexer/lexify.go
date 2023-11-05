@@ -27,20 +27,6 @@ func Lexify(path string) *Node {
 		}
 	}
 
-	//decompose template strings into (strings)
-	for i := 0; i < len(filecontent); i++ {
-		if filecontent[i] == '$' {
-			if filecontent[i+1] == '{' {
-				for j := i + 2; j < len(filecontent); j++ {
-					if filecontent[j] == '}' {
-						expr := string(filecontent[i+2 : j])
-						filecontent = bytes.ReplaceAll(filecontent, []byte("${"+expr+"}"), []byte("`+("+expr+")+`"))
-						break
-					}
-				}
-			}
-		}
-	}
 	// fmt.Println(string(filecontent))
 	stringliterals := make([]string, 0)
 	//placeholder for strings
@@ -49,6 +35,7 @@ func Lexify(path string) *Node {
 			for j := i + 1; j < len(filecontent); j++ {
 				if filecontent[j] == '`' {
 					str := string(filecontent[i : j+1])
+					
 					stringliterals = append(stringliterals, str)
 					i = j + 1
 					break
@@ -56,11 +43,16 @@ func Lexify(path string) *Node {
 			}
 		}
 	}
+	//parse escape sequence from all string literals
+	// for i := 0; i < len(stringliterals); i++ {
+	// 	stringliterals[i] = utils.ParseEscapeSequence(stringliterals[i])
+		
+	// }
 	for i := 0; i < len(stringliterals); i++ {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(stringliterals[i]), []byte(" __STR__ "))
 	}
 
-	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!"}
+	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!","|","&"}
 	for i := 0; i < len(toPad); i++ {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(toPad[i]), []byte(" "+toPad[i]+" "))
 	}
@@ -95,7 +87,7 @@ func Lexify(path string) *Node {
 
 	//coalesce multicharacter operators into one
 	for node := ret; node != nil; node = node.Next {
-		if utils.IsOneOf(node.Val.Ref, "<>=!") && node.Next != nil && node.Next.Val.Ref == "=" {
+		if (utils.IsOneOf(node.Val.Ref, "<>=!") && node.Next != nil && node.Next.Val.Ref == "=")||(node.Val.Ref=="|" && node.Next != nil && node.Next.Val.Ref == "|")||(node.Val.Ref=="&" && node.Next != nil && node.Next.Val.Ref == "&") {
 			node.Val.Ref = node.Val.Ref + node.Next.Val.Ref
 			node.Next = node.Next.Next
 		}
@@ -105,10 +97,9 @@ func Lexify(path string) *Node {
 	count := 0
 	for node := ret; node != nil; node = node.Next {
 		if node.Val.Type == "IDENTIFIER" && node.Val.Ref == "__STR__" {
-			node.Val.Ref = stringliterals[count]
+			node.Val.Ref = utils.ParseEscapeSequence(stringliterals[count])
 			count++
 			node.Val.Type = "STRING_LITERAL"
-
 		}
 	}
 
@@ -140,6 +131,10 @@ func addToken(temp string, tokens *Node) bool {
 		tokens.Next = &Node{TokenType{"ELSE IF", "elif"}, nil}
 	case dict["ELSE"]:
 		tokens.Next = &Node{TokenType{"ELSE", "else"}, nil}
+	case dict["LOOP"]:
+		tokens.Next = &Node{TokenType{"LOOP", "loop"}, nil}
+	case dict["BREAK"]:
+		tokens.Next = &Node{TokenType{"BREAK", "break"}, nil}
 	case dict["DOT"]:
 		tokens.Next = &Node{TokenType{"DOT", "."}, nil}
 
@@ -165,6 +160,6 @@ func addToken(temp string, tokens *Node) bool {
 }
 
 func isOperator(temp string) bool {
-	operators := "=+-*/<>#!"
+	operators := "=+-*/<>#!|&"
 	return utils.IsOneOf(temp, operators)
 }

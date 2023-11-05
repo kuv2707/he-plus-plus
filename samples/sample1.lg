@@ -1,26 +1,17 @@
-function main(int a,int b) int{
+n=20;
+a=0;
+b=n;
 
-    let a:int=4;
-    let c:int=4;
-    let b:int=6;
-    let k:int=a b + 2 /;
-    # k;
 
-    function min(int a) char{
-        
-    }
+loop(c*c-n>0.0001 || c*c-n< -0.0001){
+
+c=(a+b)/2;
+    if(c*c-n>0)
+       { b=c;}
+    else
+       { 
+        a=c;
+       }
     
-}
-
-function giveInt()int{
-    return 5;
-}
-
-let m:float=5.67f;
-
-
-function multNum(int a,float b)
-float
-{
-    let prod:float=a*b;
+#(c);
 }

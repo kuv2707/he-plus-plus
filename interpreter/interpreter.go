@@ -21,8 +21,8 @@ type Variable struct {
 type Environment struct {
 	variables map[string]Variable
 }
-
-func ExecuteAST(node *parser.TreeNode, env *Environment) {
+//returns whether the execution of a scope was interrupted by a break/continue statement
+func ExecuteAST(node *parser.TreeNode, env *Environment) bool{
 
 MAIN:
 	for _, child := range node.Children {
@@ -36,9 +36,8 @@ MAIN:
 			k := 0
 			for ; child.Properties["condition"+fmt.Sprint(k)] != nil; k++ {
 				treenode:=child.Properties["condition"+fmt.Sprint(k)]
-				treenode.PrintTree("_")
 				verd := executeOperator(treenode, *env)
-				fmt.Println(verd)
+				
 				if verd.value.(bool) {
 					ExecuteAST(child.Children[k], env)
 					continue MAIN
@@ -49,9 +48,28 @@ MAIN:
 				child.Children[k].PrintTree("-")
 				ExecuteAST(child.Children[k], env)
 			}
+		case "LOOP":
+			treenode:=child.Properties["condition"]
+			for {
+				verd := executeOperator(treenode, *env)
+				if verd.value.(bool) {
+					vvv:=ExecuteAST(child.Children[0], env)
+					if !vvv{
+						break
+					}
+				}else{
+					break
+				}
+
+			}
+		case "BREAK":
+			fmt.Println("breaking")
+			return false
 		}
 
+
 	}
+	return true
 }
 
 func Interpret(node *parser.TreeNode) {

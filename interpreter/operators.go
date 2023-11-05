@@ -39,9 +39,15 @@ func executeOperator(node *parser.TreeNode, env Environment) Variable {
 	} else if node.Description == "<=" {
 	} else if node.Description == ">=" {
 	} else if node.Description == "!"{
-		
+		res:=executeNOT(node,env)
+		return res
+	} else if node.Description == "||"{
+		return executeOR(node,env)
+	} else if node.Description == "&&"{
+		return executeAND(node,env)
 	}
-	return Variable{"", DATA_TYPES["NULL"], "NULL"}
+	panic("invalid operator")
+	// return Variable{"", DATA_TYPES["NULL"], "NULL"}
 }
 
 func executeAssignment(node *parser.TreeNode, env Environment) Variable {
@@ -143,8 +149,25 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 
 func executePrint(node *parser.TreeNode, env Environment) Variable {
 	val := executeOperator(node.Children[0], env)
-	yellow := "\033[33m"
-	reset := "\033[0m"
-	fmt.Println(yellow,val.value,reset)
+	fmt.Print(utils.Colors["GREEN"],val.value,utils.Colors["RESET"])
 	return val
+}
+
+
+func executeNOT(node *parser.TreeNode, env Environment) Variable {
+	val:= executeOperator(node.Children[0],env)
+	val.value=!val.value.(bool)
+	return val
+}
+
+func executeOR(node *parser.TreeNode, env Environment) Variable {
+	left:=executeOperator(node.Children[0],env)
+	right:=executeOperator(node.Children[1],env)
+	return Variable{"",DATA_TYPES["BOOL"],left.value.(bool)||right.value.(bool)}
+}
+
+func executeAND(node *parser.TreeNode, env Environment) Variable {
+	left:=executeOperator(node.Children[0],env)
+	right:=executeOperator(node.Children[1],env)
+	return Variable{"",DATA_TYPES["BOOL"],left.value.(bool)&&right.value.(bool)}
 }

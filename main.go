@@ -5,6 +5,7 @@ import (
 	"toylingo/interpreter"
 	"toylingo/lexer"
 	"toylingo/parser"
+	"toylingo/utils"
 )
 
 func main() {
@@ -13,14 +14,12 @@ func main() {
 	// return
 	var tokens *lexer.Node = lexer.Lexify("./samples/sample.lg")
 	tokens = tokens.Next
-	// PrintLexemes(tokens)
+	PrintLexemes(tokens)
 
 	treeNode := parser.ParseTreeM(tokens)
 
 	treeNode.PrintTree("")
-	fmt.Println("starting execution")
-	interpreter.Interpret(treeNode)
-	fmt.Println("program executed")
+	StartInterpreting(treeNode)
 
 }
 func PrintLexemes(tokens *lexer.Node) {
@@ -29,4 +28,10 @@ func PrintLexemes(tokens *lexer.Node) {
 		fmt.Println(c, node.Val.Type, node.Val.Ref)
 		c++
 	}
+}
+
+func StartInterpreting(treeNode *parser.TreeNode) {
+	fmt.Println(utils.Colors["BOLDYELLOW"]+"starting execution"+utils.Colors["RESET"])
+	interpreter.Interpret(treeNode)
+	fmt.Println("\n"+ utils.Colors["BOLDYELLOW"]+"program executed"+utils.Colors["RESET"])
 }

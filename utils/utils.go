@@ -70,3 +70,37 @@ func StringVal(s interface{})string{
 		panic("unknown type")
 	}
 }
+
+func ParseEscapeSequence(s string) string {
+	ret:=""
+	for i:=0;i<len(s);i++{
+		if s[i]=='\\'{
+			switch s[i+1] {
+			case 'n':
+				ret+="\n"
+			case 't':
+				ret+="\t"
+			case 'r':
+				ret+="\r"
+			case 'b':
+				ret+="\b"
+			case 'f':
+				ret+="\f"
+			case '\\':
+				ret+="\\"
+			case '\'':
+				ret+="`"
+			case '`'://fixme: might be a bug
+				ret+="\""
+			default:
+				ret+=string(s[i+1])
+			}
+			i++
+		} else{
+			ret+=string(s[i])
+		}
+	}
+	return ret
+}
+
+
