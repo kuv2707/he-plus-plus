@@ -84,9 +84,24 @@ func executeMultiplication(node *parser.TreeNode, env Environment) Variable {
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
 		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) * right.value.(float32)}
+	} else if left.datatype == DATA_TYPES["STRING"] && right.datatype == DATA_TYPES["STRING"] {
+		panic("invalid operation")
+		return Variable{"", DATA_TYPES["STRING"], left.value.(string) + right.value.(string)}
 	} else {
-		//todo multiplying strings
-		return Variable{"", DATA_TYPES["NUMBER"], 0}
+		//todo
+		if left.datatype==DATA_TYPES["STRING"] && right.datatype==DATA_TYPES["NUMBER"]{
+			res:=""
+			for i:=0;i<int(right.value.(float32));i++{
+				res+=left.value.(string)
+			}
+			return Variable{"", DATA_TYPES["STRING"], res}
+		}else{
+			res:=""
+			for i:=0;i<int(left.value.(float32));i++{
+				res+=right.value.(string)
+			}
+			return Variable{"", DATA_TYPES["STRING"], res}
+		}
 	}
 }
 func executeDivision(node *parser.TreeNode, env Environment) Variable {
