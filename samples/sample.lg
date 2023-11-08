@@ -1,2 +1,10 @@
-a=`hi`;
-#(5*a);
+func(firstnum,secondnum)add{
+    #(`fdsa`);
+    return firstnum+secondnum;
+}
+
+func(str)print{
+    #(str);
+}
+
+let m=print(`hi i am `+add(9,11)+` years old`);

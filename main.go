@@ -33,5 +33,5 @@ func PrintLexemes(tokens *lexer.Node) {
 func StartInterpreting(treeNode *parser.TreeNode) {
 	fmt.Println(utils.Colors["BOLDYELLOW"]+"starting execution"+utils.Colors["RESET"])
 	interpreter.Interpret(treeNode)
-	fmt.Println("\n"+ utils.Colors["BOLDYELLOW"]+"program executed"+utils.Colors["RESET"])
+	fmt.Println("\n"+ utils.Colors["BOLDYELLOW"]+"execution complete"+utils.Colors["RESET"])
 }

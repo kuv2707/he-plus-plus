@@ -32,3 +32,4 @@ But only the expression succeeding the last occurence of a string in an expressi
 # Bugs
  
 * negative numbers not detected (- sign ignored)
+* 8/9\*18 not evaluated correctly (9*18 evaluated first)
