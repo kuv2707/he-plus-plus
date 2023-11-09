@@ -1,19 +1,19 @@
-#(3*3-1);
-func(firstnum,secondnum)add{
-    +println(`fdsa`+`\n`);
-    return firstnum+secondnum;
-}
 func(str)println{
     #(str);
     #(`\n`);
 }
-i=0;
-sum=0;
-loop(i<5){
-    i=i+1;
-    sum=add(sum,i);
-    0+println(i);
-}
-0+println(sum);
 
+func(k)abs{
+   if(k>0)
+   {
+      return k;
+   }else {
+      return -k;
+   }
+}
+if(3<5){
+
+    0+println(abs(-5));
+    0+println(`after`);
+}
 //not able to execute functions if they are not a part of an expression

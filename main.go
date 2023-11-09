@@ -18,7 +18,7 @@ func main() {
 
 	treeNode := parser.ParseTreeM(tokens)
 
-	// treeNode.PrintTree("")
+	treeNode.PrintTree("")
 	StartInterpreting(treeNode)
 
 }

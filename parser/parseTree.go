@@ -59,7 +59,7 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 					}
 				}
 				i++
-				scp := parseScope(tokensArr)
+				scp := parseScope(tokensArr,"conditional_scope")
 				// scp.PrintTree("/")
 				condNode.Children = append(condNode.Children, scp)
 				if is_else {
@@ -79,7 +79,7 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 				}
 			}
 			i++
-			scp := parseScope(tokensArr)
+			scp := parseScope(tokensArr,"loop_scope")
 			loopnode.Children = append(loopnode.Children, scp)
 			treeNode.Children = append(treeNode.Children, loopnode)
 
@@ -101,7 +101,7 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 			name:=tokensArr[i].Ref
 			funcNode.Properties["name"] = makeTreeNode(name, nil, "varname")
 			i++
-			scp := parseScope(tokensArr)
+			scp := parseScope(tokensArr,"function_scope")
 			funcNode.Children = append(funcNode.Children, scp)
 			treeNode.Children = append(treeNode.Children, funcNode)
 		}else if tokensArr[i].Type == "BREAK" {
@@ -120,7 +120,7 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 			}
 		} else if tokensArr[i].Type == "SCOPE_START" {
 			// fmt.Println("scope start")
-			scope := parseScope(tokensArr)
+			scope := parseScope(tokensArr,"scope")
 			treeNode.Children = append(treeNode.Children, scope)
 		} else if tokensArr[i].Type == "SCOPE_END" {
 			return
@@ -138,8 +138,8 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 	return
 }
 
-func parseScope(tokensArr []lexer.TokenType) *TreeNode {
-	scopeNode := makeTreeNode("scope", make([]*TreeNode, 0), "scope")
+func parseScope(tokensArr []lexer.TokenType,desc string) *TreeNode {
+	scopeNode := makeTreeNode("scope", make([]*TreeNode, 0), desc)
 	i++
 	ParseTree(tokensArr, scopeNode)
 	return scopeNode
