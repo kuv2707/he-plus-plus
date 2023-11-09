@@ -90,19 +90,9 @@ MAIN:
 				verd := executeOperator(treenode, *env)
 				// fmt.Println(node.Description, verd)
 				if verd.value.(bool) {
-					vvv := ExecuteAST(child.Children[0], env)
+					ExecuteAST(child.Children[0], env)
 					// fmt.Println(vvv)
-					if node.Description == "function_scope" {
-						if !vvv.shouldContinue {
-							return vvv
-						} else {
-							break
-						}
-
-					} else {
-						continue
-
-					}
+					continue
 				} else {
 					break
 				}

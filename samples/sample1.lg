@@ -12,7 +12,20 @@ func(k)abs{
    }
 }
 
-println(abs(-5));
+func(base,exp)pow{
+   //println(`base: `+base+` exp: `+exp);
+   ans=1;
+   loop((exp)>0){
+      ans=ans*base;
+      exp=exp-1;
+      //println(`iter `+exp+` ans: `+ans);
+   
+   }
+   return ans;
+
+}
+
+//println(pow(2,3));
 
 
 n=20;
@@ -22,14 +35,14 @@ c=(a+b)/2;
 i=0;
 TOLERANCE=0.000001;
 // square root by bisection method
-loop(i<1000){
+loop(i<6000){
    c=(a+b)/2;
    i=i+1;
-   if(c*c-n>TOLERANCE)
+   if(pow(c,2)-n>TOLERANCE)
    { 
       b=c;
    }else{ 
       a=c;
    }
 }
-println(`the root of `+n+` is: `+c);
+println(`the square root of `+n+` is: `+c);

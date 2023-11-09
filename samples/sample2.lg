@@ -3,4 +3,18 @@ func(str)println{
     #(`\n`);
 }
 
-println(`hii`);
+
+func(base,exp)pow{
+   println(`base: `+base+` exp: `+exp);
+   ans=1;
+   loop((exp)>0){
+      ans=ans*base;
+      exp=exp-1;
+      println(`iter `+exp+` ans: `+ans);
+   
+   }
+   return ans;
+
+}
+
+println(pow(2,3));
