@@ -1,0 +1,10 @@
+i=0;
+
+loop(i<1){
+    i=i+1;
+    if(3<5){
+    #(`3 is less than 5`);
+}else{
+    #(`3 is not less than 5`);
+}
+}

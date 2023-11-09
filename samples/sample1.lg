@@ -1,17 +1,25 @@
+func(str)println{
+    #(str);
+    #(`\n`);
+}
+
 n=20;
 a=0;
 b=n;
-
-
-loop(c*c-n>0.0001 || c*c-n< -0.0001){
-
 c=(a+b)/2;
-    if(c*c-n>0)
-       { b=c;}
-    else
-       { 
-        a=c;
-       }
-    
-#(c);
+i=0;
+TOLERANCE=0.000001;
+// square root by bisection method
+loop(i<1000){
+   c=(a+b)/2;
+   i=i+1;
+   if(c*c-n>TOLERANCE)
+   { 
+      b=c;
+   }else{ 
+      a=c;
+   }
+   
 }
+//function calls need to be a part of an expression
+0+println(`the root of `+n+` is: `+c);

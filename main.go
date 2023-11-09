@@ -12,13 +12,13 @@ func main() {
 
 	// 	fmt.Println(utils.ValidVariableName("`aaa`"))
 	// return
-	var tokens *lexer.Node = lexer.Lexify("./samples/sample.lg")
+	var tokens *lexer.Node = lexer.Lexify("./samples/sample1.lg")
 	tokens = tokens.Next
-	PrintLexemes(tokens)
+	// PrintLexemes(tokens)
 
 	treeNode := parser.ParseTreeM(tokens)
 
-	treeNode.PrintTree("")
+	// treeNode.PrintTree("")
 	StartInterpreting(treeNode)
 
 }

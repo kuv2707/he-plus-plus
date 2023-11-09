@@ -1,10 +1,19 @@
+#(3*3-1);
 func(firstnum,secondnum)add{
-    #(`fdsa`);
+    +println(`fdsa`+`\n`);
     return firstnum+secondnum;
 }
-
-func(str)print{
+func(str)println{
     #(str);
+    #(`\n`);
 }
+i=0;
+sum=0;
+loop(i<5){
+    i=i+1;
+    sum=add(sum,i);
+    0+println(i);
+}
+0+println(sum);
 
-let m=print(`hi i am `+add(9,11)+` years old`);
+//not able to execute functions if they are not a part of an expression

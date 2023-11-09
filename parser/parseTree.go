@@ -47,7 +47,7 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 			count := 0
 			for (i < len(tokensArr)) && (tokensArr[i].Type == "IF" || tokensArr[i].Type == "ELSE IF" || tokensArr[i].Type == "ELSE") {
 				is_else := tokensArr[i].Type == "ELSE"
-				fmt.Println("is else", is_else)
+				// fmt.Println("is else", is_else)
 				if !(is_else) {
 					for j := i + 1; j < len(tokensArr); j++ {
 						if tokensArr[j].Type == "SCOPE_START" {
@@ -63,7 +63,7 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 				// scp.PrintTree("/")
 				condNode.Children = append(condNode.Children, scp)
 				if is_else {
-					fmt.Println(tokensArr[i])
+					// fmt.Println(tokensArr[i])
 					break
 				}
 				i++
@@ -328,7 +328,7 @@ func parseUnary(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
-	printTokensArr(tokens)
+	// printTokensArr(tokens)
 	if tokens[0].Type == "OPEN_PAREN" {
 		return parseExpression(tokens[1 : len(tokens)-1])
 	} else {

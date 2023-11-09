@@ -27,7 +27,13 @@ type ScopeInfo struct{
 type Environment struct {
 	variables map[string]Variable
 	functions map[string]*parser.TreeNode
+
+
 }
+
+//todo: call stack implement
+
+
 //returns whether the execution of a scope was interrupted by a break/continue statement
 func ExecuteAST(node *parser.TreeNode, env *Environment) ScopeInfo{
 
@@ -55,7 +61,7 @@ MAIN:
 			}
 			
 			if k < len(child.Children) {
-				child.Children[k].PrintTree("-")
+				// child.Children[k].PrintTree("-")
 				ExecuteAST(child.Children[k], env)
 			}
 		case "LOOP":
@@ -80,7 +86,7 @@ MAIN:
 			// fmt.Println("return",returnVal)
 			return ScopeInfo{false,returnVal}
 		case "FUNCTION":
-			fmt.Println("function",child.Properties["name"].Label)
+			// fmt.Println("function",child.Properties["name"].Label)
 			env.functions[child.Properties["name"].Label] = child
 		}
 

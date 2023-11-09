@@ -142,7 +142,6 @@ func executeEquals(node *parser.TreeNode, env Environment) Variable {
 }
 
 func executePrimary(node *parser.TreeNode, env Environment) Variable {
-	fmt.Println("hereee")
 	if node.Description == "true" || node.Description == "false" {
 		return Variable{"", DATA_TYPES["BOOL"], node.Description == "true"}
 	} else if utils.IsNumber(node.Description) {
@@ -160,7 +159,7 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 		} else {
 			if len(node.Children) > 0 {
 				//function call
-				fmt.Println("function call")
+				// fmt.Println("function call")
 				params:=make([]Variable,0)
 				for key, childNode := range node.Children[0].Properties {
 					if key[0:4] == "args" {
@@ -172,7 +171,7 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 				for i, param := range params {
 					newenv.variables[funcNode.Properties["args"+fmt.Sprint(i)].Description]=param
 				}
-				fmt.Println("calling function",node.Description)
+				// fmt.Println("calling function",node.Description)
 				k:=ExecuteAST(funcNode,&newenv)
 				// fmt.Println(k)
 				return k.returnVal
