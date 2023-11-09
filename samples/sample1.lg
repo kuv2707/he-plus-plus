@@ -12,7 +12,7 @@ func(k)abs{
    }
 }
 
-0+println(abs(-5));
+println(abs(-5));
 
 
 n=20;
@@ -33,4 +33,4 @@ loop(i<1000){
    }
 }
 //function calls need to be a part of an expression
-0+println(`the root of `+n+` is: `+c);
+println(`the root of `+n+` is: `+c);

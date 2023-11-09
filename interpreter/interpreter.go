@@ -39,6 +39,8 @@ MAIN:
 		switch child.Label {
 		case "operator":
 			executeOperator(child, *env)
+		case "primary":
+			executePrimary(child, *env)
 		case "scope":
 			info := ExecuteAST(child, env)
 			if !info.shouldContinue {
