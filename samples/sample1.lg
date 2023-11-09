@@ -32,5 +32,4 @@ loop(i<1000){
       a=c;
    }
 }
-//function calls need to be a part of an expression
 println(`the root of `+n+` is: `+c);
