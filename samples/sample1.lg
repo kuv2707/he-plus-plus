@@ -28,7 +28,7 @@ func(base,exp)pow{
 //println(pow(2,3));
 
 
-n=20;
+n=25;
 a=0;
 b=n;
 c=(a+b)/2;

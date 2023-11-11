@@ -70,8 +70,16 @@ func executeAddition(node *parser.TreeNode, env Environment) Variable {
 	}
 }
 func executeSubtraction(node *parser.TreeNode, env Environment) Variable {
-	left := executeOperator(node.Children[0], env)
-	right := executeOperator(node.Children[1], env)
+	var left,right Variable
+	if len(node.Children) == 1 {
+		//unary minus
+		left = Variable{"", DATA_TYPES["NUMBER"], float32(0)}
+		right = executeOperator(node.Children[0], env)
+	}else{
+		left = executeOperator(node.Children[0], env)
+		right = executeOperator(node.Children[1], env)
+
+	}
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
 		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) - right.value.(float32)}
 	} else {

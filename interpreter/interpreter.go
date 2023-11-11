@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	_ "fmt"
 	"toylingo/parser"
 )
 
@@ -32,7 +31,6 @@ type Environment struct {
 
 // returns whether the execution of a scope was interrupted by a break/continue statement
 func ExecuteAST(node *parser.TreeNode, env *Environment) ScopeInfo {
-
 MAIN:
 	for _, child := range node.Children {
 

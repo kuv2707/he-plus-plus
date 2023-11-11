@@ -12,9 +12,9 @@ func main() {
 
 	// 	fmt.Println(utils.ValidVariableName("`aaa`"))
 	// return
-	var tokens *lexer.Node = lexer.Lexify("./samples/sample1.lg")
+	var tokens *lexer.Node = lexer.Lexify("./samples/sample.lg")
 	tokens = tokens.Next
-	// PrintLexemes(tokens)
+	PrintLexemes(tokens)
 
 	treeNode := parser.ParseTreeM(tokens)
 

@@ -253,6 +253,7 @@ func parseComparison(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parseTerm(tokens []lexer.TokenType) *TreeNode {
+	printTokensArr(tokens);
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
@@ -261,6 +262,7 @@ func parseTerm(tokens []lexer.TokenType) *TreeNode {
 			continue
 		}
 		if tokens[i].Ref == "+" || tokens[i].Ref == "-" {
+			fmt.Println("FDa")
 			opIndex = i
 			op = tokens[i].Ref
 			break
@@ -272,9 +274,11 @@ func parseTerm(tokens []lexer.TokenType) *TreeNode {
 		node := makeTreeNode("operator", []*TreeNode{left, right}, op)
 		return node
 
-	} else {
-		right := parseFactor(tokens[opIndex+1:])
+	} else if(opIndex==0) {
+		right := parseFactor(tokens[opIndex:])
 		return right
+	}else{
+		return parseFactor(tokens[opIndex+1:])
 	}
 }
 
@@ -305,6 +309,7 @@ func parseFactor(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parseUnary(tokens []lexer.TokenType) *TreeNode {
+	
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
