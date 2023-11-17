@@ -13,12 +13,12 @@ func IsNumber(temp string) bool {
 	return true
 }
 
-func StringToNumber(str string) float32 {
+func StringToNumber(str string) float64 {
 	num, err := strconv.ParseFloat(str, 32)
 	if err != nil {
 		panic(err)
 	}
-	return float32(num)
+	return float64(num)
 }
 
 func IsOneOf(temp string, options string) bool {
@@ -52,16 +52,15 @@ func ValidVariableName(s string) bool {
 	return !InQuotes(s)
 }
 
-
-func StringVal(s interface{})string{
-	if s==nil{
-		return("nil")
+func StringVal(s interface{}) string {
+	if s == nil {
+		return ("nil")
 	}
 	switch s.(type) {
 	case string:
-		return(s.(string))
-	case float32:
-		a:=s.(float32)
+		return (s.(string))
+	case float64:
+		a := s.(float64)
 		//todo understand why this is needed
 		return strconv.FormatFloat(float64(a), 'f', -1, 32)
 	case bool:
@@ -72,35 +71,33 @@ func StringVal(s interface{})string{
 }
 
 func ParseEscapeSequence(s string) string {
-	ret:=""
-	for i:=0;i<len(s);i++{
-		if s[i]=='\\'{
+	ret := ""
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' {
 			switch s[i+1] {
 			case 'n':
-				ret+="\n"
+				ret += "\n"
 			case 't':
-				ret+="\t"
+				ret += "\t"
 			case 'r':
-				ret+="\r"
+				ret += "\r"
 			case 'b':
-				ret+="\b"
+				ret += "\b"
 			case 'f':
-				ret+="\f"
+				ret += "\f"
 			case '\\':
-				ret+="\\"
+				ret += "\\"
 			case '\'':
-				ret+="`"
-			case '`'://fixme: might be a bug
-				ret+="\""
+				ret += "`"
+			case '`': //fixme: might be a bug
+				ret += "\""
 			default:
-				ret+=string(s[i+1])
+				ret += string(s[i+1])
 			}
 			i++
-		} else{
-			ret+=string(s[i])
+		} else {
+			ret += string(s[i])
 		}
 	}
 	return ret
 }
-
-

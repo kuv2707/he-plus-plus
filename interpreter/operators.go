@@ -54,14 +54,14 @@ func executeAssignment(node *parser.TreeNode, env Environment) Variable {
 	varname := node.Children[0].Label
 	varval := executeOperator(node.Children[1], env)
 	env.variables[varname] = varval
-
+	// fmt.Println("assigning", varname, varval)
 	return varval
 }
 func executeAddition(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) + right.value.(float32)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float64) + right.value.(float64)}
 	} else if left.datatype == DATA_TYPES["STRING"] && right.datatype == DATA_TYPES["STRING"] {
 		return Variable{"", DATA_TYPES["STRING"], left.value.(string) + right.value.(string)}
 	} else {
@@ -70,18 +70,18 @@ func executeAddition(node *parser.TreeNode, env Environment) Variable {
 	}
 }
 func executeSubtraction(node *parser.TreeNode, env Environment) Variable {
-	var left,right Variable
+	var left, right Variable
 	if len(node.Children) == 1 {
 		//unary minus
-		left = Variable{"", DATA_TYPES["NUMBER"], float32(0)}
+		left = Variable{"", DATA_TYPES["NUMBER"], float64(0)}
 		right = executeOperator(node.Children[0], env)
-	}else{
+	} else {
 		left = executeOperator(node.Children[0], env)
 		right = executeOperator(node.Children[1], env)
 
 	}
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) - right.value.(float32)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float64) - right.value.(float64)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["NUMBER"], 0}
@@ -91,7 +91,7 @@ func executeMultiplication(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) * right.value.(float32)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float64) * right.value.(float64)}
 	} else if left.datatype == DATA_TYPES["STRING"] && right.datatype == DATA_TYPES["STRING"] {
 		panic("invalid operation")
 		return Variable{"", DATA_TYPES["STRING"], left.value.(string) + right.value.(string)}
@@ -99,13 +99,13 @@ func executeMultiplication(node *parser.TreeNode, env Environment) Variable {
 		//todo
 		if left.datatype == DATA_TYPES["STRING"] && right.datatype == DATA_TYPES["NUMBER"] {
 			res := ""
-			for i := 0; i < int(right.value.(float32)); i++ {
+			for i := 0; i < int(right.value.(float64)); i++ {
 				res += left.value.(string)
 			}
 			return Variable{"", DATA_TYPES["STRING"], res}
 		} else {
 			res := ""
-			for i := 0; i < int(left.value.(float32)); i++ {
+			for i := 0; i < int(left.value.(float64)); i++ {
 				res += right.value.(string)
 			}
 			return Variable{"", DATA_TYPES["STRING"], res}
@@ -116,7 +116,7 @@ func executeDivision(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float32) / right.value.(float32)}
+		return Variable{"", DATA_TYPES["NUMBER"], left.value.(float64) / right.value.(float64)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["NUMBER"], 0}
@@ -126,7 +126,7 @@ func executeGreaterThan(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["BOOL"], left.value.(float32) > right.value.(float32)}
+		return Variable{"", DATA_TYPES["BOOL"], left.value.(float64) > right.value.(float64)}
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["BOOL"], false}
@@ -135,8 +135,10 @@ func executeGreaterThan(node *parser.TreeNode, env Environment) Variable {
 func executeLessThan(node *parser.TreeNode, env Environment) Variable {
 	left := executeOperator(node.Children[0], env)
 	right := executeOperator(node.Children[1], env)
+	verd:=left.value.(float64) < right.value.(float64)
+	// fmt.Println(left, right,verd)
 	if left.datatype == DATA_TYPES["NUMBER"] && right.datatype == DATA_TYPES["NUMBER"] {
-		return Variable{"", DATA_TYPES["BOOL"], left.value.(float32) < right.value.(float32)}
+		return Variable{"", DATA_TYPES["BOOL"],verd }
 	} else {
 		//todo
 		return Variable{"", DATA_TYPES["BOOL"], false}
@@ -155,7 +157,7 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 	} else if utils.IsNumber(node.Description) {
 		return Variable{"", DATA_TYPES["NUMBER"], utils.StringToNumber(node.Description)}
 	} else {
-		
+
 		if !utils.ValidVariableName(node.Description) {
 			// evaluatedStr:=""
 			for i := 1; i < len(node.Description)-1; i++ {
@@ -168,24 +170,25 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 			if len(node.Children) > 0 {
 				//function call
 				// fmt.Println("function call")
-				params:=make([]Variable,0)
+				params := make([]Variable, 0)
 				for key, childNode := range node.Children[0].Properties {
 					if key[0:4] == "args" {
-						params=append(params,executeOperator(childNode,env))
+						params = append(params, executeOperator(childNode, env))
 					}
 				}
-				funcNode:=env.functions[node.Description]
-				newenv:=NewCallStackContext(env)
+				funcNode := env.functions[node.Description]
+				newenv := NewCallStackContext(env)
 				for i, param := range params {
-					newenv.variables[funcNode.Properties["args"+fmt.Sprint(i)].Description]=param
+					newenv.variables[funcNode.Properties["args"+fmt.Sprint(i)].Description] = param
 				}
 				// fmt.Println("calling function",node.Description)
-				k:=ExecuteAST(funcNode,&newenv)
+				k := ExecuteAST(funcNode, &newenv)
 				// fmt.Println(k)
 				return k.returnVal
 
 			}
 			if _, ok := env.variables[node.Description]; !ok {
+				fmt.Println(env.variables)
 				panic("variable not defined: " + node.Description)
 			}
 			return env.variables[node.Description]

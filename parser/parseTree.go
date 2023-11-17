@@ -47,7 +47,7 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 			count := 0
 			for (i < len(tokensArr)) && (tokensArr[i].Type == "IF" || tokensArr[i].Type == "ELSE IF" || tokensArr[i].Type == "ELSE") {
 				is_else := tokensArr[i].Type == "ELSE"
-				// fmt.Println("is else", is_else)
+				fmt.Println("is else", is_else)
 				if !(is_else) {
 					for j := i + 1; j < len(tokensArr); j++ {
 						if tokensArr[j].Type == "SCOPE_START" {
@@ -63,7 +63,6 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 				// scp.PrintTree("/")
 				condNode.Children = append(condNode.Children, scp)
 				if is_else {
-					// fmt.Println(tokensArr[i])
 					break
 				}
 				i++
@@ -105,7 +104,9 @@ func ParseTree(tokensArr []lexer.TokenType, treeNode *TreeNode) {
 			funcNode.Children = append(funcNode.Children, scp)
 			treeNode.Children = append(treeNode.Children, funcNode)
 		}else if tokensArr[i].Type == "BREAK" {
+			fmt.Println("break")
 			treeNode.Children = append(treeNode.Children, makeTreeNode("BREAK", nil, "break"))
+			i++
 		} else if tokensArr[i].Type == "RETURN" {
 			for j := i + 1; j < len(tokensArr); j++ {
 				retNode := makeTreeNode("RETURN", make([]*TreeNode, 0), "return")
@@ -262,7 +263,6 @@ func parseTerm(tokens []lexer.TokenType) *TreeNode {
 			continue
 		}
 		if tokens[i].Ref == "+" || tokens[i].Ref == "-" {
-			fmt.Println("FDa")
 			opIndex = i
 			op = tokens[i].Ref
 			break
@@ -341,6 +341,8 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		if len(tokens) > 1 {
 			//might be func call
 			if tokens[1].Type != "OPEN_PAREN" {
+				fmt.Println("invalid expression")
+				printTokensArr(tokens)
 				panic("invalid expression")
 			}
 			node := makeTreeNode("func_call", make([]*TreeNode, 0), tokens[0].Ref)

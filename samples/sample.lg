@@ -1,2 +1,30 @@
-a=-5;
-#(a);
+func(str)println{
+    #(str);
+    #(`\n`);
+    return 0;
+}
+
+i=10;
+func(a,b)doer{
+    loop(true){
+        a=a-1;
+        println(a+` `+b);
+        if(a<b){
+            break;
+        }
+        else{
+            println(`else`);
+            //return 0;
+        }
+    }
+    println(`printed`);
+}
+
+
+func(a,b)nada{
+
+doer(5,3);
+println(`came back`);
+}
+
+nada(3,3);
