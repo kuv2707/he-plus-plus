@@ -4,14 +4,16 @@ An interpreted language built on top of golang.
 # Features
 
 ## Variables
-declare a variable using the let keyword
-the let keyword is optional
+* declare a variable using the let keyword
+* the let keyword is optional
 
 ## Template Strings
-Full support for JS style template strings
+to be implemented soon
 
 ## Conditionals
 Support for if, else if, else statements
+
+```
 if(true){
 
 } elseif(5<7){
@@ -19,6 +21,18 @@ if(true){
 }else{
     
 }
+```
+
+## Loops
+Support for a basic loop structure with break statement
+```
+loop(boolean_expression){
+    //statements
+    if(condition){
+        break;
+    }else{}
+}
+```
 
 
 
@@ -33,3 +47,8 @@ But only the expression succeeding the last occurence of a string in an expressi
  
 * 8/9\*18 not evaluated correctly (9*18 evaluated first): right to left evaluated
 * if conditional chain is not terminated by an else, the next token is consumed.
+
+* return value and argument lists of functions must be non empty 
+* the programs sometimes glitch and control flow becomes entirely different
+
+* if statements must always have a corresponding else 

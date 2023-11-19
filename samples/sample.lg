@@ -3,8 +3,6 @@ func(str)println{
     #(`\n`);
     return 0;
 }
-
-i=10;
 func(a,b)doer{
     loop(true){
         a=a-1;
@@ -14,17 +12,14 @@ func(a,b)doer{
         }
         else{
             println(`else`);
-            //return 0;
         }
     }
     println(`printed`);
 }
 
-
 func(a,b)nada{
-
-doer(5,3);
-println(`came back`);
+    doer(5,3);
+    println(`came back`);
 }
 
 nada(3,3);

@@ -178,6 +178,7 @@ func executePrimary(node *parser.TreeNode, env Environment) Variable {
 				}
 				funcNode := env.functions[node.Description]
 				newenv := NewCallStackContext(env)
+				// fmt.Println(node.Description,params)
 				for i, param := range params {
 					newenv.variables[funcNode.Properties["args"+fmt.Sprint(i)].Description] = param
 				}
