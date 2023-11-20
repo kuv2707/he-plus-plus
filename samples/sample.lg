@@ -1,25 +1,12 @@
-func(str)println{
-    #(str);
-    #(`\n`);
-    return 0;
-}
-func(a,b)doer{
-    loop(true){
-        a=a-1;
-        println(a+` `+b);
-        if(a<b){
-            break;
-        }
-        else{
-            println(`else`);
-        }
-    }
-    println(`printed`);
+let a=5;
+if(a<5){
+    #(3);
+} elseif(a<10){
+    #(4);
+} else {
+    #(5);
 }
 
-func(a,b)nada{
-    doer(5,3);
-    println(`came back`);
+func(a,b) add{
+    #(a+b);
 }
-
-nada(3,3);

@@ -16,10 +16,10 @@ func main() {
 	tokens = tokens.Next
 	PrintLexemes(tokens)
 
-	treeNode := parser.ParseTreeM(tokens)
+	treeNode := parser.ParseTree(tokens)
 
 	treeNode.PrintTree("")
-	StartInterpreting(treeNode)
+	// StartInterpreting(treeNode)
 
 }
 func PrintLexemes(tokens *lexer.Node) {

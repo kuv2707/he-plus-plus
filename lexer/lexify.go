@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"toylingo/utils"
+	"toylingo/globals"
 )
 
 func Lexify(path string) *Node {
@@ -108,51 +109,53 @@ func Lexify(path string) *Node {
 	return ret
 }
 
+var TOKENS=globals.TOKENS
+
 func addToken(temp string, tokens *Node) bool {
 	if temp == " " || temp == "\n" || temp == "\t" || temp == "" || temp == "\r" {
 		return false
 	}
 	switch strings.Trim(temp, " ") {
-	case dict["SCOPE_START"]:
+	case TOKENS["SCOPE_START"]:
 		tokens.Next = &Node{TokenType{"SCOPE_START", "{"}, nil}
-	case dict["SCOPE_END"]:
+	case TOKENS["SCOPE_END"]:
 		tokens.Next = &Node{TokenType{"SCOPE_END", "}"}, nil}
-	case dict["OPEN_PAREN"]:
+	case TOKENS["OPEN_PAREN"]:
 		tokens.Next = &Node{TokenType{"OPEN_PAREN", "("}, nil}
-	case dict["CLOSE_PAREN"]:
+	case TOKENS["CLOSE_PAREN"]:
 		tokens.Next = &Node{TokenType{"CLOSE_PAREN", ")"}, nil}
-	case dict["COLON"]:
+	case TOKENS["COLON"]:
 		tokens.Next = &Node{TokenType{"COLON", ":"}, nil}
-	case dict["SEMICOLON"]:
+	case TOKENS["SEMICOLON"]:
 		tokens.Next = &Node{TokenType{"SEMICOLON", ";"}, nil}
-	case dict["LET"]:
+	case TOKENS["LET"]:
 		tokens.Next = &Node{TokenType{"LET", "let"}, nil}
-	case dict["IF"]:
+	case TOKENS["IF"]:
 		tokens.Next = &Node{TokenType{"IF", "if"}, nil}
-	case dict["ELSE IF"]:
+	case TOKENS["ELSE IF"]:
 		tokens.Next = &Node{TokenType{"ELSE IF", "elif"}, nil}
-	case dict["ELSE"]:
+	case TOKENS["ELSE"]:
 		tokens.Next = &Node{TokenType{"ELSE", "else"}, nil}
-	case dict["LOOP"]:
+	case TOKENS["LOOP"]:
 		tokens.Next = &Node{TokenType{"LOOP", "loop"}, nil}
-	case dict["BREAK"]:
+	case TOKENS["BREAK"]:
 		tokens.Next = &Node{TokenType{"BREAK", "break"}, nil}
-	case dict["DOT"]:
+	case TOKENS["DOT"]:
 		tokens.Next = &Node{TokenType{"DOT", "."}, nil}
-	case dict["COMMA"]:
+	case TOKENS["COMMA"]:
 		tokens.Next = &Node{TokenType{"COMMA", ","}, nil}
-	case dict["FUNCTION"]:
+	case TOKENS["FUNCTION"]:
 		tokens.Next = &Node{TokenType{"FUNCTION", "func"}, nil}
-	case dict["RETURN"]:
+	case TOKENS["RETURN"]:
 		tokens.Next = &Node{TokenType{"RETURN", "return"}, nil}
 
-	case dict["INTEGER"]:
+	case TOKENS["INTEGER"]:
 		tokens.Next = &Node{TokenType{"DATATYPE", "INTEGER"}, nil}
-	case dict["FLOAT"]:
+	case TOKENS["FLOAT"]:
 		tokens.Next = &Node{TokenType{"DATATYPE", "FLOAT"}, nil}
-	case dict["STRING"]:
+	case TOKENS["STRING"]:
 		tokens.Next = &Node{TokenType{"DATATYPE", "STRING"}, nil}
-	case dict["BOOLEAN"]:
+	case TOKENS["BOOLEAN"]:
 		tokens.Next = &Node{TokenType{"DATATYPE", "BOOLEAN"}, nil}
 	default:
 		if utils.IsNumber(temp) {

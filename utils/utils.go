@@ -2,6 +2,8 @@ package utils
 
 import "strconv"
 
+func DoNothing(args ...interface{}) {}
+
 func IsNumber(temp string) bool {
 	for i := 0; i < len(temp); i++ {
 		if temp[i] < '0' || temp[i] > '9' {
