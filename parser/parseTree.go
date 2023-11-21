@@ -38,6 +38,9 @@ func parseScope() *TreeNode {
 		case "LOOP":
 			scopeNode.Children = append(scopeNode.Children, parseLoop())
 
+		case "FUNCTION":
+			scopeNode.Children = append(scopeNode.Children, parseFunction())
+
 		case "SCOPE_END":
 			return scopeNode
 
@@ -48,6 +51,7 @@ func parseScope() *TreeNode {
 		}
 
 	}
+	//sort children such that all function definitions are at the beginning
 	return scopeNode
 }
 
@@ -87,6 +91,27 @@ func parseLoop() *TreeNode {
 	loopNode.Properties["condition"]=parseExpression(collectTill("SCOPE_START"))
 	loopNode.Properties["body"]=parseScope()
 	return loopNode
+}
+
+func parseFunction() *TreeNode {
+	funcNode:=makeTreeNode("function",nil,"func")
+	expect("OPEN_PAREN")
+	next()
+	funcNode.Properties["args"]=parseArgs(collectTill("CLOSE_PAREN"))
+	funcNode.Properties["body"]=parseScope()
+	
+	return funcNode
+}
+
+func parseArgs(tokens []lexer.TokenType) *TreeNode {
+	argsNode:=makeTreeNode("args",nil,"args")
+	for i:=0;i<len(tokens);i++ {
+		if tokens[i].Type=="COMMA" {
+			continue
+		}
+		argsNode.Children=append(argsNode.Children,makeTreeNode("arg",nil,tokens[i].Ref))
+	}
+	return argsNode
 }
 
 func parseExpression(tokens []lexer.TokenType) *TreeNode {
@@ -237,7 +262,7 @@ func parseFactor(tokens []lexer.TokenType) *TreeNode {
 func parseUnary(tokens []lexer.TokenType) *TreeNode {
 
 	opIndex := -1
-	op := ""
+	op:=""
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Ref == "(" {
 			i += seekClosingParen(tokens[i+1:])
@@ -249,7 +274,7 @@ func parseUnary(tokens []lexer.TokenType) *TreeNode {
 			break
 		}
 	}
-	if op == "" {
+	if opIndex == -1 {
 		node := parsePrimary(tokens)
 		return node
 	} else {

@@ -90,10 +90,10 @@ func (treeNode *TreeNode) PrintTree(space string) {
 			child.PrintTree(space + utils.ONETAB)
 			fmt.Print(utils.Colors["RESET"])
 		}
-
+		fmt.Print(color)
+		fmt.Println(space + "]")
 	}
-	fmt.Print(color)
-	fmt.Println(space + "]\n" + space[0:len(space)-2] + "}")
+	fmt.Println(space[0:len(space)-2] + "}")
 
 }
 func printTokensArr(tokens []lexer.TokenType) {

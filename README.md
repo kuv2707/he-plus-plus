@@ -34,6 +34,17 @@ loop(boolean_expression){
 }
 ```
 
+## Functions
+Support for functions with return values and arguments
+All functions in a scope are hoisted to the top of the scope
+
+```
+func(a,b) add{
+    return a+b;
+}
+```
+
+
 
 
 # Peculiarities
