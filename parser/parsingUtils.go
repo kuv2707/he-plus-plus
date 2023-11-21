@@ -77,8 +77,8 @@ func (treeNode *TreeNode) PrintTree(space string) {
 	fmt.Print(color)
 	fmt.Println(space + "{")
 	space += "  "
-	fmt.Println(space + "desc:" + treeNode.Description)
 	fmt.Println(space + "label:" + treeNode.Label)
+	fmt.Println(space + "desc:" + treeNode.Description)
 	for key, val := range treeNode.Properties {
 		fmt.Println(space + key + ":")
 		val.PrintTree(space + utils.ONETAB)

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"os"
 	"strings"
+	g "toylingo/globals"
 	"toylingo/utils"
-	"toylingo/globals"
 )
 
 func Lexify(path string) *Node {
@@ -109,54 +109,46 @@ func Lexify(path string) *Node {
 	return ret
 }
 
-var TOKENS=globals.TOKENS
-
 func addToken(temp string, tokens *Node) bool {
 	if temp == " " || temp == "\n" || temp == "\t" || temp == "" || temp == "\r" {
 		return false
 	}
 	switch strings.Trim(temp, " ") {
-	case TOKENS["SCOPE_START"]:
-		tokens.Next = &Node{TokenType{"SCOPE_START", "{"}, nil}
-	case TOKENS["SCOPE_END"]:
-		tokens.Next = &Node{TokenType{"SCOPE_END", "}"}, nil}
-	case TOKENS["OPEN_PAREN"]:
-		tokens.Next = &Node{TokenType{"OPEN_PAREN", "("}, nil}
-	case TOKENS["CLOSE_PAREN"]:
-		tokens.Next = &Node{TokenType{"CLOSE_PAREN", ")"}, nil}
-	case TOKENS["COLON"]:
-		tokens.Next = &Node{TokenType{"COLON", ":"}, nil}
-	case TOKENS["SEMICOLON"]:
-		tokens.Next = &Node{TokenType{"SEMICOLON", ";"}, nil}
-	case TOKENS["LET"]:
-		tokens.Next = &Node{TokenType{"LET", "let"}, nil}
-	case TOKENS["IF"]:
-		tokens.Next = &Node{TokenType{"IF", "if"}, nil}
-	case TOKENS["ELSE IF"]:
-		tokens.Next = &Node{TokenType{"ELSE IF", "elif"}, nil}
-	case TOKENS["ELSE"]:
-		tokens.Next = &Node{TokenType{"ELSE", "else"}, nil}
-	case TOKENS["LOOP"]:
-		tokens.Next = &Node{TokenType{"LOOP", "loop"}, nil}
-	case TOKENS["BREAK"]:
-		tokens.Next = &Node{TokenType{"BREAK", "break"}, nil}
-	case TOKENS["DOT"]:
-		tokens.Next = &Node{TokenType{"DOT", "."}, nil}
-	case TOKENS["COMMA"]:
-		tokens.Next = &Node{TokenType{"COMMA", ","}, nil}
-	case TOKENS["FUNCTION"]:
-		tokens.Next = &Node{TokenType{"FUNCTION", "func"}, nil}
-	case TOKENS["RETURN"]:
-		tokens.Next = &Node{TokenType{"RETURN", "return"}, nil}
+	case g.SCOPE_START:
+		tokens.Next = &Node{TokenType{"SCOPE_START", g.SCOPE_START}, nil}
+	case g.SCOPE_END:
+		tokens.Next = &Node{TokenType{"SCOPE_END", g.SCOPE_END}, nil}
+	case g.OPEN_PAREN:
+		tokens.Next = &Node{TokenType{"OPEN_PAREN", g.OPEN_PAREN}, nil}
+	case g.CLOSE_PAREN:
+		tokens.Next = &Node{TokenType{"CLOSE_PAREN", g.CLOSE_PAREN}, nil}
+	case g.COLON:
+		tokens.Next = &Node{TokenType{"COLON", g.COLON}, nil}
+	case g.SEMICOLON:
+		tokens.Next = &Node{TokenType{"SEMICOLON", g.SEMICOLON}, nil}
+	case g.LET:
+		tokens.Next = &Node{TokenType{"LET", g.LET}, nil}
+	case g.IF:
+		tokens.Next = &Node{TokenType{"IF", g.IF}, nil}
+	case g.ELSE_IF:
+		tokens.Next = &Node{TokenType{"ELSE IF", g.ELSE_IF}, nil}
+	case g.ELSE:
+		tokens.Next = &Node{TokenType{"ELSE", g.ELSE}, nil}
+	case g.LOOP:
+		tokens.Next = &Node{TokenType{"LOOP", g.LOOP}, nil}
+	case g.BREAK:
+		tokens.Next = &Node{TokenType{"BREAK", g.BREAK}, nil}
+	case g.DOT:
+		tokens.Next = &Node{TokenType{"DOT", g.DOT}, nil}
+	case g.EQUALS:
+		tokens.Next = &Node{TokenType{"COMMA", g.EQUALS}, nil}
+	case g.COMMA:
+		tokens.Next = &Node{TokenType{"FUNCTION", g.COMMA}, nil}
+	case g.RETURN:
+		tokens.Next = &Node{TokenType{"RETURN", g.RETURN}, nil}
+	case g.FUNCTION:
+		tokens.Next = &Node{TokenType{"FUNCTION", g.FUNCTION}, nil}
 
-	case TOKENS["INTEGER"]:
-		tokens.Next = &Node{TokenType{"DATATYPE", "INTEGER"}, nil}
-	case TOKENS["FLOAT"]:
-		tokens.Next = &Node{TokenType{"DATATYPE", "FLOAT"}, nil}
-	case TOKENS["STRING"]:
-		tokens.Next = &Node{TokenType{"DATATYPE", "STRING"}, nil}
-	case TOKENS["BOOLEAN"]:
-		tokens.Next = &Node{TokenType{"DATATYPE", "BOOLEAN"}, nil}
 	default:
 		if utils.IsNumber(temp) {
 			tokens.Next = &Node{TokenType{"NUMBER", temp}, nil}

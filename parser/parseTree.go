@@ -5,6 +5,7 @@ import (
 	_"toylingo/globals"
 	"toylingo/lexer"
 	"toylingo/utils"
+	_"sort"
 )
 
 var tokensArr = make([]lexer.TokenType, 0)
@@ -26,6 +27,7 @@ func ParseTree(tokens *lexer.Node) *TreeNode {
 
 func parseScope() *TreeNode {
 	scopeNode := makeTreeNode("scope", make([]*TreeNode, 0), "scope")
+	OUT:
 	for index() < maxIndex() {
 		token := next()
 		switch token.Type {
@@ -42,7 +44,7 @@ func parseScope() *TreeNode {
 			scopeNode.Children = append(scopeNode.Children, parseFunction())
 
 		case "SCOPE_END":
-			return scopeNode
+			break OUT
 
 
 		default:
@@ -52,6 +54,12 @@ func parseScope() *TreeNode {
 
 	}
 	//sort children such that all function definitions are at the beginning
+	fmt.Println("Fdafa",len(scopeNode.Children))
+	// sort.SliceStable(scopeNode.Children,func(i,j int) bool{
+	// 	fmt.Println("sorting",scopeNode.Children[i].Label,scopeNode.Children[j].Label)
+		
+	// })
+
 	return scopeNode
 }
 
