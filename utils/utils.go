@@ -1,6 +1,9 @@
 package utils
 
-import "strconv"
+import (
+	"strconv"
+	"toylingo/globals"
+)
 
 func DoNothing(args ...interface{}) {}
 
@@ -23,9 +26,9 @@ func StringToNumber(str string) float64 {
 	return float64(num)
 }
 
-func IsOneOf(temp string, options string) bool {
+func IsOneOf(temp string, options []string) bool {
 	for i := 0; i < len(options); i++ {
-		if temp == string(options[i]) {
+		if temp == (options[i]) {
 			return true
 		}
 	}
@@ -42,7 +45,7 @@ func IsOneOfArr(str string, options []string) bool {
 	return false
 }
 
-var QUOTES = "`"
+var QUOTES = []string{"`"}
 
 //todo use regex
 func InQuotes(s string) bool {
@@ -50,7 +53,7 @@ func InQuotes(s string) bool {
 }
 
 //todo use regex and add more constraints
-func ValidVariableName(s string) bool {
+func IsValidVariableName(s string) bool {
 	return !InQuotes(s)
 }
 
@@ -102,4 +105,17 @@ func ParseEscapeSequence(s string) string {
 		}
 	}
 	return ret
+}
+
+
+func IsLiteral(s string) bool {
+	return IsOneOf(s, []string{"NUMBER", "STRING_LITERAL", "BOOLEAN"})
+}
+
+func IsOperator(temp string) bool {
+	return IsOneOf(temp, globals.Operators)
+}
+
+func IsBoolean(temp string) bool {
+	return IsOneOf(temp, globals.Booleans)
 }

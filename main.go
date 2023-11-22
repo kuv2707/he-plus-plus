@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"toylingo/interpreter"
+	// "toylingo/interpreter"
 	"toylingo/lexer"
 	"toylingo/parser"
 	"toylingo/utils"
@@ -20,7 +20,7 @@ func main() {
 
 	treeNode.PrintTree("")
 	// StartInterpreting(treeNode)
-
+	fmt.Println(utils.Colors["RESET"])
 }
 func PrintLexemes(tokens *lexer.Node) {
 	c := 0
@@ -31,7 +31,7 @@ func PrintLexemes(tokens *lexer.Node) {
 }
 
 func StartInterpreting(treeNode *parser.TreeNode) {
-	fmt.Println(utils.Colors["BOLDYELLOW"]+"starting execution"+utils.Colors["RESET"])
-	interpreter.Interpret(treeNode)
-	fmt.Println("\n"+ utils.Colors["BOLDYELLOW"]+"execution complete"+utils.Colors["RESET"])
+	fmt.Println(utils.Colors["BOLDYELLOW"] + "starting execution" + utils.Colors["RESET"])
+	// interpreter.Interpret(treeNode)
+	fmt.Println("\n" + utils.Colors["BOLDYELLOW"] + "execution complete" + utils.Colors["RESET"])
 }

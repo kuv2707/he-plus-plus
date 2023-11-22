@@ -90,7 +90,7 @@ func Lexify(path string) *Node {
 
 	//coalesce multicharacter operators into one
 	for node := ret; node != nil; node = node.Next {
-		if (utils.IsOneOf(node.Val.Ref, "<>=!") && node.Next != nil && node.Next.Val.Ref == "=") || (node.Val.Ref == "|" && node.Next != nil && node.Next.Val.Ref == "|") || (node.Val.Ref == "&" && node.Next != nil && node.Next.Val.Ref == "&") {
+		if (utils.IsOneOf(node.Val.Ref, []string{"<",">","=","!"}) && node.Next != nil && node.Next.Val.Ref == "=") || (node.Val.Ref == "|" && node.Next != nil && node.Next.Val.Ref == "|") || (node.Val.Ref == "&" && node.Next != nil && node.Next.Val.Ref == "&") {
 			node.Val.Ref = node.Val.Ref + node.Next.Val.Ref
 			node.Next = node.Next.Next
 		}
@@ -138,12 +138,8 @@ func addToken(temp string, tokens *Node) bool {
 		tokens.Next = &Node{TokenType{"LOOP", g.LOOP}, nil}
 	case g.BREAK:
 		tokens.Next = &Node{TokenType{"BREAK", g.BREAK}, nil}
-	case g.DOT:
-		tokens.Next = &Node{TokenType{"DOT", g.DOT}, nil}
-	case g.EQUALS:
-		tokens.Next = &Node{TokenType{"COMMA", g.EQUALS}, nil}
 	case g.COMMA:
-		tokens.Next = &Node{TokenType{"FUNCTION", g.COMMA}, nil}
+		tokens.Next = &Node{TokenType{"COMMA", g.COMMA}, nil}
 	case g.RETURN:
 		tokens.Next = &Node{TokenType{"RETURN", g.RETURN}, nil}
 	case g.FUNCTION:
@@ -152,7 +148,9 @@ func addToken(temp string, tokens *Node) bool {
 	default:
 		if utils.IsNumber(temp) {
 			tokens.Next = &Node{TokenType{"NUMBER", temp}, nil}
-		} else if isOperator(temp) {
+		} else if utils.IsBoolean(temp){
+			tokens.Next=&Node{TokenType{"BOOLEAN",temp},nil}
+		}else if utils.IsOperator(temp) {
 			tokens.Next = &Node{TokenType{"OPERATOR", temp}, nil}
 		} else {
 			tokens.Next = &Node{TokenType{"IDENTIFIER", temp}, nil}
@@ -162,7 +160,4 @@ func addToken(temp string, tokens *Node) bool {
 	return true
 }
 
-func isOperator(temp string) bool {
-	operators := "=+-*/<>#!|&"
-	return utils.IsOneOf(temp, operators)
-}
+

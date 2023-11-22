@@ -24,3 +24,7 @@ var RETURN = "return"
 var EQUALS = "="
 
 var KEYWORDS = []string{"IF", "ELSE IF", "ELSE", "FUNCTION", "SCOPE_END", "LET"}
+
+var Operators= []string{"=","+","-","*","/","<",">","#","!","|","&"}
+
+var Booleans = []string{"true","false"}

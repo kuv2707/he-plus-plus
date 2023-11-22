@@ -1,15 +1,11 @@
 package lexer
 
-type TokenType struct{
+type TokenType struct {
 	Type string
-	Ref string //like int,float etc for DATATYPE
+	Ref  string //like int,float etc for DATATYPE
 }
 
 type Node struct {
 	Val  TokenType
 	Next *Node
 }
-
-
-
-

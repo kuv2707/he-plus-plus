@@ -1,8 +1,9 @@
 package parser
+
 import (
+	"fmt"
 	"toylingo/lexer"
 	"toylingo/utils"
-	"fmt"
 )
 
 var i, length int = 0, 0
@@ -19,7 +20,7 @@ func prev() lexer.TokenType {
 func peek() lexer.TokenType {
 	//todo check index before accessing
 	return tokensArr[i+1]
-	
+
 }
 
 func index() int {
@@ -70,6 +71,20 @@ func consume(tokenType string) {
 	}
 }
 
+func seekClosingParen(tokens []lexer.TokenType) int {
+	balance := 1
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			balance++
+		} else if tokens[i].Ref == ")" {
+			balance--
+		}
+		if balance == 0 {
+			return i
+		}
+	}
+	panic("unbalanced parentheses")
+}
 
 
 func (treeNode *TreeNode) PrintTree(space string) {
@@ -83,10 +98,10 @@ func (treeNode *TreeNode) PrintTree(space string) {
 		fmt.Println(space + key + ":")
 		val.PrintTree(space + utils.ONETAB)
 	}
-	if len(treeNode.Children)>0{
-		fmt.Println(space + "children:\n"+space+"[")
+	if len(treeNode.Children) > 0 {
+		fmt.Println(space + "children:\n" + space + "[")
 		for _, child := range treeNode.Children {
-	
+
 			child.PrintTree(space + utils.ONETAB)
 			fmt.Print(utils.Colors["RESET"])
 		}
@@ -102,3 +117,5 @@ func printTokensArr(tokens []lexer.TokenType) {
 	}
 	fmt.Println()
 }
+
+
