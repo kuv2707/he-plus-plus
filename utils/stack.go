@@ -8,6 +8,10 @@ type Stack struct {
 	items []interface{}
 }
 
+func MakeStack() Stack {
+	return Stack{make([]interface{}, 0)}
+}
+
 func (s *Stack) Push(item interface{}) {
 	s.items = append(s.items, item)
 }
@@ -36,6 +40,10 @@ func (s *Stack) Get(i int) interface{} {
 
 func (s *Stack) Len() int {
 	return len(s.items)
+}
+
+func (s *Stack) IsEmpty() bool {
+	return len(s.items) == 0
 }
 
 func (s *Stack) PrintStack() bool {

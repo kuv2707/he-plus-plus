@@ -19,7 +19,7 @@ func IsNumber(temp string) bool {
 }
 
 func StringToNumber(str string) float64 {
-	num, err := strconv.ParseFloat(str, 32)
+	num, err := strconv.ParseFloat(str, 64)
 	if err != nil {
 		panic(err)
 	}

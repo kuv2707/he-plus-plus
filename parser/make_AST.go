@@ -61,7 +61,6 @@ OUT:
 
 func parseLet() *TreeNode {
 	tokens := collectTill("SEMICOLON")
-	fmt.Println("let tokens:", tokens)
 	expNode := parseExpression(tokens, 0)
 
 	return expNode
@@ -82,6 +81,8 @@ func parseConditionalBlock() *TreeNode {
 	}
 	if matchCurrent("ELSE") {
 		next()
+		consume("SCOPE_START")
+		
 		condBlock.Properties["else"] = parseScope()
 	}
 	return condBlock
@@ -120,26 +121,26 @@ func parseFormalArgs(tokens []lexer.TokenType) *TreeNode {
 	return argsNode
 }
 
-func parseActualArgs(tokens []lexer.TokenType)*TreeNode{
+func parseActualArgs(tokens []lexer.TokenType) *TreeNode {
 	argsNode := makeTreeNode("args", nil, "args")
-	coll:=make([]lexer.TokenType,0)
-	balance:=0
-	for i:=0;i<len(tokens);i++{
-		if tokens[i].Type=="OPEN_PAREN"{
+	coll := make([]lexer.TokenType, 0)
+	balance := 0
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Type == "OPEN_PAREN" {
 			balance++
-		}else if tokens[i].Type=="CLOSE_PAREN"{
+		} else if tokens[i].Type == "CLOSE_PAREN" {
 			balance--
 		}
 
-		if tokens[i].Type=="COMMA" && balance == 0{
-			argsNode.Children=append(argsNode.Children,parseExpression(coll,0))
-			coll=make([]lexer.TokenType,0)
+		if tokens[i].Type == "COMMA" && balance == 0 {
+			argsNode.Children = append(argsNode.Children, parseExpression(coll, 0))
+			coll = make([]lexer.TokenType, 0)
 			continue
 		}
-		coll=append(coll,tokens[i])
+		coll = append(coll, tokens[i])
 	}
-	if len(coll)>0{
-		argsNode.Children=append(argsNode.Children,parseExpression(coll,0))
+	if len(coll) > 0 {
+		argsNode.Children = append(argsNode.Children, parseExpression(coll, 0))
 	}
 	return argsNode
 }
@@ -193,7 +194,6 @@ func parseUnary(tokens []lexer.TokenType, operators []string) *TreeNode {
 }
 
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
-	printTokensArr(tokens)
 	if tokens[0].Type == "OPEN_PAREN" {
 		return parseExpression(tokens[1:len(tokens)-1], 0)
 	}
@@ -205,35 +205,35 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		panic("invalid variable name " + tokens[0].Ref)
 	}
 	primNode := makeTreeNode("primary", nil, tokens[0].Ref)
-	if len(tokens)==1{
+	if len(tokens) == 1 {
 		return primNode
 	}
 	if tokens[1].Type != "OPEN_PAREN" {
-			printTokensArr(tokens)
-			panic("invalid expression")
+		printTokensArr(tokens)
+		panic("invalid expression")
+	}
+	node := makeTreeNode("call", make([]*TreeNode, 0), tokens[0].Ref)
+	primNode.Children = append(primNode.Children, node)
+	//parse args
+	balance := 1
+	last := 2
+	for k := 2; k < len(tokens); k++ {
+		if tokens[k].Type == "OPEN_PAREN" {
+			balance++
+		} else if tokens[k].Type == "CLOSE_PAREN" {
+			balance--
 		}
-		node := makeTreeNode("call", make([]*TreeNode, 0), tokens[0].Ref)
-		primNode.Children = append(primNode.Children, node)
-		//parse args
-		balance := 1
-		last := 2
-		for k := 2; k < len(tokens); k++ {
-			if tokens[k].Type == "OPEN_PAREN" {
-				balance++
-			} else if tokens[k].Type == "CLOSE_PAREN" {
-				balance--
-			}
 
-			if tokens[k].Type == "COMMA" && balance == 1 {
-				node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
-				last = k + 1
-			}
-			if balance == 0 {
-				node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
-				break
-			}
+		if tokens[k].Type == "COMMA" && balance == 1 {
+			node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
+			last = k + 1
 		}
-	
+		if balance == 0 {
+			node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
+			break
+		}
+	}
+
 	return primNode
 
 }

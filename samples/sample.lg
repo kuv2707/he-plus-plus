@@ -1,9 +1,2 @@
-a=!true;
-b=`hello there`;
-c=false;
-println(a);
-
-func(s,a)println {
-    #(s);
-    #(`\n`);
-}
+let a=(86+2)/(88);
+#(a);

@@ -1,6 +1,5 @@
 package globals
 
-
 var SCOPE_START = "{"
 var SCOPE_END = "}"
 var COLON = ":"
@@ -25,6 +24,8 @@ var EQUALS = "="
 
 var KEYWORDS = []string{"IF", "ELSE IF", "ELSE", "FUNCTION", "SCOPE_END", "LET"}
 
-var Operators= []string{"=","+","-","*","/","<",">","#","!","|","&"}
+var Operators = []string{"=", "+", "-", "*", "/", "<", ">", "#", "!", "|", "&", "==", "!=", "<=", ">=", "++", "--"}
 
-var Booleans = []string{"true","false"}
+//todo bitwise operators
+
+var Booleans = []string{"true", "false"}
