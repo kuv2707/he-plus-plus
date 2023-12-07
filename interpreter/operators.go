@@ -68,8 +68,8 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		// fmt.Println("DMAS", operator, value)
 		memaddr := malloc(8)
 		writeBits(memaddr, int64(math.Float64bits(value)), 8)
-		freePtr(left.pointer)
-		freePtr(right.pointer)
+		// freePtr(left.pointer)
+		// freePtr(right.pointer)
 		return Variable{memaddr, "number"}
 
 	} else {
@@ -137,8 +137,9 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 			val = 1.0
 		}
 		writeBits(memaddr, int64(math.Float64bits(val)), 8)
-		freePtr(left.pointer)
-		freePtr(right.pointer)
+		//todo: freeing left and right causes bugs
+		// freePtr(left.pointer)
+		// freePtr(right.pointer)
 		return Variable{memaddr, "number"}
 
 	} else {

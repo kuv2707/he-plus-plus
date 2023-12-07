@@ -21,7 +21,7 @@ func executeScope(node *parser.TreeNode,ctx *scopeContext,depth int ) {
 			executeScope(child,pushScopeContext(fmt.Sprintf("scope_%d",depth+1)),depth+1)
 		case "loop":
 			for getNumber(evaluateExpression(child.Properties["condition"],ctx))!=0{
-				executeScope(child.Properties["body"],pushScopeContext("loop"),depth+1)
+				executeScope(child.Properties["body"],pushScopeContext(fmt.Sprintf("loop_%d",depth+1)),depth+1)
 			}
 		case "operator":
 			evaluateOperator(*child,ctx)
