@@ -1,21 +1,27 @@
 package interpreter
 
-import "toylingo/parser"
+import (
+	"fmt"
+	"toylingo/parser"
+)
 
 func Interpret(root *parser.TreeNode){
-	executeScope(root,pushScopeContext("root"))
+	executeScope(root,pushScopeContext("scope_0"),0)
 }
 
-func executeScope(node *parser.TreeNode,ctx scopeContext ) {
+func executeScope(node *parser.TreeNode,ctx *scopeContext,depth int ) {
 	
 	for i :=range node.Children{
 		child:=node.Children[i]
 		switch child.Label{
 		case "function":
 			ctx.functions[child.Description]=*child
+
+		case "scope":
+			executeScope(child,pushScopeContext(fmt.Sprintf("scope_%d",depth+1)),depth+1)
 		case "loop":
-			for getNumber(evaluateExpression(child.Children[0],ctx))!=0{
-				executeScope(child.Children[1],pushScopeContext("loop"))
+			for getNumber(evaluateExpression(child.Properties["condition"],ctx))!=0{
+				executeScope(child.Properties["body"],pushScopeContext("loop"),depth+1)
 			}
 		case "operator":
 			evaluateOperator(*child,ctx)
@@ -23,5 +29,8 @@ func executeScope(node *parser.TreeNode,ctx scopeContext ) {
 
 		}
 	}
+	println("exiting ",ctx.scopeType)
+	
+	popScopeContext()
 }
 

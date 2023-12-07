@@ -41,6 +41,9 @@ OUT:
 
 		case "FUNCTION":
 			scopeNode.Children = append(scopeNode.Children, parseFunction())
+		
+		case "SCOPE_START":
+			scopeNode.Children = append(scopeNode.Children, parseScope())
 
 		case "SCOPE_END":
 			break OUT
