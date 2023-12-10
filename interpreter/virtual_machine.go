@@ -10,7 +10,7 @@ var reserved = make([]bool, MEMSIZE)
 
 var pointers = make(map[Pointer]interface{}, 0)
 
-func malloc(size int) Pointer {
+func malloc(size int, scid string,temp bool) Pointer {
 
 	cap := 0
 	for i := len(HEAP) - 1; i >= 0; i-- {
@@ -24,8 +24,9 @@ func malloc(size int) Pointer {
 			for j := i; j < i+size; j++ {
 				reserved[j] = true
 			}
-			p := Pointer{i, size}
+			p := Pointer{i, size, scid, temp}
 			pointers[p] = true
+			// fmt.Printf("allocating %d to %d\n", p.address, p.address+p.size)
 			return p
 		}
 	}
@@ -47,4 +48,32 @@ func freeAll() {
 	for ptr := range pointers {
 		freePtr(ptr)
 	}
+}
+
+// frees all unmapped pointers in current scope
+func gc() {
+	// ctx := contextStack.Peek().(scopeContext)
+	
+	for ptr := range pointers {
+		if ptr.temp {
+			// println("------------------")
+			// freePtr(ptr)
+		}
+	}
+}
+
+func validatePointer(ptr Pointer) {
+	if !reserved[ptr.address] {
+		fmt.Println("invalid pointer " + fmt.Sprint(ptr))
+	}
+}
+
+func printMemoryStats() {
+	rvd := 0
+	for _, v := range reserved {
+		if v {
+			rvd = rvd + 1
+		}
+	}
+	fmt.Println("Occupied", rvd*100/len(reserved), "%")
 }

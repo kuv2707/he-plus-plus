@@ -3,7 +3,6 @@ package interpreter
 import (
 	"encoding/binary"
 	"fmt"
-	// "fmt"
 	"math"
 	"toylingo/parser"
 	"toylingo/utils"
@@ -20,6 +19,13 @@ type Variable struct {
 	vartype string
 }
 
+// returns new variable with pointer to different address but same value is stored in both addresses
+func copyVariable(variable Variable) Variable {
+	addr:=malloc(variable.pointer.size,variable.pointer.scopeId,false)
+	writeBits(addr, int64(math.Float64bits(getNumber(variable))), 8)
+	return Variable{addr, variable.vartype}
+}
+
 func getValue(variable Variable) interface{} {
 	switch variable.vartype {
 	case "number":
@@ -33,7 +39,7 @@ func getValue(variable Variable) interface{} {
 }
 
 func writeBits(ptr Pointer, value int64, size int) {
-	// fmt.Println("writeBits", ptr, value, size)
+	// fmt.Println("writeBits", ptr, value)
 	for i := 0; i < size; i++ {
 		HEAP[ptr.address+i] = byte(value & 0xFF)
 		value = value >> 8
@@ -42,6 +48,7 @@ func writeBits(ptr Pointer, value int64, size int) {
 
 func getNumber(variable Variable) float64 {
 	ptr := variable.pointer
+	validatePointer(ptr)
 	// Take 8 bytes from HEAP starting at ptr.address and convert to float64
 	bytes := HEAP[ptr.address : ptr.address+8]
 	parsedFloat := math.Float64frombits(binary.LittleEndian.Uint64(bytes))
@@ -82,18 +89,10 @@ func popScopeContext(){
 		freeAll()
 		return
 	}
-	prevCtx:=contextStack.Peek().(scopeContext)
-	for _,k:=range ctx.inScopeVars{
-		fmt.Println("removing",k)
-	}
-	for k:=range ctx.variables{
-		_,exists:=prevCtx.variables[k]
-		if exists{
-			prevCtx.variables[k]=ctx.variables[k]
-			fmt.Println("setting",k,"to",getNumber(ctx.variables[k]))
-		}else{
-			freePtr(ctx.variables[k].pointer)
-		
+	for k,v:=range ctx.variables{
+		if v.pointer.scopeId==ctx.scopeType{
+			fmt.Println("freeing",k,v,"in",ctx.scopeType)
+			freePtr(v.pointer)
 		}
 	}
 	//free memory of inScopeVars

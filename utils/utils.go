@@ -119,3 +119,16 @@ func IsOperator(temp string) bool {
 func IsBoolean(temp string) bool {
 	return IsOneOf(temp, globals.Booleans)
 }
+
+func ClosingBracket(bracket string) string {
+	switch bracket {
+	case "(":
+		return ")"
+	case "[":
+		return "]"
+	case "{":
+		return "}"
+	default:
+		panic("invalid bracket " + bracket)
+	}
+}

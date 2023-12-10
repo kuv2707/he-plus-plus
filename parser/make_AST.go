@@ -169,8 +169,8 @@ func parseBinary(tokens []lexer.TokenType, operators []string, rank int) *TreeNo
 	opIndex := -1
 	op := ""
 	for i := 0; i < len(tokens); i++ {
-		if tokens[i].Ref == "(" {
-			i += seekClosingParen(tokens[i+1:])
+		if tokens[i].Ref == "(" || tokens[i].Ref == "[" || tokens[i].Ref == "{" {
+			i += seekClosingParen(tokens[i+1:], tokens[i].Ref)
 			continue
 		}
 		if utils.IsOneOf(tokens[i].Ref, operators) {
@@ -200,6 +200,9 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 	if tokens[0].Type == "OPEN_PAREN" {
 		return parseExpression(tokens[1:len(tokens)-1], 0)
 	}
+	// if tokens[0].Type == "OPEN_BRACKET" {
+	// 	return parseArray(tokens[1:len(tokens)-1])
+	// }
 	if utils.IsLiteral(tokens[0].Type) {
 		return makeTreeNode("literal", nil, tokens[0].Ref)
 	}

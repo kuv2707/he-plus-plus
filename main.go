@@ -14,7 +14,7 @@ func main() {
 	// return
 	var tokens *lexer.Node = lexer.Lexify("./samples/sample.lg")
 	tokens = tokens.Next
-	PrintLexemes(tokens)
+	// PrintLexemes(tokens)
 
 	treeNode := parser.ParseTree(tokens)
 

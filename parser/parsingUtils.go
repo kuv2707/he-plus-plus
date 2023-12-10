@@ -71,12 +71,12 @@ func consume(tokenType string) {
 	}
 }
 
-func seekClosingParen(tokens []lexer.TokenType) int {
+func seekClosingParen(tokens []lexer.TokenType,bracket string) int {
 	balance := 1
 	for i := 0; i < len(tokens); i++ {
-		if tokens[i].Ref == "(" {
+		if tokens[i].Ref == bracket {
 			balance++
-		} else if tokens[i].Ref == ")" {
+		} else if tokens[i].Ref == utils.ClosingBracket(bracket) {
 			balance--
 		}
 		if balance == 0 {
