@@ -14,12 +14,12 @@ func main() {
 	// return
 	var tokens *lexer.Node = lexer.Lexify("./samples/sample.lg")
 	tokens = tokens.Next
-	// PrintLexemes(tokens)
+	PrintLexemes(tokens)
 
 	treeNode := parser.ParseTree(tokens)
 
 	treeNode.PrintTree("")
-	StartInterpreting(treeNode)
+	// StartInterpreting(treeNode)
 	fmt.Println(utils.Colors["RESET"])
 }
 func PrintLexemes(tokens *lexer.Node) {

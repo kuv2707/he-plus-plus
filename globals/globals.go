@@ -21,6 +21,8 @@ var FUNCTION = "func"
 var COMMA = ","
 var RETURN = "return"
 var EQUALS = "="
+var OPEN_SQUARE = "["
+var CLOSE_SQUARE = "]"
 
 var KEYWORDS = []string{"IF", "ELSE IF", "ELSE", "FUNCTION", "SCOPE_END", "LET"}
 

@@ -55,7 +55,7 @@ func Lexify(path string) *Node {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(stringliterals[i]), []byte(" __STR__ "))
 	}
 
-	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!", "|", "&", ","}
+	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!", "|", "&", ",","[","]"}
 	for i := 0; i < len(toPad); i++ {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(toPad[i]), []byte(" "+toPad[i]+" "))
 	}
@@ -122,6 +122,10 @@ func addToken(temp string, tokens *Node) bool {
 		tokens.Next = &Node{TokenType{"OPEN_PAREN", g.OPEN_PAREN}, nil}
 	case g.CLOSE_PAREN:
 		tokens.Next = &Node{TokenType{"CLOSE_PAREN", g.CLOSE_PAREN}, nil}
+	case g.OPEN_SQUARE:
+		tokens.Next = &Node{TokenType{"OPEN_SQUARE", g.OPEN_SQUARE}, nil}
+	case g.CLOSE_SQUARE:
+		tokens.Next = &Node{TokenType{"CLOSE_SQUARE", g.CLOSE_SQUARE}, nil}
 	case g.COLON:
 		tokens.Next = &Node{TokenType{"COLON", g.COLON}, nil}
 	case g.SEMICOLON:

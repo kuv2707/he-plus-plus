@@ -132,3 +132,10 @@ func ClosingBracket(bracket string) string {
 		panic("invalid bracket " + bracket)
 	}
 }
+
+func IsOpenBracket(bracket string) bool {
+	return IsOneOf(bracket, []string{"(", "[", "{"})
+}
+func IsCloseBracket(bracket string) bool {
+	return IsOneOf(bracket, []string{")", "]", "}"})
+}
