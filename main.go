@@ -9,17 +9,18 @@ import (
 )
 
 func main() {
+	
 
 	// 	fmt.Println(utils.ValidVariableName("`aaa`"))
 	// return
-	var tokens *lexer.Node = lexer.Lexify("./samples/sample.lg")
+	var tokens *lexer.Node = lexer.Lexify("./samples/sample.js")
 	tokens = tokens.Next
 	PrintLexemes(tokens)
 
 	treeNode := parser.ParseTree(tokens)
 
-	treeNode.PrintTree("")
-	// StartInterpreting(treeNode)
+	// treeNode.PrintTree("")
+	StartInterpreting(treeNode)
 	fmt.Println(utils.Colors["RESET"])
 }
 func PrintLexemes(tokens *lexer.Node) {

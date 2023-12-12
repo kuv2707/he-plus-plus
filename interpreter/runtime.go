@@ -15,14 +15,14 @@ var type_sizes = map[string]int{
 }
 
 type Variable struct {
-	pointer Pointer
+	pointer *Pointer
 	vartype string
 }
 
 // returns new variable with pointer to different address but same value is stored in both addresses
 func copyVariable(variable Variable) Variable {
 	addr:=malloc(variable.pointer.size,variable.pointer.scopeId,false)
-	writeBits(addr, int64(math.Float64bits(getNumber(variable))), 8)
+	writeBits(*addr, int64(math.Float64bits(getNumber(variable))), 8)
 	return Variable{addr, variable.vartype}
 }
 
@@ -48,7 +48,7 @@ func writeBits(ptr Pointer, value int64, size int) {
 
 func getNumber(variable Variable) float64 {
 	ptr := variable.pointer
-	validatePointer(ptr)
+	validatePointer(*ptr)
 	// Take 8 bytes from HEAP starting at ptr.address and convert to float64
 	bytes := HEAP[ptr.address : ptr.address+8]
 	parsedFloat := math.Float64frombits(binary.LittleEndian.Uint64(bytes))
@@ -92,7 +92,7 @@ func popScopeContext(){
 	for k,v:=range ctx.variables{
 		if v.pointer.scopeId==ctx.scopeType{
 			fmt.Println("freeing",k,v,"in",ctx.scopeType)
-			freePtr(v.pointer)
+			freePtr(*v.pointer)
 		}
 	}
 	//free memory of inScopeVars

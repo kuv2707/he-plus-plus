@@ -45,16 +45,17 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	variableValue := evaluateExpression(node.Children[1], ctx)
 	val, ok := ctx.variables[variableName]
 	if ok {
+		fmt.Println("updating existing var",variableName)
 		fmt.Println(">>>", variableName, val.pointer, getNumber(variableValue))
-		writeBits(val.pointer, int64(math.Float64bits(getNumber(variableValue))), 8)
+		writeBits(*val.pointer, int64(math.Float64bits(getNumber(variableValue))), 8)
 		return val
 
 	}
 	ctx.variables[variableName] = variableValue
+	variableValue.pointer.temp=false
 	ctx.inScopeVars = append(ctx.inScopeVars, variableName)
 	//print inscopevars
-	fmt.Println(ctx.scopeType, "inScopeVars", ctx.inScopeVars)
-	fmt.Println(">>", variableName, variableValue.pointer, getNumber(variableValue))
+	
 	return variableValue
 }
 
@@ -75,12 +76,12 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		}
 		// fmt.Println("DMAS", operator, value)
 		memaddr := malloc(8, ctx.scopeType,true)
-		writeBits(memaddr, int64(math.Float64bits(value)), 8)
-		fmt.Println("want to free", left.pointer, right.pointer)
+		writeBits(*memaddr, int64(math.Float64bits(value)), 8)
+		// fmt.Println("want to free", left.pointer, right.pointer)
 		// left or right may be mapped to a variable in ctx.variables, so we must not free them without checking
 		// possible solution: parsePrimary should return a copy of the variable, not the variable itself
-		freePtr(left.pointer)
-		freePtr(right.pointer)
+		// freePtr(left.pointer)
+		// freePtr(right.pointer)
 		return Variable{memaddr, "number"}
 
 	} else {
@@ -99,27 +100,24 @@ func parsePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 	val := node.Description
 	if utils.IsNumber(val) {
 		memaddr := malloc(8, ctx.scopeType,true)
-		writeBits(memaddr, int64(math.Float64bits(utils.StringToNumber(val))), 8)
+		writeBits(*memaddr, int64(math.Float64bits(utils.StringToNumber(val))), 8)
 		return Variable{memaddr, "number"}
 	} else {
 		//if val is not a key in ctx.variables, it returns {0,0} why?
 		// fmt.Println("parsePrimary", val, ctx.variables[val], getNumber(ctx.variables[val]))
-		return copyVariable(ctx.variables[val])
+		return (ctx.variables[val])
 	}
 }
 //todo: garbage collect after every expression evaluation
 func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
-	// defer gc()
 	switch node.Label {
 	case "operator":
 		ret:= evaluateOperator(*node, ctx)
-		gc()
 		return ret
 	case "literal":
 		fallthrough
 	case "primary":
 		ret:= parsePrimary(*node, ctx)
-		gc()
 		return ret
 	default:
 		panic("invalid expression " + node.Label)
@@ -146,19 +144,18 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 			value = getValue(left).(float64) != getValue(right).(float64)
 
 		}
-		fmt.Println("COMP", operator, value)
+		// fmt.Println("COMP", operator, value)
 		//convert value to IEEE 754 format 64-bit floating point number and store in HEAP by a malloc call -> a pointer is returned -> return a Variable with that pointer
 		memaddr := malloc(8, ctx.scopeType,true)
-		fmt.Println("new allocated address", memaddr)
 		val := 0.0
 		if value {
 			val = 1.0
 		}
-		writeBits(memaddr, int64(math.Float64bits(val)), 8)
+		writeBits(*memaddr, int64(math.Float64bits(val)), 8)
 		//todo: freeing left and right causes bugs
-		fmt.Println("want to free", left.pointer, right.pointer)
-		freePtr(left.pointer)
-		freePtr(right.pointer)
+		// fmt.Println("want to free", left.pointer, right.pointer)
+		// freePtr(left.pointer)
+		// freePtr(right.pointer)
 		return Variable{memaddr, "number"}
 
 	} else {

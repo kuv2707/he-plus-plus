@@ -11,7 +11,10 @@ func Interpret(root *parser.TreeNode) {
 }
 
 func executeScope(node *parser.TreeNode, ctx *scopeContext, depth int) {
-	fmt.Println("entered", ctx.scopeType, ctx.variables)
+	fmt.Println("entered", ctx.scopeType)
+	for variable:=range ctx.variables{
+		fmt.Println("variable",variable,ctx.variables[variable],getNumber(ctx.variables[variable]))
+	}
 	for i := range node.Children {
 		child := node.Children[i]
 		switch child.Label {
@@ -22,14 +25,14 @@ func executeScope(node *parser.TreeNode, ctx *scopeContext, depth int) {
 			executeScope(child, pushScopeContext(fmt.Sprintf("scope_%d", depth+1)), depth+1)
 		case "loop":
 			for true{
-				variable := evaluateExpression(child.Properties["condition"], ctx)
+				variable := evaluateExpressionClean(child.Properties["condition"], ctx)
 				if getNumber(variable)==0{
 					break
 				}
 				executeScope(child.Properties["body"], pushScopeContext(fmt.Sprintf("loop_%d", depth+1)), depth+1)
 			}
 		case "operator":
-			evaluateOperator(*child, ctx)
+			evaluateExpressionClean(child, ctx)
 			// case "conditional_block":
 
 		}
@@ -37,4 +40,13 @@ func executeScope(node *parser.TreeNode, ctx *scopeContext, depth int) {
 	println("exiting ", ctx.scopeType)
 	printMemoryStats()
 	popScopeContext()
+}
+
+
+func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) Variable {
+	variable := evaluateExpression(node, ctx)
+	variable.pointer.temp = false
+	fmt.Println("value", getNumber(variable), variable.pointer)
+	gc()
+	return variable
 }

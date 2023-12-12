@@ -8,9 +8,9 @@ var MEMSIZE = 1024 //1kb
 var HEAP = make([]byte, MEMSIZE)
 var reserved = make([]bool, MEMSIZE)
 
-var pointers = make(map[Pointer]interface{}, 0)
+var pointers = make(map[int]*Pointer, 0)
 
-func malloc(size int, scid string,temp bool) Pointer {
+func malloc(size int, scid string,temp bool) *Pointer {
 
 	cap := 0
 	for i := len(HEAP) - 1; i >= 0; i-- {
@@ -25,9 +25,9 @@ func malloc(size int, scid string,temp bool) Pointer {
 				reserved[j] = true
 			}
 			p := Pointer{i, size, scid, temp}
-			pointers[p] = true
+			pointers[i] = &p
 			// fmt.Printf("allocating %d to %d\n", p.address, p.address+p.size)
-			return p
+			return &p
 		}
 	}
 	//todo: try to defragment memory and try again
@@ -36,7 +36,8 @@ func malloc(size int, scid string,temp bool) Pointer {
 }
 
 func freePtr(ptr Pointer) {
-	delete(pointers, ptr)
+	// return
+	delete(pointers, ptr.address)
 	fmt.Printf("freeing %d to %d\n", ptr.address, ptr.address+ptr.size)
 	for i := ptr.address; i < ptr.address+ptr.size; i++ {
 		reserved[i] = false
@@ -45,8 +46,8 @@ func freePtr(ptr Pointer) {
 }
 
 func freeAll() {
-	for ptr := range pointers {
-		freePtr(ptr)
+	for _,ptr := range pointers {
+		freePtr(*ptr)
 	}
 }
 
@@ -54,10 +55,11 @@ func freeAll() {
 func gc() {
 	// ctx := contextStack.Peek().(scopeContext)
 	
-	for ptr := range pointers {
+	for _,ptr := range pointers {
 		if ptr.temp {
 			// println("------------------")
-			// freePtr(ptr)
+			fmt.Println("gc", ptr)
+			freePtr(*ptr)
 		}
 	}
 }
