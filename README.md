@@ -1,6 +1,11 @@
 # TOYLINGO
 An interpreted language built on top of golang.
 
+
+## Quick Start
+* Clone the repository
+* Run the main.go file to see the interpreter in action (it executes a sample program in the samples folder)
+
 # Features
 
 ## Variables
@@ -63,3 +68,7 @@ But only the expression succeeding the last occurence of a string in an expressi
 * the programs sometimes glitch and control flow becomes entirely different
 
 * if statements must always have a corresponding else 
+
+
+# Notes
+* Unassigned array and object declarations will not even be executed

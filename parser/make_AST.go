@@ -247,6 +247,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		if balance != 0 {
 			panic("syntax error in function call: unclosed parenthesis")
 		}
+		return node
 
 	}
 	if tokens[1].Type == "OPEN_SQUARE" {
@@ -263,7 +264,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 
 
 func parseArray(tokens []lexer.TokenType) *TreeNode {
-	arrNode := makeTreeNode("array", nil, "array")
+	arrNode := makeTreeNode("primary", nil, "array")
 	fmt.Println("parsing array", tokens)
 	balance := 0
 	last := 0

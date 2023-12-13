@@ -21,7 +21,7 @@ type Variable struct {
 
 // returns new variable with pointer to different address but same value is stored in both addresses
 func copyVariable(variable Variable) Variable {
-	addr:=malloc(variable.pointer.size,variable.pointer.scopeId,false)
+	addr:=malloc(variable.pointer.size,variable.pointer.scopeId,true)
 	writeBits(*addr, int64(math.Float64bits(getNumber(variable))), 8)
 	return Variable{addr, variable.vartype}
 }
@@ -60,13 +60,13 @@ type scopeContext struct {
 	scopeType string
 	variables map[string]Variable
 	functions map[string]parser.TreeNode
-	inScopeVars []string
+	returnValue *Variable
 }
 
 var contextStack = utils.MakeStack()
 
 func pushScopeContext(label string) *scopeContext{
-	ctx:=scopeContext{label,make(map[string]Variable),make(map[string]parser.TreeNode),make([]string,0)}
+	ctx:=scopeContext{label+fmt.Sprint(contextStack.Len()),make(map[string]Variable),make(map[string]parser.TreeNode),nil}
 	if contextStack.IsEmpty(){
 		contextStack.Push(ctx)
 		return &ctx
@@ -97,4 +97,10 @@ func popScopeContext(){
 	}
 	//free memory of inScopeVars
 	
+}
+
+func printVariableList(variables map[string]Variable){
+	for k,v:=range variables{
+		fmt.Println(k,v.pointer,getNumber(v))
+	}
 }

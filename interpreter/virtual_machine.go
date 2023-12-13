@@ -38,7 +38,7 @@ func malloc(size int, scid string,temp bool) *Pointer {
 func freePtr(ptr Pointer) {
 	// return
 	delete(pointers, ptr.address)
-	fmt.Printf("freeing %d to %d\n", ptr.address, ptr.address+ptr.size)
+	// fmt.Printf("freeing %d to %d\n", ptr.address, ptr.address+ptr.size)
 	for i := ptr.address; i < ptr.address+ptr.size; i++ {
 		reserved[i] = false
 		HEAP[i] = 0
@@ -54,11 +54,11 @@ func freeAll() {
 // frees all unmapped pointers in current scope
 func gc() {
 	// ctx := contextStack.Peek().(scopeContext)
-	
+	fmt.Println("gc called")
 	for _,ptr := range pointers {
 		if ptr.temp {
 			// println("------------------")
-			fmt.Println("gc", ptr)
+			// fmt.Println("gc", ptr)
 			freePtr(*ptr)
 		}
 	}
