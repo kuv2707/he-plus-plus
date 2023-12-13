@@ -53,7 +53,10 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 		return ret
 	case "call":
 		ret := evaluateFuncCall(*node, ctx)
-		return ret
+		if ret == nil {
+			panic("function " + node.Description + " does not return a value but is expected to")
+		}
+		return *ret
 	default:
 		node.PrintTree("")
 		panic("invalid expression " + node.Label)
@@ -179,9 +182,9 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 
 // functions are not scoped as of now
 // if a function is defined in a previously executed scope, it can be called in the current scope, even though that scope has been popped from the stack
-func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) Variable {
+func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	funcNode := ctx.functions[node.Description]
-	newCtx := pushScopeContext("function")
+	newCtx := pushScopeContext(TYPE_FUNCTION)
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
 		argValue := evaluateExpression(node.Properties["args"+fmt.Sprint(i)], ctx)
@@ -190,7 +193,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) Variable {
 	}
 	fmt.Println("calling", funcNode.Description)
 	executeScope(funcNode.Properties["body"], newCtx)
-	return *newCtx.returnValue
+	return newCtx.returnValue
 }
 
 func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {

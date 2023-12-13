@@ -1,8 +1,16 @@
 func(a,b)add{
-    return a+b;
+    let i=10;
+    loop(1){
+        #(i);
+        i=i-1;
+        if(i==0){
+            break;
+        }
+    }
     #(9);
+    return a+b;
 }
 #(add(2,3));
 
-let arr=[1,add(2,3),b[3+add(4,5)],4];
+// let arr=[1,add(2,3),b[3+add(4,5)],4];
 // #(arr[1]);

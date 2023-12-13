@@ -66,7 +66,7 @@ type scopeContext struct {
 var contextStack = utils.MakeStack()
 
 func pushScopeContext(label string) *scopeContext{
-	ctx:=scopeContext{label+fmt.Sprint(contextStack.Len()),make(map[string]Variable),make(map[string]parser.TreeNode),nil}
+	ctx:=scopeContext{label+"_"+fmt.Sprint(contextStack.Len()),make(map[string]Variable),make(map[string]parser.TreeNode),nil}
 	if contextStack.IsEmpty(){
 		contextStack.Push(ctx)
 		return &ctx

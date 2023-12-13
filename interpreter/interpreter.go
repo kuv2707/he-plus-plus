@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"strings"
 	"toylingo/parser"
 )
 
@@ -10,9 +11,21 @@ func Interpret(root *parser.TreeNode) {
 	printMemoryStats()
 }
 
-func executeScope(node *parser.TreeNode, ctx *scopeContext) {
+type Reason string
+const REASON_NATURAL Reason = "natural"
+const REASON_RETURN Reason = "return"
+const REASON_BREAK Reason = "break"
+
+const TYPE_LOOP string = "loop"
+const TYPE_FUNCTION string = "function"
+const TYPE_SCOPE string = "scope"
+
+
+
+func executeScope(node *parser.TreeNode, ctx *scopeContext) (Reason,*Variable) {
 	fmt.Println("entered", ctx.scopeType)
-	// printVariableList(ctx.variables)
+	var returnReason Reason = REASON_NATURAL
+	scopeType:=strings.Split(ctx.scopeType, "_")[0]
 SCOPE_EXECUTION:
 	for i := range node.Children {
 		child := node.Children[i]
@@ -21,28 +34,49 @@ SCOPE_EXECUTION:
 			ctx.functions[child.Description] = *child
 
 		case "scope":
-			executeScope(child, pushScopeContext("scope"))
+			rzn,val:=executeScope(child, pushScopeContext(TYPE_SCOPE))
+			ctx.returnValue=val
+			fmt.Println("scope ret rzn", rzn,scopeType)
+			if rzn!=REASON_NATURAL{
+					if scopeType==TYPE_LOOP && rzn==REASON_BREAK{
+						break SCOPE_EXECUTION
+					} else if scopeType==TYPE_FUNCTION && rzn==REASON_RETURN{
+						
+						break SCOPE_EXECUTION
+					} else {
+						returnReason=rzn
+						break SCOPE_EXECUTION
+					}
+				}
 		case "loop":
 			for true {
 				variable := evaluateExpressionClean(child.Properties["condition"], ctx)
 				if getNumber(variable) == 0 {
 					break
 				}
-				executeScope(child.Properties["body"], pushScopeContext("loop"))
+				rzn,val:=executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP))
+				ctx.returnValue=val
+				if rzn!=REASON_NATURAL{
+					if scopeType==TYPE_LOOP && rzn==REASON_BREAK{
+						break SCOPE_EXECUTION
+					} else if scopeType==TYPE_FUNCTION && rzn==REASON_RETURN{
+						break SCOPE_EXECUTION
+					} else {
+						returnReason=rzn
+						break SCOPE_EXECUTION
+					}
+				}
 			}
 		case "operator":
 			fallthrough
 		case "call":
 			evaluateExpressionClean(child, ctx)
-		// case "conditional_block":
-
+		
 		case "return":
-			// fmt.Println("---eval ret val")
-			// printVariableList(ctx.variables)
 			expr := evaluateExpression(child.Children[0], ctx)
 			expr.pointer.temp = false
-			// fmt.Println("returning", expr.pointer, getNumber(expr))
 			ctx.returnValue = &expr
+			returnReason = REASON_RETURN
 			break SCOPE_EXECUTION
 		default:
 			fmt.Println("__unknown", child.Label)
@@ -51,6 +85,7 @@ SCOPE_EXECUTION:
 	}
 	printMemoryStats()
 	popScopeContext()
+	return returnReason,ctx.returnValue
 }
 
 func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) Variable {
