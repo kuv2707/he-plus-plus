@@ -29,6 +29,7 @@ func parseScope() *TreeNode {
 OUT:
 	for index() < maxIndex() {
 		token := next()
+		fmt.Println("parsing",token)
 		switch token.Type {
 		case "LET":
 			scopeNode.Children = append(scopeNode.Children, parseLet())

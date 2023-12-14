@@ -129,6 +129,14 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		memaddr := malloc(8, ctx.scopeType, true)
 		writeBits(*memaddr, int64(math.Float64bits(utils.StringToNumber(val))), 8)
 		return Variable{memaddr, TYPE_NUMBER}
+	} else if utils.IsBoolean(val){
+		memaddr := malloc(1, ctx.scopeType, true)
+		boolnum:=0
+		if utils.StringToBoolean(val){
+			boolnum=1
+		}
+		writeBits(*memaddr, int64(boolnum), 1)
+		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
 		//if val is not a key in ctx.variables, it returns {0,0} why?
 		// fmt.Println("evaluatePrimary", val, ctx.variables[val], getNumber(ctx.variables[val]))
@@ -160,7 +168,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		}
 		// fmt.Println("COMP", operator, value)
 		//convert value to IEEE 754 format 64-bit floating point number and store in HEAP by a malloc call -> a pointer is returned -> return a Variable with that pointer
-		memaddr := malloc(8, ctx.scopeType, true)
+		memaddr := malloc(1, ctx.scopeType, true)
 		val := 0.0
 		if value {
 			val = 1.0
@@ -170,7 +178,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		// fmt.Println("want to free", left.pointer, right.pointer)
 		// freePtr(left.pointer)
 		// freePtr(right.pointer)
-		return Variable{memaddr, "number"}
+		return Variable{memaddr, TYPE_BOOLEAN}
 
 	} else {
 		panic("invalid operands to binary operator " + operator)

@@ -8,3 +8,5 @@ type Pointer struct {
 }
 
 var TYPE_NUMBER = "number"
+var TYPE_CHAR = "char"
+var TYPE_BOOLEAN = "bool"

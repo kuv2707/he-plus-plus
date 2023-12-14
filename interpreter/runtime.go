@@ -38,6 +38,7 @@ func getValue(variable Variable) interface{} {
 	return nil
 }
 
+//todo:accept a byte array as value
 func writeBits(ptr Pointer, value int64, size int) {
 	// fmt.Println("writeBits", ptr, value)
 	for i := 0; i < size; i++ {

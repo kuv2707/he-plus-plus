@@ -26,6 +26,17 @@ func StringToNumber(str string) float64 {
 	return float64(num)
 }
 
+func StringToBoolean(str string) bool {
+	if str == globals.Booleans[0] {
+		return true
+	} else if str == globals.Booleans[1] {
+		return false
+	} else {
+		panic("invalid boolean value " + str)
+	}
+}
+
+
 func IsOneOf(temp string, options []string) bool {
 	for i := 0; i < len(options); i++ {
 		if temp == (options[i]) {

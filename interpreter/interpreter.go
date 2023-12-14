@@ -47,6 +47,31 @@ SCOPE_EXECUTION:
 					break SCOPE_EXECUTION
 				}
 			}
+		case "conditional_block":
+			k := 0
+			for ; ; k++ {
+				condnode,exists:=child.Properties["condition"+fmt.Sprint(k)]
+				if !exists{
+					break
+				}
+				condition := evaluateExpressionClean(condnode, ctx)
+				if condition == 0 {
+					continue
+				}
+				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_SCOPE))
+				ctx.returnValue = val
+				if rzn != REASON_NATURAL {
+					if scopeType == TYPE_LOOP && rzn == REASON_BREAK {
+						break SCOPE_EXECUTION
+					} else if scopeType == TYPE_FUNCTION && rzn == REASON_RETURN {
+						break SCOPE_EXECUTION
+					} else {
+						returnReason = rzn
+						break SCOPE_EXECUTION
+					}
+				}
+				break
+			}
 		case "loop":
 			for true {
 				num := evaluateExpressionClean(child.Properties["condition"], ctx)
@@ -91,7 +116,7 @@ SCOPE_EXECUTION:
 func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) float64 {
 	variable := evaluateExpression(node, ctx)
 	ret := 0.0
-	if variable.vartype == TYPE_NUMBER {
+	if variable.vartype == TYPE_NUMBER || variable.vartype == TYPE_BOOLEAN {
 		ret = getNumber(variable)
 	}
 	gc()
