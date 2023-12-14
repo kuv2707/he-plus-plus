@@ -6,3 +6,5 @@ type Pointer struct {
 	scopeId string
 	temp bool
 }
+
+var TYPE_NUMBER = "number"

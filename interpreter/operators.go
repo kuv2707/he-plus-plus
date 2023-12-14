@@ -65,10 +65,8 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	variableName := node.Children[0].Description
 	variableValue := evaluateExpression(node.Children[1], ctx)
-	val, ok := ctx.variables[variableName]
-	if ok {
-		// fmt.Println("updating existing var",variableName)
-		// fmt.Println(">>>", variableName, val.pointer, getNumber(variableValue))
+	val, alreadyExists := ctx.variables[variableName]
+	if alreadyExists {
 		//todo: make a function to copy value from one pointer to another
 		writeBits(*val.pointer, int64(math.Float64bits(getNumber(variableValue))), 8)
 		return val
@@ -130,7 +128,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 	if utils.IsNumber(val) {
 		memaddr := malloc(8, ctx.scopeType, true)
 		writeBits(*memaddr, int64(math.Float64bits(utils.StringToNumber(val))), 8)
-		return Variable{memaddr, "number"}
+		return Variable{memaddr, TYPE_NUMBER}
 	} else {
 		//if val is not a key in ctx.variables, it returns {0,0} why?
 		// fmt.Println("evaluatePrimary", val, ctx.variables[val], getNumber(ctx.variables[val]))

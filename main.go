@@ -16,7 +16,7 @@ func main() {
 	treeNode := parser.ParseTree(tokens)
 
 	treeNode.PrintTree("")
-	// StartInterpreting(treeNode)
+	StartInterpreting(treeNode)
 	fmt.Println(utils.Colors["RESET"])
 }
 func PrintLexemes(tokens *lexer.Node) {

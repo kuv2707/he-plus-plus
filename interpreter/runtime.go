@@ -92,7 +92,7 @@ func popScopeContext(){
 	for k,v:=range ctx.variables{
 		if v.pointer.scopeId==ctx.scopeType{
 			fmt.Println("freeing",k,v,"in",ctx.scopeType)
-			freePtr(*v.pointer)
+			freePtr(v.pointer)
 		}
 	}
 	//free memory of inScopeVars

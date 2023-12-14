@@ -26,7 +26,7 @@ func malloc(size int, scid string,temp bool) *Pointer {
 			}
 			p := Pointer{i, size, scid, temp}
 			pointers[i] = &p
-			// fmt.Printf("allocating %d to %d\n", p.address, p.address+p.size)
+			fmt.Printf("allocating %d to %d\n", p.address, p.address+p.size)
 			return &p
 		}
 	}
@@ -35,10 +35,10 @@ func malloc(size int, scid string,temp bool) *Pointer {
 	panic("out of memory")
 }
 
-func freePtr(ptr Pointer) {
+func freePtr(ptr *Pointer) {
 	// return
 	delete(pointers, ptr.address)
-	// fmt.Printf("freeing %d to %d\n", ptr.address, ptr.address+ptr.size)
+	fmt.Printf("freeing %d to %d\n", ptr.address, ptr.address+ptr.size)
 	for i := ptr.address; i < ptr.address+ptr.size; i++ {
 		reserved[i] = false
 		HEAP[i] = 0
@@ -47,7 +47,7 @@ func freePtr(ptr Pointer) {
 
 func freeAll() {
 	for _,ptr := range pointers {
-		freePtr(*ptr)
+		freePtr(ptr)
 	}
 }
 
@@ -59,7 +59,7 @@ func gc() {
 		if ptr.temp {
 			// println("------------------")
 			// fmt.Println("gc", ptr)
-			freePtr(*ptr)
+			freePtr(ptr)
 		}
 	}
 }
@@ -77,5 +77,5 @@ func printMemoryStats() {
 			rvd = rvd + 1
 		}
 	}
-	fmt.Println("Occupied", rvd*100/len(reserved), "%")
+	fmt.Println("Occupied", rvd,"/",MEMSIZE,"bytes")
 }
