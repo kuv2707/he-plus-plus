@@ -61,13 +61,9 @@ But only the expression succeeding the last occurence of a string in an expressi
 
 # Bugs
  
-* 8/9\*18 not evaluated correctly (9*18 evaluated first): right to left evaluated
-* if conditional chain is not terminated by an else, the next token is consumed.
+* 8/9\*18 not evaluated correctly (9*18 evaluated first): 
+operators of same precedence are evaluated right to left instead of left to right
 
-* boolean literals are not evaluated correctly
-* the programs sometimes glitch and control flow becomes entirely different
-
-* if statements must always have a corresponding else 
 
 
 # Notes

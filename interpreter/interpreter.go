@@ -72,6 +72,22 @@ SCOPE_EXECUTION:
 				}
 				break
 			}
+			if child.Properties["else"] == nil {
+				break
+			}
+			rzn, val := executeScope(child.Properties["else"], pushScopeContext(TYPE_SCOPE))
+			ctx.returnValue = val
+			if rzn != REASON_NATURAL {
+				if scopeType == TYPE_LOOP && rzn == REASON_BREAK {
+					break SCOPE_EXECUTION
+				} else if scopeType == TYPE_FUNCTION && rzn == REASON_RETURN {
+					break SCOPE_EXECUTION
+				} else {
+					returnReason = rzn
+					break SCOPE_EXECUTION
+				}
+			}
+
 		case "loop":
 			for true {
 				num := evaluateExpressionClean(child.Properties["condition"], ctx)
@@ -115,10 +131,7 @@ SCOPE_EXECUTION:
 // will only return number value from evaluated variable
 func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) float64 {
 	variable := evaluateExpression(node, ctx)
-	ret := 0.0
-	if variable.vartype == TYPE_NUMBER || variable.vartype == TYPE_BOOLEAN {
-		ret = getNumber(variable)
-	}
+	ret := getNumber(variable)
 	gc()
 	return ret
 }
