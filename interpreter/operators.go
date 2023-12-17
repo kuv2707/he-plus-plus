@@ -168,7 +168,6 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	funcNode := ctx.functions[node.Description]
 	newCtx := pushScopeContext(TYPE_FUNCTION)
-	fmt.Println("scanning args")
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
 		argValue := evaluateExpression(node.Properties["args"+fmt.Sprint(i)], newCtx)

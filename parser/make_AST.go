@@ -29,7 +29,6 @@ func parseScope() *TreeNode {
 OUT:
 	for index() < maxIndex() {
 		token := next()
-		fmt.Println("parsing", token)
 		switch token.Type {
 		case "LET":
 			scopeNode.Children = append(scopeNode.Children, parseLet())
@@ -231,7 +230,6 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		panic("invalid expression " + fmt.Sprint(tokens))
 	}
 	if tokens[1].Type == "OPEN_PAREN" {
-		fmt.Println("call", tokens)
 		node := makeTreeNode("call", make([]*TreeNode, 0), tokens[0].Ref)
 		primNode.Children = append(primNode.Children, node)
 		//parse args
