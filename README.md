@@ -68,3 +68,11 @@ operators of same precedence are evaluated right to left instead of left to righ
 
 # Notes
 * Unassigned array and object declarations will not even be executed
+
+
+# TODO
+* Implement arrays
+* Implement strings
+* Implement objects
+* comma operator
+* fix memory leak bug
