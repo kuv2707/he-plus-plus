@@ -10,7 +10,7 @@ var reserved = make([]bool, MEMSIZE)
 
 var pointers = make(map[int]*Pointer, 0)
 
-func malloc(size int, scid string,temp bool) *Pointer {
+func malloc(size int, scid string, temp bool) *Pointer {
 
 	cap := 0
 	for i := len(HEAP) - 1; i >= 0; i-- {
@@ -26,7 +26,6 @@ func malloc(size int, scid string,temp bool) *Pointer {
 			}
 			p := Pointer{i, size, scid, temp}
 			pointers[i] = &p
-			fmt.Printf("allocating %d to %d\n", p.address, p.address+p.size)
 			return &p
 		}
 	}
@@ -36,9 +35,7 @@ func malloc(size int, scid string,temp bool) *Pointer {
 }
 
 func freePtr(ptr *Pointer) {
-	// return
 	delete(pointers, ptr.address)
-	fmt.Printf("freeing %d to %d\n", ptr.address, ptr.address+ptr.size)
 	for i := ptr.address; i < ptr.address+ptr.size; i++ {
 		reserved[i] = false
 		HEAP[i] = 0
@@ -46,19 +43,15 @@ func freePtr(ptr *Pointer) {
 }
 
 func freeAll() {
-	for _,ptr := range pointers {
+	for _, ptr := range pointers {
 		freePtr(ptr)
 	}
 }
 
-// frees all unmapped pointers in current scope
+// frees all temp pointers
 func gc() {
-	// ctx := contextStack.Peek().(scopeContext)
-	fmt.Println("gc called")
-	for _,ptr := range pointers {
+	for _, ptr := range pointers {
 		if ptr.temp {
-			// println("------------------")
-			// fmt.Println("gc", ptr)
 			freePtr(ptr)
 		}
 	}
@@ -66,7 +59,7 @@ func gc() {
 
 func validatePointer(ptr Pointer) {
 	if !reserved[ptr.address] {
-		fmt.Println("invalid pointer " + fmt.Sprint(ptr))
+		panic("invalid pointer " + fmt.Sprint(ptr))
 	}
 }
 
@@ -77,5 +70,5 @@ func printMemoryStats() {
 			rvd = rvd + 1
 		}
 	}
-	fmt.Println("Occupied", rvd,"/",MEMSIZE,"bytes")
+	debug_info("Occupied", rvd, "/", MEMSIZE, "bytes")
 }

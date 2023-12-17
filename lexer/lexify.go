@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"strings"
 	g "toylingo/globals"
@@ -83,6 +84,7 @@ func Lexify(path string) *Node {
 	//coalesce decimal nos (4.67 etc) into one
 	for node := ret; node != nil; node = node.Next {
 		if node.Val.Type == "NUMBER" && node.Next != nil && node.Next.Val.Type == "DOT" && node.Next.Next != nil && node.Next.Next.Val.Type == "NUMBER" {
+			fmt.Println("coalescing", node.Val.Ref, node.Next.Val.Ref, node.Next.Next.Val.Ref)
 			node.Val.Ref = node.Val.Ref + "." + node.Next.Next.Val.Ref
 			node.Next = node.Next.Next.Next
 		}
@@ -130,6 +132,8 @@ func addToken(temp string, tokens *Node) bool {
 		tokens.Next = &Node{TokenType{"COLON", g.COLON}, nil}
 	case g.SEMICOLON:
 		tokens.Next = &Node{TokenType{"SEMICOLON", g.SEMICOLON}, nil}
+	case g.DOT:
+		tokens.Next = &Node{TokenType{"DOT", g.DOT}, nil}
 	case g.LET:
 		tokens.Next = &Node{TokenType{"LET", g.LET}, nil}
 	case g.IF:

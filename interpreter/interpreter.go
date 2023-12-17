@@ -20,9 +20,10 @@ const REASON_BREAK Reason = "break"
 const TYPE_LOOP string = "loop"
 const TYPE_FUNCTION string = "function"
 const TYPE_SCOPE string = "scope"
+const TYPE_CONDITIONAL string = "conditional"
 
 func executeScope(node *parser.TreeNode, ctx *scopeContext) (Reason, *Variable) {
-	fmt.Println("entered", ctx.scopeType)
+	debug_info("entered", ctx.scopeType)
 	var returnReason Reason = REASON_NATURAL
 	scopeType := strings.Split(ctx.scopeType, "_")[0]
 SCOPE_EXECUTION:
@@ -35,9 +36,8 @@ SCOPE_EXECUTION:
 		case "scope":
 			rzn, val := executeScope(child, pushScopeContext(TYPE_SCOPE))
 			ctx.returnValue = val
-			fmt.Println("scope ret rzn", rzn, scopeType)
 			if rzn != REASON_NATURAL {
-				if scopeType == TYPE_LOOP && rzn == REASON_BREAK {
+				if rzn == REASON_BREAK {
 					break SCOPE_EXECUTION
 				} else if scopeType == TYPE_FUNCTION && rzn == REASON_RETURN {
 
@@ -49,19 +49,21 @@ SCOPE_EXECUTION:
 			}
 		case "conditional_block":
 			k := 0
+			executed:=false
 			for ; ; k++ {
-				condnode,exists:=child.Properties["condition"+fmt.Sprint(k)]
-				if !exists{
+				condnode, exists := child.Properties["condition"+fmt.Sprint(k)]
+				if !exists {
 					break
 				}
 				condition := evaluateExpressionClean(condnode, ctx)
 				if condition == 0 {
 					continue
 				}
-				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_SCOPE))
+				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_CONDITIONAL))
 				ctx.returnValue = val
 				if rzn != REASON_NATURAL {
-					if scopeType == TYPE_LOOP && rzn == REASON_BREAK {
+					if rzn == REASON_BREAK {
+						returnReason = rzn
 						break SCOPE_EXECUTION
 					} else if scopeType == TYPE_FUNCTION && rzn == REASON_RETURN {
 						break SCOPE_EXECUTION
@@ -70,15 +72,17 @@ SCOPE_EXECUTION:
 						break SCOPE_EXECUTION
 					}
 				}
+				executed=true
 				break
 			}
-			if child.Properties["else"] == nil {
-				break
+			if child.Properties["else"] == nil || executed{
+				continue SCOPE_EXECUTION
 			}
-			rzn, val := executeScope(child.Properties["else"], pushScopeContext(TYPE_SCOPE))
+			rzn, val := executeScope(child.Properties["else"], pushScopeContext(TYPE_CONDITIONAL))
 			ctx.returnValue = val
 			if rzn != REASON_NATURAL {
-				if scopeType == TYPE_LOOP && rzn == REASON_BREAK {
+				if rzn == REASON_BREAK {
+					returnReason = rzn
 					break SCOPE_EXECUTION
 				} else if scopeType == TYPE_FUNCTION && rzn == REASON_RETURN {
 					break SCOPE_EXECUTION
@@ -95,9 +99,14 @@ SCOPE_EXECUTION:
 					break
 				}
 				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP))
+				if rzn == REASON_BREAK {
+					break
+				}
 				ctx.returnValue = val
 				if rzn != REASON_NATURAL {
-					if scopeType == TYPE_LOOP && rzn == REASON_BREAK {
+					if rzn == REASON_BREAK {
+						//todo: match loop label
+						returnReason = rzn
 						break SCOPE_EXECUTION
 					} else if scopeType == TYPE_FUNCTION && rzn == REASON_RETURN {
 						break SCOPE_EXECUTION
@@ -105,12 +114,17 @@ SCOPE_EXECUTION:
 						returnReason = rzn
 						break SCOPE_EXECUTION
 					}
+
 				}
 			}
 		case "operator":
 			fallthrough
 		case "call":
 			evaluateExpressionClean(child, ctx)
+
+		case "break":
+			returnReason = REASON_BREAK
+			break SCOPE_EXECUTION
 
 		case "return":
 			expr := evaluateExpression(child.Children[0], ctx)
@@ -119,7 +133,7 @@ SCOPE_EXECUTION:
 			returnReason = REASON_RETURN
 			break SCOPE_EXECUTION
 		default:
-			fmt.Println("__unknown", child.Label)
+			debug_error("__unknown", child.Label)
 		}
 
 	}

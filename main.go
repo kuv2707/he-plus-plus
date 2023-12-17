@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	var tokens *lexer.Node = lexer.Lexify("./samples/sample.js")
+	var tokens *lexer.Node = lexer.Lexify("./samples/sqrt.js")
 	tokens = tokens.Next
 	PrintLexemes(tokens)
 

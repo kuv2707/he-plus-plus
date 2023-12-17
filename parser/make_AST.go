@@ -29,7 +29,7 @@ func parseScope() *TreeNode {
 OUT:
 	for index() < maxIndex() {
 		token := next()
-		fmt.Println("parsing",token)
+		fmt.Println("parsing", token)
 		switch token.Type {
 		case "LET":
 			scopeNode.Children = append(scopeNode.Children, parseLet())
@@ -42,15 +42,23 @@ OUT:
 
 		case "FUNCTION":
 			scopeNode.Children = append(scopeNode.Children, parseFunction())
-		
+
 		case "SCOPE_START":
 			scopeNode.Children = append(scopeNode.Children, parseScope())
 
 		case "SCOPE_END":
 			break OUT
-		
+
 		case "RETURN":
 			scopeNode.Children = append(scopeNode.Children, makeTreeNode("return", []*TreeNode{parseExpression(collectTill("SEMICOLON"), 0)}, "return"))
+
+		case "BREAK":
+			val := []*TreeNode{}
+			toks := collectTill("SEMICOLON")
+			if len(toks) > 0 {
+				val = []*TreeNode{parseExpression(toks,0)}
+			}
+			scopeNode.Children = append(scopeNode.Children, makeTreeNode("break", val, "break"))
 
 		default:
 			prev()
@@ -89,7 +97,7 @@ func parseConditionalBlock() *TreeNode {
 	if matchCurrent("ELSE") {
 		next()
 		consume("SCOPE_START")
-		
+
 		condBlock.Properties["else"] = parseScope()
 	}
 	return condBlock
@@ -205,7 +213,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		return parseExpression(tokens[1:len(tokens)-1], 0)
 	}
 	if tokens[0].Type == "OPEN_SQUARE" {
-		return parseArray(tokens[1:len(tokens)-1])
+		return parseArray(tokens[1 : len(tokens)-1])
 	}
 	if utils.IsLiteral(tokens[0].Type) {
 		return makeTreeNode("literal", nil, tokens[0].Ref)
@@ -220,10 +228,10 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 	}
 	if !utils.IsOpenBracket(tokens[1].Ref) {
 		printTokensArr(tokens)
-		panic("invalid expression "+fmt.Sprint(tokens))
+		panic("invalid expression " + fmt.Sprint(tokens))
 	}
 	if tokens[1].Type == "OPEN_PAREN" {
-		fmt.Println("call",tokens)
+		fmt.Println("call", tokens)
 		node := makeTreeNode("call", make([]*TreeNode, 0), tokens[0].Ref)
 		primNode.Children = append(primNode.Children, node)
 		//parse args
@@ -235,7 +243,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 			} else if tokens[k].Type == "CLOSE_PAREN" {
 				balance--
 			}
-	
+
 			if tokens[k].Type == "COMMA" && balance == 1 {
 				node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
 				last = k + 1
@@ -252,9 +260,9 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 
 	}
 	if tokens[1].Type == "OPEN_SQUARE" {
-		node:=makeTreeNode("index", []*TreeNode{parseExpression(tokens[2:len(tokens)-1], 0)}, tokens[0].Ref)
+		node := makeTreeNode("index", []*TreeNode{parseExpression(tokens[2:len(tokens)-1], 0)}, tokens[0].Ref)
 		primNode.Children = append(primNode.Children, node)
-		if tokens[len(tokens)-1].Type!="CLOSE_SQUARE" {
+		if tokens[len(tokens)-1].Type != "CLOSE_SQUARE" {
 			panic("syntax error in array index: unclosed square bracket")
 		}
 	}
@@ -262,7 +270,6 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 	return primNode
 
 }
-
 
 func parseArray(tokens []lexer.TokenType) *TreeNode {
 	arrNode := makeTreeNode("primary", nil, "array")
@@ -277,14 +284,14 @@ func parseArray(tokens []lexer.TokenType) *TreeNode {
 		}
 
 		if tokens[k].Type == "COMMA" && balance == 0 {
-			ch:=parseExpression(tokens[last:k], 0)
+			ch := parseExpression(tokens[last:k], 0)
 			// ch.PrintTree("")
 			arrNode.Children = append(arrNode.Children, ch)
 			last = k + 1
 		}
-		
+
 	}
-	if last<len(tokens) {
+	if last < len(tokens) {
 		arrNode.Children = append(arrNode.Children, parseExpression(tokens[last:], 0))
 	}
 

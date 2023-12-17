@@ -10,47 +10,29 @@ import (
 func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 	if node.Label == "literal" {
 		return evaluatePrimary(node, ctx)
-
 	}
-	switch node.Description {
-	case "=":
-		return evaluateAssignment(ctx, node)
-	case "+":
-		fallthrough
-	case "-":
-		fallthrough
-	case "*":
-		fallthrough
-	case "/":
+	if utils.IsOneOf(node.Description, []string{"+", "-", "*", "/"}) {
 		return evaluateDMAS(ctx, node, node.Description)
-	case "<":
-		fallthrough
-	case ">":
-		fallthrough
-	case "<=":
-		fallthrough
-	case ">=":
-		fallthrough
-	case "==":
+	} else if utils.IsOneOf(node.Description, []string{"<", ">", "<=", ">=", "==", "!="}) {
 		return evaluateComparison(ctx, node, node.Description)
-	case "#":
+	} else if node.Description == "=" {
+		return evaluateAssignment(ctx, node)
+	} else if node.Description == "#" {
 		return evaluatePrint(ctx, node)
-
+	} else if utils.IsOneOf(node.Description, []string{"&&", "||"}) {
+		return evaluateLogical(ctx, node, node.Description)
 	}
 	panic("invalid operator " + node.Description)
 }
 
-// todo: garbage collect after every expression evaluation
 func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 	switch node.Label {
 	case "operator":
-		ret := evaluateOperator(*node, ctx)
-		return ret
+		return evaluateOperator(*node, ctx)
 	case "literal":
 		fallthrough
 	case "primary":
-		ret := evaluatePrimary(*node, ctx)
-		return ret
+		return evaluatePrimary(*node, ctx)
 	case "call":
 		ret := evaluateFuncCall(*node, ctx)
 		if ret == nil {
@@ -58,19 +40,19 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 		}
 		return *ret
 	default:
-		node.PrintTree("")
+		node.PrintTree("->")
 		panic("invalid expression " + node.Label)
 	}
 }
+
 func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	variableName := node.Children[0].Description
 	variableValue := evaluateExpression(node.Children[1], ctx)
 	val, alreadyExists := ctx.variables[variableName]
 	if alreadyExists {
-		//todo: make a function to copy value from one pointer to another
+		//todo: make a function to copy value from one pointer to another: memcpy
 		writeBits(*val.pointer, int64(math.Float64bits(getNumber(variableValue))), 8)
 		return val
-
 	}
 	ctx.variables[variableName] = variableValue
 	variableValue.pointer.temp = false
@@ -78,45 +60,85 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	return variableValue
 }
 
-func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
-	// fmt.Println("eval DMAS", node.Description)
+func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
-	// fmt.Println("DMAS args: ", getNumber(left), getNumber(right))
-	if left.vartype == "number" && right.vartype == "number" {
-		value := math.NaN()
+	if left.vartype == "bool" && right.vartype == "bool" {
+		value := false
 		switch operator {
-		case "+":
-			value = getValue(left).(float64) + getValue(right).(float64)
-		case "-":
-			value = getValue(left).(float64) - getValue(right).(float64)
-		case "*":
-			value = getValue(left).(float64) * getValue(right).(float64)
-		case "/":
-			value = getValue(left).(float64) / getValue(right).(float64)
+		case "&&":
+			value = getBool(left) && getBool(right)
+		case "||":
+			value = getBool(left) || getBool(right)
 		}
-		// fmt.Println("DMAS", operator, value)
-		memaddr := malloc(8, ctx.scopeType, true)
-		writeBits(*memaddr, int64(math.Float64bits(value)), 8)
-		// fmt.Println("want to free", left.pointer, right.pointer)
-		// left or right may be mapped to a variable in ctx.variables, so we must not free them without checking
-		// possible solution: evaluatePrimary should return a copy of the variable, not the variable itself
-		// freePtr(left.pointer)
-		// freePtr(right.pointer)
-		return Variable{memaddr, "number"}
-
+		memaddr := malloc(1, ctx.scopeType, true)
+		val := int64(0)
+		if value {
+			val = 1
+		}
+		writeBits(*memaddr, val, 1)
+		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
 		panic("invalid operands to binary operator " + operator)
-
 	}
 }
 
-func evaluatePrint(ctx *scopeContext, node parser.TreeNode) Variable {
-	// node.PrintTree("")
-	value := evaluateExpression(node.Children[0], ctx)
-	fmt.Println("printval", value.pointer)
-	fmt.Print(utils.Colors["GREEN"], getNumber(value), utils.Colors["RESET"])
-	return value
+func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
+	left := evaluateExpression(node.Children[0], ctx)
+	right := evaluateExpression(node.Children[1], ctx)
+	if left.vartype == "number" && right.vartype == "number" {
+		leftVal := getValue(left).(float64)
+		rightVal := getValue(right).(float64)
+		value := 0.0
+		switch operator {
+		case "+":
+			value = leftVal + rightVal
+		case "-":
+			value = leftVal - rightVal
+		case "*":
+			value = leftVal * rightVal
+		case "/":
+			value = leftVal / rightVal
+		}
+		memaddr := malloc(8, ctx.scopeType, true)
+		writeBits(*memaddr, int64(math.Float64bits(value)), 8)
+		return Variable{memaddr, "number"}
+	} else {
+		panic("invalid operands to binary operator " + operator)
+	}
+}
+
+func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
+	left := evaluateExpression(node.Children[0], ctx)
+	right := evaluateExpression(node.Children[1], ctx)
+	if left.vartype == "number" && right.vartype == "number" {
+		value := false
+		leftVal := getValue(left).(float64)
+		rightVal := getValue(right).(float64)
+		switch operator {
+		case "<":
+			value = leftVal < rightVal
+		case ">":
+			value = leftVal > rightVal
+		case "<=":
+			value = leftVal <= rightVal
+		case ">=":
+			value = leftVal >= rightVal
+		case "==":
+			value = leftVal == rightVal
+		case "!=":
+			value = leftVal != rightVal
+		}
+		memaddr := malloc(1, ctx.scopeType, true)
+		val := int64(0)
+		if value {
+			val = 1
+		}
+		writeBits(*memaddr, val, 8)
+		return Variable{memaddr, TYPE_BOOLEAN}
+	} else {
+		panic("invalid operands to binary operator " + operator)
+	}
 }
 
 func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
@@ -129,65 +151,20 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		memaddr := malloc(8, ctx.scopeType, true)
 		writeBits(*memaddr, int64(math.Float64bits(utils.StringToNumber(val))), 8)
 		return Variable{memaddr, TYPE_NUMBER}
-	} else if utils.IsBoolean(val){
+	} else if utils.IsBoolean(val) {
 		memaddr := malloc(1, ctx.scopeType, true)
-		boolnum:=0
-		if utils.StringToBoolean(val){
-			boolnum=1
+		boolnum := 0
+		if utils.StringToBoolean(val) {
+			boolnum = 1
 		}
 		writeBits(*memaddr, int64(boolnum), 1)
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		//if val is not a key in ctx.variables, it returns {0,0} why?
-		// fmt.Println("evaluatePrimary", val, ctx.variables[val], getNumber(ctx.variables[val]))
 		copy := copyVariable(ctx.variables[val])
-		// fmt.Println("evaluatePrimary", val, copy, getNumber(copy))
 		return copy
 	}
 }
 
-func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
-	left := evaluateExpression(node.Children[0], ctx)
-	right := evaluateExpression(node.Children[1], ctx)
-	if left.vartype == "number" && right.vartype == "number" {
-		value := false
-		switch operator {
-		case "<":
-			value = getValue(left).(float64) < getValue(right).(float64)
-		case ">":
-			value = getValue(left).(float64) > getValue(right).(float64)
-		case "<=":
-			value = getValue(left).(float64) <= getValue(right).(float64)
-		case ">=":
-			value = getValue(left).(float64) >= getValue(right).(float64)
-		case "==":
-			value = getValue(left).(float64) == getValue(right).(float64)
-		case "!=":
-			value = getValue(left).(float64) != getValue(right).(float64)
-
-		}
-		// fmt.Println("COMP", operator, value)
-		//convert value to IEEE 754 format 64-bit floating point number and store in HEAP by a malloc call -> a pointer is returned -> return a Variable with that pointer
-		memaddr := malloc(1, ctx.scopeType, true)
-		val := 0.0
-		if value {
-			val = 1.0
-		}
-		writeBits(*memaddr, int64(math.Float64bits(val)), 8)
-		//todo: freeing left and right causes bugs
-		// fmt.Println("want to free", left.pointer, right.pointer)
-		// freePtr(left.pointer)
-		// freePtr(right.pointer)
-		return Variable{memaddr, TYPE_BOOLEAN}
-
-	} else {
-		panic("invalid operands to binary operator " + operator)
-
-	}
-}
-
-// functions are not scoped as of now
-// if a function is defined in a previously executed scope, it can be called in the current scope, even though that scope has been popped from the stack
 func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	funcNode := ctx.functions[node.Description]
 	newCtx := pushScopeContext(TYPE_FUNCTION)
@@ -197,7 +174,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 		argValue.pointer.temp = false
 		newCtx.variables[argName] = argValue
 	}
-	fmt.Println("calling", funcNode.Description)
+	debug_info("calling", funcNode.Description)
 	executeScope(funcNode.Properties["body"], newCtx)
 	return newCtx.returnValue
 }
@@ -210,8 +187,15 @@ func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
 	panic("invalid composite data structure")
 
 }
+
 //returns a Variable with pointer to an array
 // func evaluateArray(node parser.TreeNode, ctx *scopeContext) Variable {
 // 	len:=len(node.Children)
-	
+
 // }
+
+func evaluatePrint(ctx *scopeContext, node parser.TreeNode) Variable {
+	value := evaluateExpression(node.Children[0], ctx)
+	fmt.Print(utils.Colors["WHITE"], getNumber(value), utils.Colors["RESET"])
+	return value
+}

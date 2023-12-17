@@ -21,7 +21,7 @@ type Variable struct {
 
 // returns new variable with pointer to different address but same value is stored in both addresses
 func copyVariable(variable Variable) Variable {
-	addr:=malloc(variable.pointer.size,variable.pointer.scopeId,true)
+	addr := malloc(variable.pointer.size, variable.pointer.scopeId, true)
 	writeBits(*addr, int64(math.Float64bits(getNumber(variable))), 8)
 	return Variable{addr, variable.vartype}
 }
@@ -30,17 +30,16 @@ func getValue(variable Variable) interface{} {
 	switch variable.vartype {
 	case "number":
 		return getNumber(variable)
-	// case "char":
-	// 	return getChar(variable)
-	// case "bool":
-	// 	return getBool(variable)
+		// case "char":
+		// 	return getChar(variable)
+		case "bool":
+			return getBool(variable)
 	}
-	return nil
+	panic("invalid variable type " + variable.vartype)
 }
 
 //todo:accept a byte array as value
 func writeBits(ptr Pointer, value int64, size int) {
-	// fmt.Println("writeBits", ptr, value)
 	for i := 0; i < size; i++ {
 		HEAP[ptr.address+i] = byte(value & 0xFF)
 		value = value >> 8
@@ -53,55 +52,62 @@ func getNumber(variable Variable) float64 {
 	// Take 8 bytes from HEAP starting at ptr.address and convert to float64
 	bytes := HEAP[ptr.address : ptr.address+8]
 	parsedFloat := math.Float64frombits(binary.LittleEndian.Uint64(bytes))
-	// fmt.Println("getNumber", parsedFloat)
 	return parsedFloat
 }
 
+func getBool(variable Variable) bool {
+	pointer := variable.pointer
+	validatePointer(*pointer)
+	// Take 1 byte from HEAP from end side of block pointed to by ptr
+	parsedBool := HEAP[pointer.address+pointer.size-1] == 1
+	return parsedBool
+}
+
 type scopeContext struct {
-	scopeType string
-	variables map[string]Variable
-	functions map[string]parser.TreeNode
+	scopeType   string
+	variables   map[string]Variable
+	functions   map[string]parser.TreeNode
 	returnValue *Variable
 }
 
 var contextStack = utils.MakeStack()
 
-func pushScopeContext(label string) *scopeContext{
-	ctx:=scopeContext{label+"_"+fmt.Sprint(contextStack.Len()),make(map[string]Variable),make(map[string]parser.TreeNode),nil}
-	if contextStack.IsEmpty(){
+func pushScopeContext(label string) *scopeContext {
+	ctx := scopeContext{label + "_" + fmt.Sprint(contextStack.Len()), make(map[string]Variable), make(map[string]parser.TreeNode), nil}
+	if contextStack.IsEmpty() {
 		contextStack.Push(ctx)
 		return &ctx
 	}
-	for k,v:=range contextStack.Peek().(scopeContext).variables{
-		ctx.variables[k]=v
+	for k, v := range contextStack.Peek().(scopeContext).variables {
+		ctx.variables[k] = v
 	}
-	for k,v:=range contextStack.Peek().(scopeContext).functions{
-		ctx.functions[k]=v
+	for k, v := range contextStack.Peek().(scopeContext).functions {
+		ctx.functions[k] = v
 	}
 	contextStack.Push(ctx)
 	return &ctx
 }
 
-func popScopeContext(){
-	ctx:=contextStack.Peek().(scopeContext)
+func popScopeContext() {
+	ctx := contextStack.Peek().(scopeContext)
 	contextStack.Pop()
-	if contextStack.IsEmpty(){
+	if contextStack.IsEmpty() {
 		//todo: free all memory
 		freeAll()
 		return
 	}
-	for k,v:=range ctx.variables{
-		if v.pointer.scopeId==ctx.scopeType{
-			fmt.Println("freeing",k,v,"in",ctx.scopeType)
+	for k, v := range ctx.variables {
+		if v.pointer.scopeId == ctx.scopeType {
+			debug_info("freeing", k, v, "in", ctx.scopeType)
 			freePtr(v.pointer)
 		}
 	}
 	//free memory of inScopeVars
-	
+
 }
 
-func printVariableList(variables map[string]Variable){
-	for k,v:=range variables{
-		fmt.Println(k,v.pointer,getNumber(v))
+func printVariableList(variables map[string]Variable) {
+	for k, v := range variables {
+		debug_info(k, v.pointer, getNumber(v))
 	}
 }

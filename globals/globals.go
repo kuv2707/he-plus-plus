@@ -26,7 +26,7 @@ var CLOSE_SQUARE = "]"
 
 var KEYWORDS = []string{"IF", "ELSE IF", "ELSE", "FUNCTION", "SCOPE_END", "LET"}
 
-var Operators = []string{"=", "+", "-", "*", "/", "<", ">", "#", "!", "|", "&", "==", "!=", "<=", ">=", "++", "--"}
+var Operators = []string{"=", "+", "-", "*", "/", "<", ">", "#", "!", "|", "&", "==", "!=", "<=", ">=", "++", "--", "&&", "||"}
 
 //todo bitwise operators
 
