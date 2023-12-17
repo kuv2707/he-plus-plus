@@ -3,7 +3,7 @@ let n=9;
 let low=0;
 let high=n;
 let mid=0;    
-let TOLERANCE=0.00001;
+let TOLERANCE=0.000000001;
 loop(abs(low-high)>TOLERANCE){
     mid=(low+high)/2;
     if(mid*mid>n){

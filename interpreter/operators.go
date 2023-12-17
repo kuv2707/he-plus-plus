@@ -160,7 +160,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		writeBits(*memaddr, int64(boolnum), 1)
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		copy := copyVariable(ctx.variables[val])
+		copy := copyVariable(ctx.variables[val],ctx.scopeType)
 		return copy
 	}
 }
@@ -168,9 +168,10 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	funcNode := ctx.functions[node.Description]
 	newCtx := pushScopeContext(TYPE_FUNCTION)
+	fmt.Println("scanning args")
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
-		argValue := evaluateExpression(node.Properties["args"+fmt.Sprint(i)], ctx)
+		argValue := evaluateExpression(node.Properties["args"+fmt.Sprint(i)], newCtx)
 		argValue.pointer.temp = false
 		newCtx.variables[argName] = argValue
 	}

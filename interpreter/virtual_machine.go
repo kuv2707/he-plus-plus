@@ -26,6 +26,7 @@ func malloc(size int, scid string, temp bool) *Pointer {
 			}
 			p := Pointer{i, size, scid, temp}
 			pointers[i] = &p
+			debug_info("allocated", size, "bytes at", i, "for", scid)
 			return &p
 		}
 	}
@@ -40,9 +41,11 @@ func freePtr(ptr *Pointer) {
 		reserved[i] = false
 		HEAP[i] = 0
 	}
+	debug_info("freed", ptr.size, "bytes at", ptr.address, "for", ptr.scopeId)
 }
 
 func freeAll() {
+	debug_error("freeing all pointers")
 	for _, ptr := range pointers {
 		freePtr(ptr)
 	}

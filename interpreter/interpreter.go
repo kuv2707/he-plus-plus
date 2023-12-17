@@ -48,6 +48,7 @@ SCOPE_EXECUTION:
 				}
 			}
 		case "conditional_block":
+			debug_info("conditional block")
 			k := 0
 			executed:=false
 			for ; ; k++ {
@@ -118,10 +119,10 @@ SCOPE_EXECUTION:
 				}
 			}
 		case "operator":
-			fallthrough
-		case "call":
 			evaluateExpressionClean(child, ctx)
-
+		case "call":
+			evaluateFuncCall(*child, ctx)
+			gc()
 		case "break":
 			returnReason = REASON_BREAK
 			break SCOPE_EXECUTION
@@ -138,6 +139,7 @@ SCOPE_EXECUTION:
 
 	}
 	printMemoryStats()
+	debug_info("exited", ctx.scopeType)
 	popScopeContext()
 	return returnReason, ctx.returnValue
 }

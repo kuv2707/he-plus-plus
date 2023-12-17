@@ -2,21 +2,32 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"toylingo/interpreter"
 	"toylingo/lexer"
 	"toylingo/parser"
 	"toylingo/utils"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	var tokens *lexer.Node = lexer.Lexify("./samples/sqrt.js")
+	if err := godotenv.Load(); err != nil {
+		panic("Error loading .env file")
+	}
+	var tokens *lexer.Node = lexer.Lexify("./samples/"+os.Getenv("SOURCE_FILE"))
 	tokens = tokens.Next
-	PrintLexemes(tokens)
-
+	if os.Getenv("DEBUG_LEXER") == "true" {
+		PrintLexemes(tokens)
+	}
 	treeNode := parser.ParseTree(tokens)
 
-	treeNode.PrintTree("")
-	StartInterpreting(treeNode)
+	if os.Getenv("DEBUG_AST") == "true" {
+		treeNode.PrintTree("")
+	}
+	if os.Getenv("INTERPRET") == "true" {
+		StartInterpreting(treeNode)
+	}
 	fmt.Println(utils.Colors["RESET"])
 }
 func PrintLexemes(tokens *lexer.Node) {

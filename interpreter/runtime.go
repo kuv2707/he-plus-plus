@@ -20,8 +20,8 @@ type Variable struct {
 }
 
 // returns new variable with pointer to different address but same value is stored in both addresses
-func copyVariable(variable Variable) Variable {
-	addr := malloc(variable.pointer.size, variable.pointer.scopeId, true)
+func copyVariable(variable Variable, scopeType string) Variable {
+	addr := malloc(variable.pointer.size, scopeType, true)
 	writeBits(*addr, int64(math.Float64bits(getNumber(variable))), 8)
 	return Variable{addr, variable.vartype}
 }
@@ -89,14 +89,13 @@ func pushScopeContext(label string) *scopeContext {
 }
 
 func popScopeContext() {
+	if contextStack.IsEmpty() {
+		panic("no context to pop")
+	}
 	ctx := contextStack.Peek().(scopeContext)
 	contextStack.Pop()
-	if contextStack.IsEmpty() {
-		//todo: free all memory
-		freeAll()
-		return
-	}
 	for k, v := range ctx.variables {
+		// debug_error("freeing?", k, v, "in", ctx.scopeType)
 		if v.pointer.scopeId == ctx.scopeType {
 			debug_info("freeing", k, v, "in", ctx.scopeType)
 			freePtr(v.pointer)
