@@ -149,7 +149,7 @@ SCOPE_EXECUTION:
 // will only return number value from evaluated variable
 func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) float64 {
 	variable := evaluateExpression(node, ctx)
-	ret := getNumber(variable)
+	ret := getValue(variable)
 	gc()
 	return ret
 }

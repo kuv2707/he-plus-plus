@@ -28,7 +28,7 @@ func debug_warn(k ...interface{}) {
 	if os.Getenv("DEBUG_WARN") == "0" {
 		return
 	}
-	fmt.Print(utils.Colors["YELLOW"])
+	fmt.Print(utils.BGCols["YELLOW"])
 	fmt.Println(k...)
 	fmt.Print(utils.Colors["RESET"])
 }

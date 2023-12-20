@@ -10,30 +10,35 @@ import (
 )
 
 var type_sizes = map[string]int{
-	"number": 8,
-	"char":   1,
-	"bool":   1,
+	TYPE_NUMBER: 8,
+	TYPE_CHAR:   1,
+	TYPE_BOOLEAN:   1,
 }
 var LineNo = -1
 
 // returns new variable with pointer to different address but same value is stored in both addresses
 func copyVariable(variable Variable, scopeType string) Variable {
 	addr := malloc(variable.pointer.size, scopeType, true)
-	writeBits(*addr, int64(math.Float64bits(getNumber(variable))), 8)
+	writeBits(*addr, int64(math.Float64bits(getValue(variable))), variable.pointer.size)
 	return Variable{addr, variable.vartype}
 }
 
-func getValue(variable Variable) interface{} {
+//returns the number equivalent of the variable
+func getValue(variable Variable) float64 {
 	switch variable.vartype {
-	case "number":
+	case TYPE_NUMBER:
 		return getNumber(variable)
 	// case "char":
 	// 	return getChar(variable)
-	case "bool":
-		return getBool(variable)
+	case TYPE_BOOLEAN:
+		b:= getBool(variable)
+		if b {
+			return 1
+		}
+		return 0
 	}
 	interrupt("invalid variable type " + variable.vartype)
-	return nil
+	return 0
 }
 
 //todo:accept a byte array as value
@@ -45,6 +50,9 @@ func writeBits(ptr Pointer, value int64, size int) {
 }
 
 func getNumber(variable Variable) float64 {
+	if variable.vartype != TYPE_NUMBER {
+		interrupt("invalid number type " + variable.vartype)
+	}
 	ptr := variable.pointer
 	validatePointer(*ptr)
 	// Take 8 bytes from HEAP starting at ptr.address and convert to float64

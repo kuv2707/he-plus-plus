@@ -26,6 +26,8 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 		return evaluatePrint(ctx, node)
 	} else if utils.IsOneOf(node.Description, []string{"&&", "||"}) {
 		return evaluateLogical(ctx, node, node.Description)
+	} else if node.Description == "!" {
+		return evaluateUnary(node, ctx, node.Description)
 	}
 	interrupt("invalid operator " + node.Description)
 	return Variable{}
@@ -57,7 +59,7 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	val, alreadyExists := ctx.variables[variableName]
 	if alreadyExists {
 		//todo: make a function to copy value from one pointer to another: memcpy
-		writeBits(*val.pointer, int64(math.Float64bits(getNumber(variableValue))), 8)
+		writeBits(*val.pointer, int64(math.Float64bits(getValue(variableValue))), 8)
 		return val
 	}
 	ctx.variables[variableName] = variableValue
@@ -93,9 +95,9 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) V
 func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
-	if left.vartype == "number" && right.vartype == "number" {
-		leftVal := getValue(left).(float64)
-		rightVal := getValue(right).(float64)
+	if left.vartype == TYPE_NUMBER && right.vartype == TYPE_NUMBER {
+		leftVal := getValue(left)
+		rightVal := getValue(right)
 		value := 0.0
 		switch operator {
 		case "+":
@@ -109,7 +111,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		}
 		memaddr := malloc(8, ctx.scopeType, true)
 		writeBits(*memaddr, int64(math.Float64bits(value)), 8)
-		return Variable{memaddr, "number"}
+		return Variable{memaddr, TYPE_NUMBER}
 	} else {
 		interrupt("invalid operands to binary operator " + operator)
 	}
@@ -119,10 +121,10 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
-	if left.vartype == "number" && right.vartype == "number" {
+	if left.vartype == TYPE_NUMBER && right.vartype == TYPE_NUMBER {
 		value := false
-		leftVal := getValue(left).(float64)
-		rightVal := getValue(right).(float64)
+		leftVal := getValue(left)
+		rightVal := getValue(right)
 		switch operator {
 		case "<":
 			value = leftVal < rightVal
@@ -152,7 +154,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 
 func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Variable {
 	val := evaluateExpression(node.Children[0], ctx)
-	if val.vartype == "number" {
+	if val.vartype == TYPE_NUMBER {
 		switch operator {
 		case "+":
 			return val
@@ -160,6 +162,20 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 			memaddr := malloc(8, ctx.scopeType, true)
 			writeBits(*memaddr, int64(math.Float64bits(-getNumber(val))), 8)
 			return Variable{memaddr, TYPE_NUMBER}
+		default:
+			interrupt("invalid unary operator " + operator)
+		}
+	}
+	if val.vartype == "bool" {
+		switch operator {
+		case "!":
+			memaddr := malloc(1, ctx.scopeType, true)
+			valb := int64(1)
+			if !getBool(val) {
+				valb = 0
+			}
+			writeBits(*memaddr, valb, 1)
+			return Variable{memaddr, TYPE_BOOLEAN}
 		default:
 			interrupt("invalid unary operator " + operator)
 		}
@@ -235,6 +251,19 @@ func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
 
 func evaluatePrint(ctx *scopeContext, node parser.TreeNode) Variable {
 	value := evaluateExpression(node.Children[0], ctx)
-	fmt.Print(utils.Colors["WHITE"], getNumber(value), utils.Colors["RESET"])
+	val:=getValue(value)
+	if value.vartype == TYPE_NUMBER {
+		fmt.Print(utils.Colors["CYAN"], val, utils.Colors["RESET"])
+	} else if value.vartype == "bool" {
+		if getBool(value) {
+			fmt.Print(utils.Colors["GREEN"], "true", utils.Colors["RESET"])
+		} else {
+			fmt.Print(utils.Colors["RED"], "false", utils.Colors["RESET"])
+		}
+	} else if value.vartype == "char" {
+		fmt.Print(utils.Colors["WHITE"], string(int(val)), utils.Colors["RESET"])
+	} else {
+		fmt.Print(utils.Colors["WHITE"], val, utils.Colors["RESET"])
+	}
 	return value
 }
