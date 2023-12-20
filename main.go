@@ -17,15 +17,15 @@ func main() {
 	}
 	var tokens *lexer.Node = lexer.Lexify("./samples/"+os.Getenv("SOURCE_FILE"))
 	tokens = tokens.Next
-	if os.Getenv("DEBUG_LEXER") == "true" {
+	if os.Getenv("DEBUG_LEXER") == "1" {
 		PrintLexemes(tokens)
 	}
 	treeNode := parser.ParseTree(tokens)
 
-	if os.Getenv("DEBUG_AST") == "true" {
+	if os.Getenv("DEBUG_AST") == "1" {
 		treeNode.PrintTree("")
 	}
-	if os.Getenv("INTERPRET") == "true" {
+	if os.Getenv("INTERPRET") == "1" {
 		StartInterpreting(treeNode)
 	}
 	fmt.Println(utils.Colors["RESET"])

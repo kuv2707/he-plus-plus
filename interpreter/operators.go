@@ -12,7 +12,12 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 		return evaluatePrimary(node, ctx)
 	}
 	if utils.IsOneOf(node.Description, []string{"+", "-", "*", "/"}) {
-		return evaluateDMAS(ctx, node, node.Description)
+		if len(node.Children) == 1 {
+			return evaluateUnary(node, ctx,node.Description)
+		}else{
+
+			return evaluateDMAS(ctx, node, node.Description)
+		}
 	} else if utils.IsOneOf(node.Description, []string{"<", ">", "<=", ">=", "==", "!="}) {
 		return evaluateComparison(ctx, node, node.Description)
 	} else if node.Description == "=" {
@@ -22,7 +27,8 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 	} else if utils.IsOneOf(node.Description, []string{"&&", "||"}) {
 		return evaluateLogical(ctx, node, node.Description)
 	}
-	panic("invalid operator " + node.Description)
+	interrupt("invalid operator " + node.Description)
+	return Variable{}
 }
 
 func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
@@ -36,7 +42,7 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 	case "call":
 		ret := evaluateFuncCall(*node, ctx)
 		if ret == nil {
-			panic("function " + node.Description + " does not return a value but is expected to")
+			interrupt("function " + node.Description + " does not return a value but is expected to")
 		}
 		return *ret
 	default:
@@ -79,8 +85,9 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) V
 		writeBits(*memaddr, val, 1)
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		panic("invalid operands to binary operator " + operator)
+		interrupt("invalid operands to binary operator " + operator)
 	}
+	return Variable{}
 }
 
 func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
@@ -104,8 +111,9 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		writeBits(*memaddr, int64(math.Float64bits(value)), 8)
 		return Variable{memaddr, "number"}
 	} else {
-		panic("invalid operands to binary operator " + operator)
+		interrupt("invalid operands to binary operator " + operator)
 	}
+	return Variable{}
 }
 
 func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
@@ -137,8 +145,28 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		writeBits(*memaddr, val, 8)
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		panic("invalid operands to binary operator " + operator)
+		interrupt("invalid operands to binary operator " + operator)
 	}
+	return Variable{}
+}
+
+
+func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Variable {
+	val:=evaluateExpression(node.Children[0],ctx)
+	if val.vartype=="number"{
+		switch operator{
+		case "+":
+			return val
+		case "-":
+			memaddr := malloc(8, ctx.scopeType, true)
+			writeBits(*memaddr, int64(math.Float64bits(-getNumber(val))), 8)
+			return Variable{memaddr, TYPE_NUMBER}
+		default:
+			interrupt("invalid unary operator "+operator)
+		}
+	}
+	interrupt("invalid operand to unary operator "+operator)
+	return Variable{}
 }
 
 func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
@@ -160,9 +188,14 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		writeBits(*memaddr, int64(boolnum), 1)
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		copy := copyVariable(ctx.variables[val],ctx.scopeType)
+		if v,exists := ctx.variables[val];exists{
+		copy := copyVariable(v,ctx.scopeType)
 		return copy
+		}else{
+			interrupt("variable "+val+" does not exist in current scope")
+		}
 	}
+	return Variable{}
 }
 
 func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {

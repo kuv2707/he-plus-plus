@@ -11,7 +11,7 @@ func Interpret(root *parser.TreeNode) {
 	printMemoryStats()
 }
 
-type Reason string
+
 
 const REASON_NATURAL Reason = "natural"
 const REASON_RETURN Reason = "return"

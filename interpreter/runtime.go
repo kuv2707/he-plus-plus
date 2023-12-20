@@ -14,10 +14,7 @@ var type_sizes = map[string]int{
 	"bool":   1,
 }
 
-type Variable struct {
-	pointer *Pointer
-	vartype string
-}
+
 
 // returns new variable with pointer to different address but same value is stored in both addresses
 func copyVariable(variable Variable, scopeType string) Variable {
@@ -35,7 +32,8 @@ func getValue(variable Variable) interface{} {
 		case "bool":
 			return getBool(variable)
 	}
-	panic("invalid variable type " + variable.vartype)
+	interrupt("invalid variable type " + variable.vartype)
+	return nil
 }
 
 //todo:accept a byte array as value
@@ -63,12 +61,6 @@ func getBool(variable Variable) bool {
 	return parsedBool
 }
 
-type scopeContext struct {
-	scopeType   string
-	variables   map[string]Variable
-	functions   map[string]parser.TreeNode
-	returnValue *Variable
-}
 
 var contextStack = utils.MakeStack()
 

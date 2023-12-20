@@ -32,7 +32,8 @@ func malloc(size int, scid string, temp bool) *Pointer {
 	}
 	//todo: try to defragment memory and try again
 
-	panic("out of memory")
+	interrupt("out of memory")
+	return nil
 }
 
 func freePtr(ptr *Pointer) {
@@ -62,7 +63,7 @@ func gc() {
 
 func validatePointer(ptr Pointer) {
 	if !reserved[ptr.address] {
-		panic("invalid pointer " + fmt.Sprint(ptr))
+		interrupt("invalid pointer " + fmt.Sprint(ptr))
 	}
 }
 
