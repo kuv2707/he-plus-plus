@@ -97,8 +97,9 @@ func popScopeContext() {
 }
 
 func printStackTrace() {
-	for _, ctx := range contextStack.GetStack() {
-		fmt.Println(ctx.(scopeContext).scopeType)
+	s:=contextStack.GetStack()
+	for i := range s {
+		fmt.Println(s[len(s)-1-i].(scopeContext).scopeType)
 	}
 }
 
