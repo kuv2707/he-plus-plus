@@ -1,8 +1,9 @@
 package lexer
 
 type TokenType struct {
-	Type string
-	Ref  string //like int,float etc for DATATYPE
+	Type   string
+	Ref    string
+	LineNo int
 }
 
 type Node struct {

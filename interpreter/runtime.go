@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"os"
 	"toylingo/parser"
 	"toylingo/utils"
 )
@@ -13,8 +14,7 @@ var type_sizes = map[string]int{
 	"char":   1,
 	"bool":   1,
 }
-
-
+var LineNo = -1
 
 // returns new variable with pointer to different address but same value is stored in both addresses
 func copyVariable(variable Variable, scopeType string) Variable {
@@ -27,10 +27,10 @@ func getValue(variable Variable) interface{} {
 	switch variable.vartype {
 	case "number":
 		return getNumber(variable)
-		// case "char":
-		// 	return getChar(variable)
-		case "bool":
-			return getBool(variable)
+	// case "char":
+	// 	return getChar(variable)
+	case "bool":
+		return getBool(variable)
 	}
 	interrupt("invalid variable type " + variable.vartype)
 	return nil
@@ -60,7 +60,6 @@ func getBool(variable Variable) bool {
 	parsedBool := HEAP[pointer.address+pointer.size-1] == 1
 	return parsedBool
 }
-
 
 var contextStack = utils.MakeStack()
 
@@ -97,8 +96,20 @@ func popScopeContext() {
 
 }
 
-func printVariableList(variables map[string]Variable) {
-	for k, v := range variables {
-		debug_info(k, v.pointer, getNumber(v))
+func printStackTrace() {
+	for _, ctx := range contextStack.GetStack() {
+		fmt.Println(ctx.(scopeContext).scopeType)
 	}
+}
+
+func interrupt(k ...interface{}) {
+	fmt.Print(utils.Colors["RED"])
+	fmt.Print("error at line", fmt.Sprint(LineNo), ": ")
+	fmt.Println(k...)
+	printStackTrace()
+	fmt.Print(utils.Colors["RESET"])
+	fmt.Print(utils.Colors["BOLDRED"])
+	fmt.Println("execution interrupted")
+	fmt.Print(utils.Colors["RESET"])
+	os.Exit(1)
 }

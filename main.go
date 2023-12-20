@@ -33,7 +33,7 @@ func main() {
 func PrintLexemes(tokens *lexer.Node) {
 	c := 0
 	for node := tokens; node != nil; node = node.Next {
-		fmt.Println(c, node.Val.Type, node.Val.Ref)
+		fmt.Println(c, node.Val.Type, node.Val.Ref, node.Val.LineNo)
 		c++
 	}
 }

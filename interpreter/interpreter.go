@@ -29,6 +29,7 @@ func executeScope(node *parser.TreeNode, ctx *scopeContext) (Reason, *Variable) 
 SCOPE_EXECUTION:
 	for i := range node.Children {
 		child := node.Children[i]
+		LineNo = child.LineNo
 		switch child.Label {
 		case "function":
 			ctx.functions[child.Description] = *child
@@ -121,6 +122,7 @@ SCOPE_EXECUTION:
 		case "operator":
 			evaluateExpressionClean(child, ctx)
 		case "call":
+
 			evaluateFuncCall(*child, ctx)
 			gc()
 		case "break":

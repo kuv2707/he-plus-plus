@@ -46,6 +46,10 @@ func (s *Stack) IsEmpty() bool {
 	return len(s.items) == 0
 }
 
+func (s *Stack) GetStack() []interface{} {
+	return s.items
+}
+
 func (s *Stack) PrintStack() bool {
 	fmt.Println("---------")
 	for i := len(s.items) - 1; i >= 0; i-- {

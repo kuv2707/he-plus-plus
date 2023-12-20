@@ -13,8 +13,8 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 	}
 	if utils.IsOneOf(node.Description, []string{"+", "-", "*", "/"}) {
 		if len(node.Children) == 1 {
-			return evaluateUnary(node, ctx,node.Description)
-		}else{
+			return evaluateUnary(node, ctx, node.Description)
+		} else {
 
 			return evaluateDMAS(ctx, node, node.Description)
 		}
@@ -150,11 +150,10 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 	return Variable{}
 }
 
-
 func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Variable {
-	val:=evaluateExpression(node.Children[0],ctx)
-	if val.vartype=="number"{
-		switch operator{
+	val := evaluateExpression(node.Children[0], ctx)
+	if val.vartype == "number" {
+		switch operator {
 		case "+":
 			return val
 		case "-":
@@ -162,10 +161,10 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 			writeBits(*memaddr, int64(math.Float64bits(-getNumber(val))), 8)
 			return Variable{memaddr, TYPE_NUMBER}
 		default:
-			interrupt("invalid unary operator "+operator)
+			interrupt("invalid unary operator " + operator)
 		}
 	}
-	interrupt("invalid operand to unary operator "+operator)
+	interrupt("invalid operand to unary operator " + operator)
 	return Variable{}
 }
 
@@ -188,11 +187,11 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		writeBits(*memaddr, int64(boolnum), 1)
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		if v,exists := ctx.variables[val];exists{
-		copy := copyVariable(v,ctx.scopeType)
-		return copy
-		}else{
-			interrupt("variable "+val+" does not exist in current scope")
+		if v, exists := ctx.variables[val]; exists {
+			copy := copyVariable(v, ctx.scopeType)
+			return copy
+		} else {
+			interrupt("variable " + val + " does not exist in current scope")
 		}
 	}
 	return Variable{}
@@ -201,9 +200,16 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	funcNode := ctx.functions[node.Description]
 	newCtx := pushScopeContext(TYPE_FUNCTION)
+	lastValidLine := LineNo
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
-		argValue := evaluateExpression(node.Properties["args"+fmt.Sprint(i)], newCtx)
+		argNode := node.Properties["args"+fmt.Sprint(i)]
+		if argNode == nil {
+			LineNo = lastValidLine
+			interrupt("missing argument " + argName + " in function call " + funcNode.Description)
+		}
+		lastValidLine = argNode.LineNo
+		argValue := evaluateExpression(argNode, newCtx)
 		argValue.pointer.temp = false
 		newCtx.variables[argName] = argValue
 	}

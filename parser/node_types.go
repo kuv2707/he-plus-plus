@@ -5,4 +5,5 @@ type TreeNode struct {
 	Description string
 	Children    []*TreeNode
 	Properties  map[string]*TreeNode
+	LineNo      int
 }

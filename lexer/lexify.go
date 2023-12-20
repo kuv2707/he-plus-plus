@@ -55,7 +55,7 @@ func Lexify(path string) *Node {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(stringliterals[i]), []byte(" __STR__ "))
 	}
 
-	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!", "|", "&", ",","[","]"}
+	toPad := [...]string{"{", "}", ";", ":", "(", ")", ".", "=", "*", "/", "+", "-", "<", ">", "!", "|", "&", ",", "[", "]"}
 	for i := 0; i < len(toPad); i++ {
 		filecontent = bytes.ReplaceAll(filecontent, []byte(toPad[i]), []byte(" "+toPad[i]+" "))
 	}
@@ -63,13 +63,15 @@ func Lexify(path string) *Node {
 
 	// fmt.Println(string(filecontent))
 	// fmt.Println(stringliterals)
-	tokens := &Node{TokenType{"start", ""}, nil}
+	tokens := &Node{TokenType{"start", "",0}, nil}
 	ret := tokens
 	temp := ""
 	for i := 0; i < len(filecontent); i++ {
 		c := filecontent[i]
 		if c == ' ' || c == '\n' || c == '\t' {
-			// fmt.Println("word ", temp)
+			if c == '\n' {
+				lineNo++
+			}
 			if addToken(strings.Trim(temp, " "), tokens) {
 				tokens = tokens.Next
 			}
@@ -90,7 +92,7 @@ func Lexify(path string) *Node {
 
 	//coalesce multicharacter operators into one
 	for node := ret; node != nil; node = node.Next {
-		if (utils.IsOneOf(node.Val.Ref, []string{"<",">","=","!"}) && node.Next != nil && node.Next.Val.Ref == "=") || (node.Val.Ref == "|" && node.Next != nil && node.Next.Val.Ref == "|") || (node.Val.Ref == "&" && node.Next != nil && node.Next.Val.Ref == "&") {
+		if (utils.IsOneOf(node.Val.Ref, []string{"<", ">", "=", "!"}) && node.Next != nil && node.Next.Val.Ref == "=") || (node.Val.Ref == "|" && node.Next != nil && node.Next.Val.Ref == "|") || (node.Val.Ref == "&" && node.Next != nil && node.Next.Val.Ref == "&") {
 			node.Val.Ref = node.Val.Ref + node.Next.Val.Ref
 			node.Next = node.Next.Next
 		}
@@ -109,61 +111,61 @@ func Lexify(path string) *Node {
 	return ret
 }
 
+var lineNo = 1
+
 func addToken(temp string, tokens *Node) bool {
 	if temp == " " || temp == "\n" || temp == "\t" || temp == "" || temp == "\r" {
 		return false
 	}
 	switch strings.Trim(temp, " ") {
 	case g.SCOPE_START:
-		tokens.Next = &Node{TokenType{"SCOPE_START", g.SCOPE_START}, nil}
+		tokens.Next = &Node{TokenType{"SCOPE_START", g.SCOPE_START, lineNo}, nil}
 	case g.SCOPE_END:
-		tokens.Next = &Node{TokenType{"SCOPE_END", g.SCOPE_END}, nil}
+		tokens.Next = &Node{TokenType{"SCOPE_END", g.SCOPE_END, lineNo}, nil}
 	case g.OPEN_PAREN:
-		tokens.Next = &Node{TokenType{"OPEN_PAREN", g.OPEN_PAREN}, nil}
+		tokens.Next = &Node{TokenType{"OPEN_PAREN", g.OPEN_PAREN, lineNo}, nil}
 	case g.CLOSE_PAREN:
-		tokens.Next = &Node{TokenType{"CLOSE_PAREN", g.CLOSE_PAREN}, nil}
+		tokens.Next = &Node{TokenType{"CLOSE_PAREN", g.CLOSE_PAREN, lineNo}, nil}
 	case g.OPEN_SQUARE:
-		tokens.Next = &Node{TokenType{"OPEN_SQUARE", g.OPEN_SQUARE}, nil}
+		tokens.Next = &Node{TokenType{"OPEN_SQUARE", g.OPEN_SQUARE, lineNo}, nil}
 	case g.CLOSE_SQUARE:
-		tokens.Next = &Node{TokenType{"CLOSE_SQUARE", g.CLOSE_SQUARE}, nil}
+		tokens.Next = &Node{TokenType{"CLOSE_SQUARE", g.CLOSE_SQUARE, lineNo}, nil}
 	case g.COLON:
-		tokens.Next = &Node{TokenType{"COLON", g.COLON}, nil}
+		tokens.Next = &Node{TokenType{"COLON", g.COLON, lineNo}, nil}
 	case g.SEMICOLON:
-		tokens.Next = &Node{TokenType{"SEMICOLON", g.SEMICOLON}, nil}
+		tokens.Next = &Node{TokenType{"SEMICOLON", g.SEMICOLON, lineNo}, nil}
 	case g.DOT:
-		tokens.Next = &Node{TokenType{"DOT", g.DOT}, nil}
+		tokens.Next = &Node{TokenType{"DOT", g.DOT, lineNo}, nil}
 	case g.LET:
-		tokens.Next = &Node{TokenType{"LET", g.LET}, nil}
+		tokens.Next = &Node{TokenType{"LET", g.LET, lineNo}, nil}
 	case g.IF:
-		tokens.Next = &Node{TokenType{"IF", g.IF}, nil}
+		tokens.Next = &Node{TokenType{"IF", g.IF, lineNo}, nil}
 	case g.ELSE_IF:
-		tokens.Next = &Node{TokenType{"ELSE IF", g.ELSE_IF}, nil}
+		tokens.Next = &Node{TokenType{"ELSE IF", g.ELSE_IF, lineNo}, nil}
 	case g.ELSE:
-		tokens.Next = &Node{TokenType{"ELSE", g.ELSE}, nil}
+		tokens.Next = &Node{TokenType{"ELSE", g.ELSE, lineNo}, nil}
 	case g.LOOP:
-		tokens.Next = &Node{TokenType{"LOOP", g.LOOP}, nil}
+		tokens.Next = &Node{TokenType{"LOOP", g.LOOP, lineNo}, nil}
 	case g.BREAK:
-		tokens.Next = &Node{TokenType{"BREAK", g.BREAK}, nil}
+		tokens.Next = &Node{TokenType{"BREAK", g.BREAK, lineNo}, nil}
 	case g.COMMA:
-		tokens.Next = &Node{TokenType{"COMMA", g.COMMA}, nil}
+		tokens.Next = &Node{TokenType{"COMMA", g.COMMA, lineNo}, nil}
 	case g.RETURN:
-		tokens.Next = &Node{TokenType{"RETURN", g.RETURN}, nil}
+		tokens.Next = &Node{TokenType{"RETURN", g.RETURN, lineNo}, nil}
 	case g.FUNCTION:
-		tokens.Next = &Node{TokenType{"FUNCTION", g.FUNCTION}, nil}
+		tokens.Next = &Node{TokenType{"FUNCTION", g.FUNCTION, lineNo}, nil}
 
 	default:
 		if utils.IsNumber(temp) {
-			tokens.Next = &Node{TokenType{"NUMBER", temp}, nil}
-		} else if utils.IsBoolean(temp){
-			tokens.Next=&Node{TokenType{"BOOLEAN",temp},nil}
-		}else if utils.IsOperator(temp) {
-			tokens.Next = &Node{TokenType{"OPERATOR", temp}, nil}
+			tokens.Next = &Node{TokenType{"NUMBER", temp, lineNo}, nil}
+		} else if utils.IsBoolean(temp) {
+			tokens.Next = &Node{TokenType{"BOOLEAN", temp, lineNo}, nil}
+		} else if utils.IsOperator(temp) {
+			tokens.Next = &Node{TokenType{"OPERATOR", temp, lineNo}, nil}
 		} else {
-			tokens.Next = &Node{TokenType{"IDENTIFIER", temp}, nil}
+			tokens.Next = &Node{TokenType{"IDENTIFIER", temp, lineNo}, nil}
 		}
 
 	}
 	return true
 }
-
-

@@ -33,13 +33,8 @@ func debug_warn(k ...interface{}) {
 	fmt.Print(utils.Colors["RESET"])
 }
 
-func interrupt(k ...interface{}) {
-	fmt.Print(utils.Colors["RED"])
-	fmt.Println(k...)
-	
-	fmt.Print(utils.Colors["RESET"])
-	fmt.Print(utils.Colors["BOLDRED"])
-	fmt.Println("execution interrupted")
-	fmt.Print(utils.Colors["RESET"])
-	os.Exit(1)
+func printVariableList(variables map[string]Variable) {
+	for k, v := range variables {
+		debug_info(k, v.pointer, getNumber(v))
+	}
 }
