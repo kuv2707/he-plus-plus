@@ -41,12 +41,18 @@ loop(boolean_expression){
 
 ## Functions
 Support for functions with return values and arguments
+Arguments come before the function name
+Arguments are passed by value
 All functions in a scope are hoisted to the top of the scope
 
 ```
 func(a,b) add{
     return a+b;
 }
+```
+function calls also have the inversion of function name and arguments
+```
+let k=(5,6)add;
 ```
 
 

@@ -50,6 +50,21 @@ func collectTill(tokenType string) []lexer.TokenType {
 	return tokens
 }
 
+func collectTillIn(tokenType string, tokens []lexer.TokenType) ([]lexer.TokenType , int) {
+	toks := make([]lexer.TokenType, 0)
+	i := 0
+	for ; i < len(tokens); i++ {
+		if tokens[i].Type == tokenType {
+			break
+		}
+		toks = append(toks, tokens[i])
+	}
+	i++
+	return toks,i
+}
+
+
+
 func matchCurrent(tokenType string) bool {
 	if index() >= maxIndex() {
 		return false

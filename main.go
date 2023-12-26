@@ -13,7 +13,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		panic("Error loading .env file")
+		panic("Error loading .env file. Make sure you have a .env file in the root directory in the format specified in the .env.example file")
 	}
 	var tokens *lexer.Node = lexer.Lexify("./samples/"+os.Getenv("SOURCE_FILE"))
 	tokens = tokens.Next

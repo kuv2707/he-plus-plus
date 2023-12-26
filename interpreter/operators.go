@@ -192,7 +192,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 	}
 	if utils.IsNumber(val) {
 		memaddr := malloc(8, ctx.scopeType, true)
-		writeBits(*memaddr, int64(math.Float64bits(utils.StringToNumber(val))), 8)
+		writeBits(*memaddr, int64(math.Float64bits(StringToNumber(val))), 8)
 		return Variable{memaddr, TYPE_NUMBER}
 	} else if utils.IsBoolean(val) {
 		memaddr := malloc(1, ctx.scopeType, true)
@@ -265,5 +265,6 @@ func evaluatePrint(ctx *scopeContext, node parser.TreeNode) Variable {
 	} else {
 		fmt.Print(utils.Colors["WHITE"], val, utils.Colors["RESET"])
 	}
+	fmt.Print("\n")
 	return value
 }

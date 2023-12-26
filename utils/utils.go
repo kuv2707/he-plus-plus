@@ -6,24 +6,9 @@ import (
 )
 
 func DoNothing(args ...interface{}) {}
-
+//valid numbers: 12, 12.23, 0x12, 0b101, 0o12, 0x12.23, 0b101.23, 0o12.23
 func IsNumber(temp string) bool {
-	for i := 0; i < len(temp); i++ {
-		if temp[i] < '0' || temp[i] > '9' {
-			if temp[i] != '.' {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func StringToNumber(str string) float64 {
-	num, err := strconv.ParseFloat(str, 64)
-	if err != nil {
-		panic(err)
-	}
-	return float64(num)
+	return temp[0] >= '0' && temp[0] <= '9'
 }
 
 func StringToBoolean(str string) bool {
@@ -35,7 +20,6 @@ func StringToBoolean(str string) bool {
 		panic("invalid boolean value " + str)
 	}
 }
-
 
 func IsOneOf(temp string, options []string) bool {
 	for i := 0; i < len(options); i++ {
@@ -58,12 +42,12 @@ func IsOneOfArr(str string, options []string) bool {
 
 var QUOTES = []string{"`"}
 
-//todo use regex
+// todo use regex
 func InQuotes(s string) bool {
 	return IsOneOf(s[0:1], QUOTES) && IsOneOf(s[len(s)-1:], QUOTES)
 }
 
-//todo use regex and add more constraints
+// todo use regex and add more constraints
 func IsValidVariableName(s string) bool {
 	return !InQuotes(s)
 }
@@ -118,9 +102,8 @@ func ParseEscapeSequence(s string) string {
 	return ret
 }
 
-
 func IsLiteral(s string) bool {
-	return IsOneOf(s, []string{"NUMBER", "STRING_LITERAL", "BOOLEAN"})
+	return IsOneOf(s, []string{"NUMBER", "BOOLEAN"})
 }
 
 func IsOperator(temp string) bool {
