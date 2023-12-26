@@ -22,8 +22,6 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 		return evaluateComparison(ctx, node, node.Description)
 	} else if node.Description == "=" {
 		return evaluateAssignment(ctx, node)
-	} else if node.Description == "#" {
-		return evaluatePrint(ctx, node)
 	} else if utils.IsOneOf(node.Description, []string{"&&", "||"}) {
 		return evaluateLogical(ctx, node, node.Description)
 	} else if node.Description == "!" {
@@ -214,7 +212,11 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 }
 
 func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
-	funcNode := ctx.functions[node.Description]
+
+	funcNode, exists := ctx.functions[node.Description]
+	if !exists {
+		interrupt("function " + node.Description + " does not exist in current scope")
+	}
 	newCtx := pushScopeContext(TYPE_FUNCTION)
 	lastValidLine := LineNo
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
@@ -230,7 +232,12 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 		newCtx.variables[argName] = argValue
 	}
 	debug_info("calling", funcNode.Description)
-	executeScope(funcNode.Properties["body"], newCtx)
+	nfunc, exists := nativeFunctions[funcNode.Description]
+	if !exists {
+		executeScope(funcNode.Properties["body"], newCtx)
+	} else {
+		nfunc.exec(newCtx)
+	}
 	return newCtx.returnValue
 }
 
@@ -248,23 +255,3 @@ func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
 // 	len:=len(node.Children)
 
 // }
-
-func evaluatePrint(ctx *scopeContext, node parser.TreeNode) Variable {
-	value := evaluateExpression(node.Children[0], ctx)
-	val:=getValue(value)
-	if value.vartype == TYPE_NUMBER {
-		fmt.Print(utils.Colors["CYAN"], val, utils.Colors["RESET"])
-	} else if value.vartype == "bool" {
-		if getBool(value) {
-			fmt.Print(utils.Colors["GREEN"], "true", utils.Colors["RESET"])
-		} else {
-			fmt.Print(utils.Colors["RED"], "false", utils.Colors["RESET"])
-		}
-	} else if value.vartype == "char" {
-		fmt.Print(utils.Colors["WHITE"], string(int(val)), utils.Colors["RESET"])
-	} else {
-		fmt.Print(utils.Colors["WHITE"], val, utils.Colors["RESET"])
-	}
-	fmt.Print("\n")
-	return value
-}

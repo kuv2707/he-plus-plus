@@ -77,7 +77,6 @@ operators of same precedence are evaluated right to left instead of left to righ
 
 
 # TODO
-* enable base 2, 8, 16 numbers
 * native functions access
 * Implement arrays
 * Implement strings

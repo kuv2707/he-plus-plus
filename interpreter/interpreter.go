@@ -7,7 +7,13 @@ import (
 )
 
 func Interpret(root *parser.TreeNode) {
-	executeScope(root, pushScopeContext("scope_0"))
+	pushScopeContext("scope_0")
+	ctx:=contextStack.GetStack()[0].(scopeContext)
+	addNativeFuncDeclarations(&ctx)
+	// for _,v := range ctx.functions{
+	// 	v.PrintTree("->")
+	// }
+	executeScope(root, &ctx)
 	printMemoryStats()
 }
 
