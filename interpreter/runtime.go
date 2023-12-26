@@ -17,8 +17,8 @@ var type_sizes = map[string]int{
 var LineNo = -1
 
 // returns new variable with pointer to different address but same value is stored in both addresses
-func copyVariable(variable Variable, scopeType string) Variable {
-	addr := malloc(variable.pointer.size, scopeType, true)
+func copyVariable(variable Variable, sid string) Variable {
+	addr := malloc(variable.pointer.size, sid, true)
 	writeBits(*addr, int64(math.Float64bits(getValue(variable))), variable.pointer.size)
 	return Variable{addr, variable.vartype}
 }
@@ -71,8 +71,8 @@ func getBool(variable Variable) bool {
 
 var contextStack = utils.MakeStack()
 
-func pushScopeContext(label string) *scopeContext {
-	ctx := scopeContext{label + "_" + fmt.Sprint(contextStack.Len()), make(map[string]Variable), make(map[string]parser.TreeNode), nil}
+func pushScopeContext(scopetype string, scopename string) *scopeContext {
+	ctx := scopeContext{generateId(),scopetype,scopename, make(map[string]Variable), make(map[string]parser.TreeNode), nil}
 	if contextStack.IsEmpty() {
 		contextStack.Push(ctx)
 		return &ctx
@@ -95,8 +95,8 @@ func popScopeContext() {
 	contextStack.Pop()
 	for k, v := range ctx.variables {
 		// debug_error("freeing?", k, v, "in", ctx.scopeType)
-		if v.pointer.scopeId == ctx.scopeType {
-			debug_info("freeing", k, v, "in", ctx.scopeType)
+		if v.pointer.scopeId == ctx.scopeId {
+			debug_info("freeing", k, v.pointer,v.vartype, "in", ctx.scopeName)
 			freePtr(v.pointer)
 		}
 	}
@@ -107,7 +107,7 @@ func popScopeContext() {
 func printStackTrace() {
 	s:=contextStack.GetStack()
 	for i := range s {
-		fmt.Println(s[len(s)-1-i].(scopeContext).scopeType)
+		fmt.Println(s[len(s)-1-i].(scopeContext).scopeName)
 	}
 }
 

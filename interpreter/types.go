@@ -21,7 +21,9 @@ type Callable interface {
 // }
 
 type scopeContext struct {
-	scopeType   string
+	scopeId     string
+	scopeTyp    string
+	scopeName   string
 	variables   map[string]Variable
 	functions   map[string]parser.TreeNode
 	returnValue *Variable

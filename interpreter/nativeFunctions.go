@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math"
 	"toylingo/parser"
 	"toylingo/utils"
 )
@@ -19,6 +20,10 @@ var nativeFunctions = map[string]funcDef{
 	"println": {
 		exec: nativePrintln,
 		args: []string{"a"},
+	},
+	"readNumber": {
+		exec: nativeReadNumber,
+		args: []string{},
 	},
 }
 
@@ -80,5 +85,16 @@ func nativePrint(ctx *scopeContext) Variable {
 func nativePrintln(ctx *scopeContext) Variable {
 	v:=nativePrint(ctx)
 	fmt.Print("\n")
+	return v
+}
+
+func nativeReadNumber(ctx *scopeContext) Variable {
+	var value float64
+	fmt.Scan(&value)
+	// fmt.Println("in scope", ctx.scopeType+ctx.scopeName)
+	memaddr := malloc(8, ctx.scopeId, false)
+	writeBits(*memaddr, int64(math.Float64bits(value)), 8)
+	v:= Variable{memaddr, TYPE_NUMBER}
+	ctx.returnValue=&v
 	return v
 }

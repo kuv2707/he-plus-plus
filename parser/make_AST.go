@@ -111,12 +111,12 @@ func parseLoop() *TreeNode {
 
 func parseFunction() *TreeNode {
 	funcNode := makeTreeNode("function", nil, "func", -1)
-	expect("OPEN_PAREN")
-	next()
-	funcNode.Properties["args"] = parseFormalArgs(collectTill("CLOSE_PAREN"))
 	expect("IDENTIFIER")
 	funcNode.Description = tokensArr[i].Ref
 	next()
+	expect("OPEN_PAREN")
+	next()
+	funcNode.Properties["args"] = parseFormalArgs(collectTill("CLOSE_PAREN"))
 	expect("SCOPE_START")
 	next()
 	funcNode.Properties["body"] = parseScope()

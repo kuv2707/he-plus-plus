@@ -2,12 +2,11 @@ package interpreter
 
 import (
 	"fmt"
-	"strings"
 	"toylingo/parser"
 )
 
 func Interpret(root *parser.TreeNode) {
-	pushScopeContext("scope_0")
+	pushScopeContext("scope","root")
 	ctx:=contextStack.GetStack()[0].(scopeContext)
 	addNativeFuncDeclarations(&ctx)
 	// for _,v := range ctx.functions{
@@ -29,9 +28,9 @@ const TYPE_SCOPE string = "scope"
 const TYPE_CONDITIONAL string = "conditional"
 
 func executeScope(node *parser.TreeNode, ctx *scopeContext) (Reason, *Variable) {
-	debug_info("entered", ctx.scopeType)
+	debug_info("entered", ctx.scopeName)
 	var returnReason Reason = REASON_NATURAL
-	scopeType := strings.Split(ctx.scopeType, "_")[0]
+	scopeType := ctx.scopeTyp
 SCOPE_EXECUTION:
 	for i := range node.Children {
 		child := node.Children[i]
@@ -41,7 +40,7 @@ SCOPE_EXECUTION:
 			ctx.functions[child.Description] = *child
 
 		case "scope":
-			rzn, val := executeScope(child, pushScopeContext(TYPE_SCOPE))
+			rzn, val := executeScope(child, pushScopeContext(TYPE_SCOPE,"simple_scope"))
 			ctx.returnValue = val
 			if rzn != REASON_NATURAL {
 				if rzn == REASON_BREAK {
@@ -67,7 +66,7 @@ SCOPE_EXECUTION:
 				if condition == 0 {
 					continue
 				}
-				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_CONDITIONAL))
+				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_CONDITIONAL,"if-elif"))
 				ctx.returnValue = val
 				if rzn != REASON_NATURAL {
 					if rzn == REASON_BREAK {
@@ -86,7 +85,7 @@ SCOPE_EXECUTION:
 			if child.Properties["else"] == nil || executed{
 				continue SCOPE_EXECUTION
 			}
-			rzn, val := executeScope(child.Properties["else"], pushScopeContext(TYPE_CONDITIONAL))
+			rzn, val := executeScope(child.Properties["else"], pushScopeContext(TYPE_CONDITIONAL,"else"))
 			ctx.returnValue = val
 			if rzn != REASON_NATURAL {
 				if rzn == REASON_BREAK {
@@ -106,7 +105,7 @@ SCOPE_EXECUTION:
 				if num == 0 {
 					break
 				}
-				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP))
+				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP,"lp"))
 				if rzn == REASON_BREAK {
 					break
 				}
@@ -147,7 +146,7 @@ SCOPE_EXECUTION:
 
 	}
 	printMemoryStats()
-	debug_info("exited", ctx.scopeType)
+	debug_info("exited", ctx.scopeName)
 	popScopeContext()
 	return returnReason, ctx.returnValue
 }

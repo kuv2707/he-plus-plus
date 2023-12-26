@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"toylingo/utils"
+
+	"github.com/gofrs/uuid"
 )
 
 func debug_error(k ...interface{}) {
@@ -106,4 +108,9 @@ func numVal(c byte) int {
 	}
 	interrupt("invalid number")
 	return -1
+}
+
+
+func generateId() string {
+	return uuid.Must(uuid.NewV4()).String()
 }

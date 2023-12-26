@@ -77,7 +77,7 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) V
 		case "||":
 			value = getBool(left) || getBool(right)
 		}
-		memaddr := malloc(1, ctx.scopeType, true)
+		memaddr := malloc(1, ctx.scopeId, true)
 		val := int64(0)
 		if value {
 			val = 1
@@ -107,7 +107,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		case "/":
 			value = leftVal / rightVal
 		}
-		memaddr := malloc(8, ctx.scopeType, true)
+		memaddr := malloc(8, ctx.scopeId, true)
 		writeBits(*memaddr, int64(math.Float64bits(value)), 8)
 		return Variable{memaddr, TYPE_NUMBER}
 	} else {
@@ -137,7 +137,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		case "!=":
 			value = leftVal != rightVal
 		}
-		memaddr := malloc(1, ctx.scopeType, true)
+		memaddr := malloc(1, ctx.scopeId, true)
 		val := int64(0)
 		if value {
 			val = 1
@@ -157,7 +157,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 		case "+":
 			return val
 		case "-":
-			memaddr := malloc(8, ctx.scopeType, true)
+			memaddr := malloc(8, ctx.scopeId, true)
 			writeBits(*memaddr, int64(math.Float64bits(-getNumber(val))), 8)
 			return Variable{memaddr, TYPE_NUMBER}
 		default:
@@ -167,7 +167,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 	if val.vartype == "bool" {
 		switch operator {
 		case "!":
-			memaddr := malloc(1, ctx.scopeType, true)
+			memaddr := malloc(1, ctx.scopeId, true)
 			valb := int64(1)
 			if !getBool(val) {
 				valb = 0
@@ -189,11 +189,11 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		return evaluateCompositeDS(node, ctx)
 	}
 	if utils.IsNumber(val) {
-		memaddr := malloc(8, ctx.scopeType, true)
+		memaddr := malloc(8,ctx.scopeId, true)
 		writeBits(*memaddr, int64(math.Float64bits(StringToNumber(val))), 8)
 		return Variable{memaddr, TYPE_NUMBER}
 	} else if utils.IsBoolean(val) {
-		memaddr := malloc(1, ctx.scopeType, true)
+		memaddr := malloc(1,ctx.scopeId, true)
 		boolnum := 0
 		if utils.StringToBoolean(val) {
 			boolnum = 1
@@ -202,9 +202,10 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
 		if v, exists := ctx.variables[val]; exists {
-			copy := copyVariable(v, ctx.scopeType)
+			copy := copyVariable(v, ctx.scopeId)
 			return copy
 		} else {
+			LineNo = node.LineNo
 			interrupt("variable " + val + " does not exist in current scope")
 		}
 	}
@@ -217,7 +218,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	if !exists {
 		interrupt("function " + node.Description + " does not exist in current scope")
 	}
-	newCtx := pushScopeContext(TYPE_FUNCTION)
+	newCtx := pushScopeContext(TYPE_FUNCTION,node.Description)
 	lastValidLine := LineNo
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
@@ -232,11 +233,15 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 		newCtx.variables[argName] = argValue
 	}
 	debug_info("calling", funcNode.Description)
-	nfunc, exists := nativeFunctions[funcNode.Description]
-	if !exists {
-		executeScope(funcNode.Properties["body"], newCtx)
-	} else {
+	nfunc, nfexists := nativeFunctions[funcNode.Description]
+	body,bexists:=funcNode.Properties["body"]
+	if bexists {
+		executeScope(body, newCtx)
+	} else if nfexists{
 		nfunc.exec(newCtx)
+		popScopeContext()
+	} else {
+		panic("SEVERE: internal logical error. func definition should have been present in either of the maps")
 	}
 	return newCtx.returnValue
 }

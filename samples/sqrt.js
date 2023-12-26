@@ -1,7 +1,9 @@
 //find k-root of number n by bisection method
-findroot(27,3);
+findroot(readNumber(378),2);
 
-func(n,k)findroot{
+function findroot(n,k){
+    // println(n);
+    // println(k);
     let low=0;
     let high=n;
     let mid=0;    
@@ -16,17 +18,14 @@ func(n,k)findroot{
     }
     print(high);
     
-    func(arg)abs{
+    function abs(arg){
         if arg>=0 {
             return arg;
         }else{
             return 0-arg;
         }
     }
-    func(😶‍🌫️)print{
-        #(😶‍🌫️);
-    }
-    func(a,n)pow{
+    function pow(a,n){
         let ret=1;
         loop n>0 {
             ret=ret*a;

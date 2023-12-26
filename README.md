@@ -69,6 +69,7 @@ But only the expression succeeding the last occurence of a string in an expressi
  
 * 8/9\*18 not evaluated correctly (9*18 evaluated first): 
 operators of same precedence are evaluated right to left instead of left to right
+* cannot leave func args empty
 
 
 
