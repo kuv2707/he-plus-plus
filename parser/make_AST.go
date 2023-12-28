@@ -267,7 +267,9 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 				last = k + 1
 			}
 			if balance == 0 {
-				node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
+				if k > last {
+					node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
+				}
 				break
 			}
 		}

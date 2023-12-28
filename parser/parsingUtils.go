@@ -40,8 +40,16 @@ func expect(tokenType string) {
 // collects tokens till a token of type tokenType is found and consumes but does not include it in returned array
 func collectTill(tokenType string) []lexer.TokenType {
 	tokens := make([]lexer.TokenType, 0)
+	balance := 0
 	for ; i < len(tokensArr); i++ {
-		if tokensArr[i].Type == tokenType {
+		//todo balanced brackets
+		// if utils.IsOpenBracket(tokensArr[i].Ref){
+		// 	balance++
+		// }
+		// if utils.IsCloseBracket(tokensArr[i].Ref){
+		// 	balance--
+		// }
+		if tokensArr[i].Type == tokenType && balance == 0 {
 			break
 		}
 		tokens = append(tokens, tokensArr[i])
