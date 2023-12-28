@@ -104,6 +104,11 @@ func popScopeContext() {
 
 }
 
+func getScopeContext(depth int)scopeContext{
+	return contextStack.Get(contextStack.Len()-1-depth).(scopeContext)
+
+}
+
 func printStackTrace() {
 	s:=contextStack.GetStack()
 	for i := range s {

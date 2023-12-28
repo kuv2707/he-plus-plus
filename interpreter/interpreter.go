@@ -138,6 +138,7 @@ SCOPE_EXECUTION:
 			expr := evaluateExpression(child.Children[0], ctx)
 			expr.pointer.temp = false
 			ctx.returnValue = &expr
+			debug_info("return value is",expr.pointer)
 			returnReason = REASON_RETURN
 			break SCOPE_EXECUTION
 		default:

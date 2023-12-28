@@ -189,11 +189,11 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		return evaluateCompositeDS(node, ctx)
 	}
 	if utils.IsNumber(val) {
-		memaddr := malloc(8,ctx.scopeId, true)
+		memaddr := malloc(8, ctx.scopeId, true)
 		writeBits(*memaddr, int64(math.Float64bits(StringToNumber(val))), 8)
 		return Variable{memaddr, TYPE_NUMBER}
 	} else if utils.IsBoolean(val) {
-		memaddr := malloc(1,ctx.scopeId, true)
+		memaddr := malloc(1, ctx.scopeId, true)
 		boolnum := 0
 		if utils.StringToBoolean(val) {
 			boolnum = 1
@@ -218,7 +218,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	if !exists {
 		interrupt("function " + node.Description + " does not exist in current scope")
 	}
-	newCtx := pushScopeContext(TYPE_FUNCTION,node.Description)
+	newCtx := pushScopeContext(TYPE_FUNCTION, node.Description)
 	lastValidLine := LineNo
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
@@ -230,20 +230,27 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 		lastValidLine = argNode.LineNo
 		argValue := evaluateExpression(argNode, newCtx)
 		argValue.pointer.temp = false
+		argValue.pointer.scopeId = newCtx.scopeId
 		newCtx.variables[argName] = argValue
 	}
 	debug_info("calling", funcNode.Description)
 	nfunc, nfexists := nativeFunctions[funcNode.Description]
-	body,bexists:=funcNode.Properties["body"]
+	body, bexists := funcNode.Properties["body"]
 	if bexists {
 		executeScope(body, newCtx)
-	} else if nfexists{
+	} else if nfexists {
 		nfunc.exec(newCtx)
 		popScopeContext()
 	} else {
 		panic("SEVERE: internal logical error. func definition should have been present in either of the maps")
 	}
-	return newCtx.returnValue
+	var ret Variable = Variable{}
+	//fix to the memory leak bug
+	if newCtx.returnValue != nil {
+		ret=copyVariable(*newCtx.returnValue,ctx.scopeId)
+		freePtr(newCtx.returnValue.pointer)
+	}
+	return &ret
 }
 
 func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
