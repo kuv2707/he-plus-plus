@@ -37,12 +37,22 @@ func malloc(size int, scid string, temp bool) *Pointer {
 }
 
 func freePtr(ptr *Pointer) {
+	if pointers[ptr.address] == nil {
+		return
+	}
 	delete(pointers, ptr.address)
 	for i := ptr.address; i < ptr.address+ptr.size; i++ {
 		reserved[i] = false
 		HEAP[i] = 0
 	}
 	debug_info("freed", ptr.size, "bytes at", ptr.address, "for", ptr.scopeId)
+}
+
+func heapSlice(start int, size int) []byte {
+	if start+size > MEMSIZE {
+		interrupt("invalid heap slice access")
+	}
+	return HEAP[start : start+size]
 }
 
 func freeAll() {

@@ -33,7 +33,7 @@ func maxIndex() int {
 
 func expect(tokenType string) {
 	if tokensArr[i].Type != tokenType {
-		panic("unexpected token" + tokensArr[i].Type + " " + tokensArr[i].Ref + " expected " + tokenType)
+		panic("unexpected token " + tokensArr[i].Ref + " " + tokensArr[i].Ref + " expected " + tokenType)
 	}
 }
 

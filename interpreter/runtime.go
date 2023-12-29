@@ -10,20 +10,21 @@ import (
 )
 
 var type_sizes = map[string]int{
-	TYPE_NUMBER: 8,
-	TYPE_CHAR:   1,
-	TYPE_BOOLEAN:   1,
+	TYPE_NUMBER:  8,
+	TYPE_CHAR:    1,
+	TYPE_BOOLEAN: 1,
+	TYPE_POINTER: 4,
 }
 var LineNo = -1
 
 // returns new variable with pointer to different address but same value is stored in both addresses
 func copyVariable(variable Variable, sid string) Variable {
 	addr := malloc(variable.pointer.size, sid, true)
-	writeBits(*addr, int64(math.Float64bits(getValue(variable))), variable.pointer.size)
+	writeBits(*addr, heapSlice(variable.pointer.address, variable.pointer.size))
 	return Variable{addr, variable.vartype}
 }
 
-//returns the number equivalent of the variable
+// returns the number equivalent of the variable
 func getValue(variable Variable) float64 {
 	switch variable.vartype {
 	case TYPE_NUMBER:
@@ -31,21 +32,31 @@ func getValue(variable Variable) float64 {
 	// case "char":
 	// 	return getChar(variable)
 	case TYPE_BOOLEAN:
-		b:= getBool(variable)
+		b := getBool(variable)
 		if b {
 			return 1
 		}
 		return 0
+	//DOUBT: shouldnt expose pointer like this right? just return 0
+	case TYPE_ARRAY:
+		return float64(variable.pointer.address)
 	}
+
 	interrupt("invalid variable type " + variable.vartype)
 	return 0
 }
 
 //todo:accept a byte array as value
-func writeBits(ptr Pointer, value int64, size int) {
-	for i := 0; i < size; i++ {
-		HEAP[ptr.address+i] = byte(value & 0xFF)
-		value = value >> 8
+func writeBits(ptr Pointer, value []byte) {
+	validatePointer(ptr)
+	for i := range value {
+		HEAP[ptr.address+i] = value[i]
+	}
+}
+
+func unsafeWriteBits(ptr int, value []byte) {
+	for i := range value {
+		HEAP[ptr+i] = value[i]
 	}
 }
 
@@ -57,8 +68,28 @@ func getNumber(variable Variable) float64 {
 	validatePointer(*ptr)
 	// Take 8 bytes from HEAP starting at ptr.address and convert to float64
 	bytes := HEAP[ptr.address : ptr.address+8]
-	parsedFloat := math.Float64frombits(binary.LittleEndian.Uint64(bytes))
+	parsedFloat := byteArrayToFloat64(bytes)
 	return parsedFloat
+}
+
+func byteArrayToFloat64(bytes []byte) float64 {
+	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
+}
+
+func byteArrayToPointer(bytes []byte) int {
+	return int(binary.LittleEndian.Uint32(bytes))
+}
+
+func numberByteArray(value float64) []byte {
+	bytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bytes, math.Float64bits(value))
+	return bytes
+}
+
+func pointerByteArray(value int) []byte {
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, uint32(value))
+	return bytes
 }
 
 func getBool(variable Variable) bool {
@@ -69,10 +100,12 @@ func getBool(variable Variable) bool {
 	return parsedBool
 }
 
+
+
 var contextStack = utils.MakeStack()
 
 func pushScopeContext(scopetype string, scopename string) *scopeContext {
-	ctx := scopeContext{generateId(),scopetype,scopename, make(map[string]Variable), make(map[string]parser.TreeNode), nil}
+	ctx := scopeContext{generateId(), scopetype, scopename, make(map[string]Variable), make(map[string]parser.TreeNode), nil}
 	if contextStack.IsEmpty() {
 		contextStack.Push(ctx)
 		return &ctx
@@ -96,7 +129,7 @@ func popScopeContext() {
 	for k, v := range ctx.variables {
 		// debug_error("freeing?", k, v, "in", ctx.scopeType)
 		if v.pointer.scopeId == ctx.scopeId {
-			debug_info("freeing", k, v.pointer,v.vartype, "in", ctx.scopeName)
+			debug_info("freeing", k, v.pointer, v.vartype, "in", ctx.scopeName)
 			freePtr(v.pointer)
 		}
 	}
@@ -104,13 +137,13 @@ func popScopeContext() {
 
 }
 
-func getScopeContext(depth int)scopeContext{
-	return contextStack.Get(contextStack.Len()-1-depth).(scopeContext)
+func getScopeContext(depth int) scopeContext {
+	return contextStack.Get(contextStack.Len() - 1 - depth).(scopeContext)
 
 }
 
 func printStackTrace() {
-	s:=contextStack.GetStack()
+	s := contextStack.GetStack()
 	for i := range s {
 		fmt.Println(s[len(s)-1-i].(scopeContext).scopeName)
 	}

@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"math"
 	"toylingo/parser"
 	"toylingo/utils"
 )
@@ -57,7 +56,7 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	val, alreadyExists := ctx.variables[variableName]
 	if alreadyExists {
 		//todo: make a function to copy value from one pointer to another: memcpy
-		writeBits(*val.pointer, int64(math.Float64bits(getValue(variableValue))), 8)
+		writeBits(*val.pointer, numberByteArray(getNumber(variableValue)))
 		return val
 	}
 	ctx.variables[variableName] = variableValue
@@ -77,12 +76,12 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) V
 		case "||":
 			value = getBool(left) || getBool(right)
 		}
-		memaddr := malloc(1, ctx.scopeId, true)
-		val := int64(0)
+		memaddr := malloc(type_sizes[TYPE_BOOLEAN], ctx.scopeId, true)
+		var val byte = 0
 		if value {
 			val = 1
 		}
-		writeBits(*memaddr, val, 1)
+		writeBits(*memaddr, []byte{val})
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
 		interrupt("invalid operands to binary operator " + operator)
@@ -107,8 +106,8 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		case "/":
 			value = leftVal / rightVal
 		}
-		memaddr := malloc(8, ctx.scopeId, true)
-		writeBits(*memaddr, int64(math.Float64bits(value)), 8)
+		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+		writeBits(*memaddr, numberByteArray(value))
 		return Variable{memaddr, TYPE_NUMBER}
 	} else {
 		interrupt("invalid operands to binary operator " + operator)
@@ -137,12 +136,12 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		case "!=":
 			value = leftVal != rightVal
 		}
-		memaddr := malloc(1, ctx.scopeId, true)
-		val := int64(0)
+		memaddr := malloc(type_sizes[TYPE_BOOLEAN], ctx.scopeId, true)
+		var val byte = 0
 		if value {
 			val = 1
 		}
-		writeBits(*memaddr, val, 8)
+		writeBits(*memaddr, []byte{val})
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
 		interrupt("invalid operands to binary operator " + operator)
@@ -157,8 +156,8 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 		case "+":
 			return val
 		case "-":
-			memaddr := malloc(8, ctx.scopeId, true)
-			writeBits(*memaddr, int64(math.Float64bits(-getNumber(val))), 8)
+			memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+			writeBits(*memaddr, numberByteArray(-getNumber(val)))
 			return Variable{memaddr, TYPE_NUMBER}
 		default:
 			interrupt("invalid unary operator " + operator)
@@ -167,12 +166,12 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 	if val.vartype == "bool" {
 		switch operator {
 		case "!":
-			memaddr := malloc(1, ctx.scopeId, true)
-			valb := int64(1)
+			memaddr := malloc(type_sizes[TYPE_BOOLEAN], ctx.scopeId, true)
+			var valb byte = 1
 			if !getBool(val) {
 				valb = 0
 			}
-			writeBits(*memaddr, valb, 1)
+			writeBits(*memaddr, []byte{valb})
 			return Variable{memaddr, TYPE_BOOLEAN}
 		default:
 			interrupt("invalid unary operator " + operator)
@@ -189,19 +188,22 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		return evaluateCompositeDS(node, ctx)
 	}
 	if utils.IsNumber(val) {
-		memaddr := malloc(8, ctx.scopeId, true)
-		writeBits(*memaddr, int64(math.Float64bits(StringToNumber(val))), 8)
+		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+		writeBits(*memaddr, numberByteArray(StringToNumber(val)))
 		return Variable{memaddr, TYPE_NUMBER}
 	} else if utils.IsBoolean(val) {
-		memaddr := malloc(1, ctx.scopeId, true)
-		boolnum := 0
+		memaddr := malloc(type_sizes[TYPE_BOOLEAN], ctx.scopeId, true)
+		var boolnum byte = 0
 		if utils.StringToBoolean(val) {
 			boolnum = 1
 		}
-		writeBits(*memaddr, int64(boolnum), 1)
+		writeBits(*memaddr, []byte{boolnum})
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
 		if v, exists := ctx.variables[val]; exists {
+			if v.vartype == TYPE_ARRAY {
+				return v
+			}
 			copy := copyVariable(v, ctx.scopeId)
 			return copy
 		} else {
@@ -247,23 +249,37 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 	var ret Variable = Variable{}
 	//fix to the memory leak bug
 	if newCtx.returnValue != nil {
-		ret=copyVariable(*newCtx.returnValue,ctx.scopeId)
+		ret = copyVariable(*newCtx.returnValue, ctx.scopeId)
 		freePtr(newCtx.returnValue.pointer)
 	}
 	return &ret
 }
 
 func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
-	// switch node.Description{
-	// case "array":
-	// 	return evaluateArray(node, ctx)
-	// }
+	switch node.Description {
+	case "array":
+		return evaluateArray(node, ctx)
+	}
 	panic("invalid composite data structure")
 
 }
 
-//returns a Variable with pointer to an array
-// func evaluateArray(node parser.TreeNode, ctx *scopeContext) Variable {
-// 	len:=len(node.Children)
+// returns a Variable with pointer to an array
+// the arrangement of an array variable is as follows:
+// 1. the first 8 bytes contain the length of the array
+// 2. the next 8*n bytes contain the pointer to the first element of the array, or actual elements if it is a primitive
 
-// }
+func evaluateArray(node parser.TreeNode, ctx *scopeContext) Variable {
+	len := len(node.Children)
+	memaddr := malloc(type_sizes[TYPE_POINTER]*len+ type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+	addr:=memaddr.address
+	unsafeWriteBits(addr, numberByteArray(float64(len)))
+	addr+=type_sizes[TYPE_NUMBER]
+	for i:=range node.Children{
+		val := evaluateExpression(node.Children[i], ctx)
+		val.pointer.temp = false
+		unsafeWriteBits(addr, pointerByteArray(val.pointer.address))
+		addr+=type_sizes[TYPE_POINTER]
+	}
+	return Variable{memaddr, TYPE_ARRAY}
+}

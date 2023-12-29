@@ -2,9 +2,14 @@ package interpreter
 
 import "toylingo/parser"
 
+//primitive
 var TYPE_NUMBER = "number"
-var TYPE_CHAR = "char"
+var TYPE_CHAR = "char"//unused for now
 var TYPE_BOOLEAN = "bool"
+var TYPE_POINTER = "pointer"
+
+//composite
+var TYPE_ARRAY = "array"
 
 type Reason string
 

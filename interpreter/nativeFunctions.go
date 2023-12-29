@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"math"
 	"toylingo/parser"
 	"toylingo/utils"
 )
@@ -65,25 +64,38 @@ func addNativeFuncDeclarations(ctx *scopeContext) {
 
 func nativePrint(ctx *scopeContext) Variable {
 	value := ctx.variables["a"]
+	switch value.vartype {
+	case TYPE_POINTER:
+		interrupt("cannot print pointer")
+	case TYPE_ARRAY:
+		return nativePrintArray(ctx, value)
+	}
+
 	val := getValue(value)
-	if value.vartype == TYPE_NUMBER {
-		fmt.Print(utils.Colors["CYAN"], val, utils.Colors["RESET"])
-	} else if value.vartype == "bool" {
+	switch value.vartype {
+	case TYPE_BOOLEAN:
 		if getBool(value) {
 			fmt.Print(utils.Colors["GREEN"], "true", utils.Colors["RESET"])
 		} else {
 			fmt.Print(utils.Colors["RED"], "false", utils.Colors["RESET"])
 		}
-	} else if value.vartype == "char" {
+	case TYPE_NUMBER:
+		printNumber(val)
+	case TYPE_CHAR:
 		fmt.Print(utils.Colors["WHITE"], string(int(val)), utils.Colors["RESET"])
-	} else {
+	default:
 		fmt.Print(utils.Colors["WHITE"], val, utils.Colors["RESET"])
+
 	}
 	return value
 
 }
+func printNumber(val float64) {
+	fmt.Print(utils.Colors["WHITE"], val, utils.Colors["RESET"])
+}
+
 func nativePrintln(ctx *scopeContext) Variable {
-	v:=nativePrint(ctx)
+	v := nativePrint(ctx)
 	fmt.Print("\n")
 	return v
 }
@@ -91,10 +103,29 @@ func nativePrintln(ctx *scopeContext) Variable {
 func nativeReadNumber(ctx *scopeContext) Variable {
 	var value float64
 	fmt.Scan(&value)
-	// fmt.Println("in scope", ctx.scopeType+ctx.scopeName)
-	memaddr := malloc(8, ctx.scopeId, false)
-	writeBits(*memaddr, int64(math.Float64bits(value)), 8)
-	v:= Variable{memaddr, TYPE_NUMBER}
-	ctx.returnValue=&v
+	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, false)
+	writeBits(*memaddr, numberByteArray(value))
+	v := Variable{memaddr, TYPE_NUMBER}
+	ctx.returnValue = &v
 	return v
+}
+
+func nativePrintArray(ctx *scopeContext, arrvar Variable) Variable {
+	a := heapSlice(arrvar.pointer.address, type_sizes[TYPE_NUMBER])
+	size := byteArrayToFloat64(a)
+	addr := arrvar.pointer.address
+	fmt.Print(utils.Colors["BOLDBLUE"] + "[ " + utils.Colors["RESET"])
+	addr += type_sizes[TYPE_NUMBER]
+	for i := 1; i <= int(size); i++ {
+		ptr := byteArrayToPointer(heapSlice(addr, type_sizes[TYPE_POINTER]))
+		//todo: somehow retrieve the type of variable pointed to by the pointer ptr - currently assuming number
+		num := byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
+		printNumber(num)
+		if i != int(size) {
+			fmt.Print(", ")
+		}
+		addr += type_sizes[TYPE_POINTER]
+	}
+	fmt.Print(utils.Colors["BOLDBLUE"] + " ]" + utils.Colors["RESET"])
+	return arrvar
 }

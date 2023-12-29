@@ -1,7 +1,7 @@
 //find k-root of number n by bisection method
 findroot(readNumber(),2);
 
-function findroot(n,k){
+function findroot (n,k){
     // println(n);
     // println(k);
     let low=0;
@@ -22,7 +22,7 @@ function findroot(n,k){
         if arg>=0 {
             return arg;
         }else{
-            return 0-arg;
+            return -arg;
         }
     }
     function pow(a,n){
