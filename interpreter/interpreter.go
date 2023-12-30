@@ -125,6 +125,8 @@ SCOPE_EXECUTION:
 				}
 			}
 		case "operator":
+			fallthrough
+		case "primary":
 			evaluateExpressionClean(child, ctx)
 		case "call":
 

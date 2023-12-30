@@ -183,7 +183,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 
 func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 	val := node.Description
-	if len(node.Children) > 0 {
+	if len(node.Children) > 0 || len(node.Properties) > 0 {
 		//func call or array or object
 		return evaluateCompositeDS(node, ctx)
 	}
@@ -202,6 +202,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 	} else {
 		if v, exists := ctx.variables[val]; exists {
 			if v.vartype == TYPE_ARRAY {
+				//leads to array being freed twice
 				return v
 			}
 			copy := copyVariable(v, ctx.scopeId)
@@ -259,6 +260,8 @@ func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
 	switch node.Description {
 	case "array":
 		return evaluateArray(node, ctx)
+	case "index":
+		return evaluateArrayIndex(node, ctx)
 	}
 	panic("invalid composite data structure")
 
@@ -271,15 +274,33 @@ func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
 
 func evaluateArray(node parser.TreeNode, ctx *scopeContext) Variable {
 	len := len(node.Children)
-	memaddr := malloc(type_sizes[TYPE_POINTER]*len+ type_sizes[TYPE_NUMBER], ctx.scopeId, true)
-	addr:=memaddr.address
+	memaddr := malloc(type_sizes[TYPE_POINTER]*len+type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+	addr := memaddr.address
 	unsafeWriteBits(addr, numberByteArray(float64(len)))
-	addr+=type_sizes[TYPE_NUMBER]
-	for i:=range node.Children{
+	addr += type_sizes[TYPE_NUMBER]
+	for i := range node.Children {
 		val := evaluateExpression(node.Children[i], ctx)
 		val.pointer.temp = false
 		unsafeWriteBits(addr, pointerByteArray(val.pointer.address))
-		addr+=type_sizes[TYPE_POINTER]
+		addr += type_sizes[TYPE_POINTER]
 	}
 	return Variable{memaddr, TYPE_ARRAY}
+}
+
+func evaluateArrayIndex(node parser.TreeNode, ctx *scopeContext) Variable {
+	// printVariableList(ctx.variables)
+	array, yes := ctx.variables[node.Properties["array"].Description]
+	if !yes {
+		interrupt("array " + node.Properties["array"].Description + " does not exist in current scope")
+	}
+	index := getNumber(evaluateExpression(node.Properties["index"], ctx))
+	size := byteArrayToFloat64(heapSlice(array.pointer.address, type_sizes[TYPE_NUMBER]))
+	if index >= size {
+		interrupt("array index", index, " out of bounds for length", size)
+	}
+	ptr := byteArrayToPointer(heapSlice(array.pointer.address+type_sizes[TYPE_NUMBER]+type_sizes[TYPE_POINTER]*int(index), type_sizes[TYPE_POINTER]))
+	value:= byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
+	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+	writeBits(*memaddr, numberByteArray(value))
+	return Variable{memaddr, TYPE_NUMBER}
 }

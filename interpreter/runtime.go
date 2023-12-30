@@ -100,8 +100,6 @@ func getBool(variable Variable) bool {
 	return parsedBool
 }
 
-
-
 var contextStack = utils.MakeStack()
 
 func pushScopeContext(scopetype string, scopename string) *scopeContext {
@@ -129,12 +127,24 @@ func popScopeContext() {
 	for k, v := range ctx.variables {
 		// debug_error("freeing?", k, v, "in", ctx.scopeType)
 		if v.pointer.scopeId == ctx.scopeId {
-			debug_info("freeing", k, v.pointer, v.vartype, "in", ctx.scopeName)
-			freePtr(v.pointer)
+			if v.vartype == TYPE_ARRAY {
+				freeArrPtr(v.pointer)
+			} else {
+				debug_info("freeing", k, v.pointer, v.vartype, "in", ctx.scopeName)
+				freePtr(v.pointer)
+			}
 		}
 	}
 	//free memory of inScopeVars
 
+}
+
+func freeArrPtr(ptr *Pointer) {
+	for i := type_sizes[TYPE_NUMBER]; i < ptr.size; i += type_sizes[TYPE_POINTER] {
+		p:=byteArrayToPointer(heapSlice(ptr.address+i, type_sizes[TYPE_POINTER]))
+		freePtr(pointers[p])
+	}
+	freePtr(ptr)
 }
 
 func getScopeContext(depth int) scopeContext {

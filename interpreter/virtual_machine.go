@@ -37,6 +37,10 @@ func malloc(size int, scid string, temp bool) *Pointer {
 }
 
 func freePtr(ptr *Pointer) {
+	if ptr == nil {
+		debug_error("freeing nil pointer")
+		return
+	}
 	if pointers[ptr.address] == nil {
 		return
 	}

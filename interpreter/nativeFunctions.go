@@ -63,7 +63,10 @@ func addNativeFuncDeclarations(ctx *scopeContext) {
 }
 
 func nativePrint(ctx *scopeContext) Variable {
-	value := ctx.variables["a"]
+	value,exists := ctx.variables["a"]
+	if !exists {
+		interrupt("missing argument to print in function call print")
+	}
 	switch value.vartype {
 	case TYPE_POINTER:
 		interrupt("cannot print pointer")

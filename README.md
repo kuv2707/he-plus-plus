@@ -41,18 +41,17 @@ loop(boolean_expression){
 
 ## Functions
 Support for functions with return values and arguments
-Arguments come before the function name
 Arguments are passed by value
 All functions in a scope are hoisted to the top of the scope
 
 ```
-func(a,b) add{
+function add(a,b){
     return a+b;
 }
 ```
 function calls also have the inversion of function name and arguments
 ```
-let k=(5,6)add;
+let k=add(5,6);
 ```
 
 
@@ -70,6 +69,12 @@ But only the expression succeeding the last occurence of a string in an expressi
 * 8/9\*18 not evaluated correctly (9*18 evaluated first): 
 operators of same precedence are evaluated right to left instead of left to right
 
+* many bugs in parsing brackets in expressions, like:
+- an array declaration in the arguments of a function call
+```
+print([1,2,3]);
+```
+* original array returned instead of copy when exp is evaluated, so its memory is freed whenever a scope is exited
 
 
 
@@ -78,7 +83,9 @@ operators of same precedence are evaluated right to left instead of left to righ
 
 
 # TODO
+* coalesce Variable and Pointer structs
 * Implement arrays
+ - add index operator a[] and a[][] for multidimensional arrays
 * Implement strings
 * Implement objects
 * comma operator

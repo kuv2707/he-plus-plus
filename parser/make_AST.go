@@ -280,11 +280,13 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 
 	}
 	if tokens[1].Type == "OPEN_SQUARE" {
-		node := makeTreeNode("index", []*TreeNode{parseExpression(tokens[2:len(tokens)-1], 0)}, tokens[0].Ref, tokens[0].LineNo)
-		primNode.Children = append(primNode.Children, node)
+		node := makeTreeNode("primary", []*TreeNode{}, "index", tokens[0].LineNo)
+		node.Properties["array"] = primNode
+		node.Properties["index"] = parseExpression(tokens[2:len(tokens)-1], 0)
 		if tokens[len(tokens)-1].Type != "CLOSE_SQUARE" {
 			panic("syntax error in array index: unclosed square bracket")
 		}
+		return node
 	}
 
 	return primNode
@@ -293,7 +295,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 
 func parseArray(tokens []lexer.TokenType) *TreeNode {
 	arrNode := makeTreeNode("primary", nil, "array", -1)
-	fmt.Println("parsing array", tokens)
+	// fmt.Println("parsing array", tokens)
 	balance := 0
 	last := 0
 	for k := 0; k < len(tokens); k++ {
