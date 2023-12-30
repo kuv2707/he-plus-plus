@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"toylingo/parser"
 	"toylingo/utils"
 
 	"github.com/gofrs/uuid"
@@ -113,4 +114,8 @@ func numVal(c byte) int {
 
 func generateId() string {
 	return uuid.Must(uuid.NewV4()).String()
+}
+
+func isCompositeDS(node parser.TreeNode) bool {
+	return len(node.Children) > 0 || len(node.Properties) > 0
 }

@@ -127,10 +127,10 @@ func popScopeContext() {
 	for k, v := range ctx.variables {
 		// debug_error("freeing?", k, v, "in", ctx.scopeType)
 		if v.pointer.scopeId == ctx.scopeId {
+			debug_info("freeing", k, v.pointer, v.vartype, "in", ctx.scopeName)
 			if v.vartype == TYPE_ARRAY {
 				freeArrPtr(v.pointer)
 			} else {
-				debug_info("freeing", k, v.pointer, v.vartype, "in", ctx.scopeName)
 				freePtr(v.pointer)
 			}
 		}

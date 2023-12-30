@@ -51,6 +51,9 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 }
 
 func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
+	if node.Children[0].Description == "index" {
+		assignToArrayIndex(ctx, node)
+	}
 	variableName := node.Children[0].Description
 	variableValue := evaluateExpression(node.Children[1], ctx)
 	val, alreadyExists := ctx.variables[variableName]
@@ -63,6 +66,24 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	variableValue.pointer.temp = false
 
 	return variableValue
+}
+
+func assignToArrayIndex(ctx *scopeContext, node parser.TreeNode) {
+	arrayVarname:=node.Children[0].Properties["array"].Description
+	arrayVar,exists := ctx.variables[arrayVarname]
+	if !exists {
+		interrupt("array "+arrayVarname+" does not exist in current scope")
+	}
+	indexVar := evaluateExpression(node.Children[0].Properties["index"], ctx)
+	index := getNumber(indexVar)
+	size := byteArrayToFloat64(heapSlice(arrayVar.pointer.address, type_sizes[TYPE_NUMBER]))
+	if index >= size || index < 0 {
+		interrupt("cannot assign to index ", index, " of array ",arrayVarname," of length", size)
+	}
+	newval := evaluateExpression(node.Children[1], ctx)
+	pointerToValueBits := arrayVar.pointer.address + type_sizes[TYPE_NUMBER] + type_sizes[TYPE_POINTER]*int(index)
+	pointerToValue := byteArrayToPointer(heapSlice(pointerToValueBits, type_sizes[TYPE_POINTER]))
+	unsafeWriteBits(pointerToValue, numberByteArray(getNumber(newval)))
 }
 
 func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
@@ -183,7 +204,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 
 func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 	val := node.Description
-	if len(node.Children) > 0 || len(node.Properties) > 0 {
+	if isCompositeDS(node) {
 		//func call or array or object
 		return evaluateCompositeDS(node, ctx)
 	}
@@ -233,7 +254,9 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 		lastValidLine = argNode.LineNo
 		argValue := evaluateExpression(argNode, newCtx)
 		argValue.pointer.temp = false
-		argValue.pointer.scopeId = newCtx.scopeId
+		if argValue.vartype != TYPE_ARRAY {
+			argValue.pointer.scopeId = newCtx.scopeId
+		}
 		newCtx.variables[argName] = argValue
 	}
 	debug_info("calling", funcNode.Description)
@@ -295,11 +318,11 @@ func evaluateArrayIndex(node parser.TreeNode, ctx *scopeContext) Variable {
 	}
 	index := getNumber(evaluateExpression(node.Properties["index"], ctx))
 	size := byteArrayToFloat64(heapSlice(array.pointer.address, type_sizes[TYPE_NUMBER]))
-	if index >= size {
+	if index >= size || index < 0 {
 		interrupt("array index", index, " out of bounds for length", size)
 	}
 	ptr := byteArrayToPointer(heapSlice(array.pointer.address+type_sizes[TYPE_NUMBER]+type_sizes[TYPE_POINTER]*int(index), type_sizes[TYPE_POINTER]))
-	value:= byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
+	value := byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
 	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
 	writeBits(*memaddr, numberByteArray(value))
 	return Variable{memaddr, TYPE_NUMBER}

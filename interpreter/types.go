@@ -13,6 +13,12 @@ var TYPE_ARRAY = "array"
 
 type Reason string
 
+type Pointer struct {
+	address int
+	size    int
+	scopeId string
+	temp    bool
+}
 type Variable struct {
 	pointer *Pointer
 	vartype string
@@ -34,9 +40,3 @@ type scopeContext struct {
 	returnValue *Variable
 }
 
-type Pointer struct {
-	address int
-	size    int
-	scopeId string
-	temp    bool
-}
