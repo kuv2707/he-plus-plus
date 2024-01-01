@@ -1,4 +1,0 @@
-function dd(){
-
-}
-println(dd());

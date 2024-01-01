@@ -41,9 +41,7 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 	case "primary":
 		return evaluatePrimary(*node, ctx)
 	case "call":
-		fmt.Println("calling function", node.Description)
 		ret := evaluateFuncCall(*node, ctx)
-		fmt.Println("return value is", ret)
 		if ret.pointer == nil {
 			interrupt("function " + node.Description + " does not return a value but is expected to")
 		}

@@ -75,11 +75,12 @@ operators of same precedence are evaluated right to left instead of left to righ
 print([1,2,3]);
 ```
 * original array returned instead of copy when exp is evaluated, so its memory is freed whenever a scope is exited
+* unassigned array is not cleaned up when scope is exited
 
 
 
 # Notes
-* Unassigned array and object declarations will not even be executed
+
 
 
 # TODO
