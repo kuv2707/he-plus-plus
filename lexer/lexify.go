@@ -96,6 +96,14 @@ func Lexify(path string) *Node {
 			node.Val.Ref = node.Val.Ref + node.Next.Val.Ref
 			node.Next = node.Next.Next
 		}
+		if node.Val.Ref == "+" && node.Next != nil && node.Next.Val.Ref == "+" {
+			node.Val.Ref = "++"
+			node.Next = node.Next.Next
+		}
+		if node.Val.Ref == "-" && node.Next != nil && node.Next.Val.Ref == "-" {
+			node.Val.Ref = "--"
+			node.Next = node.Next.Next
+		}
 	}
 
 	//replace placeholder for strings

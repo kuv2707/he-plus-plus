@@ -166,7 +166,7 @@ var precedence = [][]string{
 	{"==", "!=", "<", ">", "<=", ">="},
 	{"+", "-"},
 	{"*", "/"},
-	{"!", "-", "#"},
+	{"!", "-", "#","++","--"},
 }
 
 func parseExpression(tokens []lexer.TokenType, rank int) *TreeNode {

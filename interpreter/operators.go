@@ -7,6 +7,7 @@ import (
 )
 
 func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
+	LineNo = node.LineNo
 	if node.Label == "literal" {
 		return evaluatePrimary(node, ctx)
 	}
@@ -23,7 +24,7 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 		return evaluateAssignment(ctx, node)
 	} else if utils.IsOneOf(node.Description, []string{"&&", "||"}) {
 		return evaluateLogical(ctx, node, node.Description)
-	} else if node.Description == "!" {
+	} else if utils.IsOneOf(node.Description, []string{"++", "--", "!"}) {
 		return evaluateUnary(node, ctx, node.Description)
 	}
 	interrupt("invalid operator " + node.Description)
@@ -31,6 +32,7 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
 }
 
 func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
+	LineNo = node.LineNo
 	switch node.Label {
 	case "operator":
 		return evaluateOperator(*node, ctx)
@@ -39,11 +41,13 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 	case "primary":
 		return evaluatePrimary(*node, ctx)
 	case "call":
+		fmt.Println("calling function", node.Description)
 		ret := evaluateFuncCall(*node, ctx)
-		if ret == nil {
+		fmt.Println("return value is", ret)
+		if ret.pointer == nil {
 			interrupt("function " + node.Description + " does not return a value but is expected to")
 		}
-		return *ret
+		return ret
 	default:
 		node.PrintTree("->")
 		panic("invalid expression " + node.Label)
@@ -52,7 +56,7 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) Variable {
 
 func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	if node.Children[0].Description == "index" {
-		assignToArrayIndex(ctx, node)
+		return assignToArrayIndex(ctx, node)
 	}
 	variableName := node.Children[0].Description
 	variableValue := evaluateExpression(node.Children[1], ctx)
@@ -68,22 +72,23 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	return variableValue
 }
 
-func assignToArrayIndex(ctx *scopeContext, node parser.TreeNode) {
-	arrayVarname:=node.Children[0].Properties["array"].Description
-	arrayVar,exists := ctx.variables[arrayVarname]
+func assignToArrayIndex(ctx *scopeContext, node parser.TreeNode) Variable {
+	arrayVarname := node.Children[0].Properties["array"].Description
+	arrayVar, exists := ctx.variables[arrayVarname]
 	if !exists {
-		interrupt("array "+arrayVarname+" does not exist in current scope")
+		interrupt("array " + arrayVarname + " does not exist in current scope")
 	}
 	indexVar := evaluateExpression(node.Children[0].Properties["index"], ctx)
 	index := getNumber(indexVar)
 	size := byteArrayToFloat64(heapSlice(arrayVar.pointer.address, type_sizes[TYPE_NUMBER]))
 	if index >= size || index < 0 {
-		interrupt("cannot assign to index ", index, " of array ",arrayVarname," of length", size)
+		interrupt("cannot assign to index ", index, " of array ", arrayVarname, " of length", size)
 	}
 	newval := evaluateExpression(node.Children[1], ctx)
 	pointerToValueBits := arrayVar.pointer.address + type_sizes[TYPE_NUMBER] + type_sizes[TYPE_POINTER]*int(index)
 	pointerToValue := byteArrayToPointer(heapSlice(pointerToValueBits, type_sizes[TYPE_POINTER]))
 	unsafeWriteBits(pointerToValue, numberByteArray(getNumber(newval)))
+	return newval
 }
 
 func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
@@ -171,6 +176,23 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 }
 
 func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Variable {
+	pm := 1.0
+	switch operator {
+	case "--":
+		pm = -1
+		fallthrough
+	case "++":
+		varname := node.Children[0].Description
+		varval, exists := ctx.variables[varname]
+		if !exists {
+			interrupt("cannot increment variable " + varname + " as it does not exist in current scope")
+		}
+		if varval.vartype != TYPE_NUMBER {
+			interrupt("cannot increment variable " + varname + " as it is not a number")
+		}
+		writeBits(*varval.pointer, numberByteArray(getNumber(varval)+pm)) //todo: maybe optimize?
+		return varval
+	}
 	val := evaluateExpression(node.Children[0], ctx)
 	if val.vartype == TYPE_NUMBER {
 		switch operator {
@@ -180,6 +202,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) Var
 			memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
 			writeBits(*memaddr, numberByteArray(-getNumber(val)))
 			return Variable{memaddr, TYPE_NUMBER}
+
 		default:
 			interrupt("invalid unary operator " + operator)
 		}
@@ -236,7 +259,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 	return Variable{}
 }
 
-func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
+func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) Variable {
 
 	funcNode, exists := ctx.functions[node.Description]
 	if !exists {
@@ -276,7 +299,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Variable {
 		ret = copyVariable(*newCtx.returnValue, ctx.scopeId)
 		freePtr(newCtx.returnValue.pointer)
 	}
-	return &ret
+	return ret
 }
 
 func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
