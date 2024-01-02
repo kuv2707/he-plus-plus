@@ -76,6 +76,8 @@ print([1,2,3]);
 ```
 * original array returned instead of copy when exp is evaluated, so its memory is freed whenever a scope is exited
 * unassigned array is not cleaned up when scope is exited
+* empty array declaration crashes interpreter
+* line numbers in error messages are not correct sometimes
 
 
 
@@ -91,3 +93,4 @@ print([1,2,3]);
 * Implement objects
 * comma operator
 * implement template strings
+* implement module system

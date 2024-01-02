@@ -83,9 +83,10 @@ func assignToArrayIndex(ctx *scopeContext, node parser.TreeNode) Variable {
 		interrupt("cannot assign to index ", index, " of array ", arrayVarname, " of length", size)
 	}
 	newval := evaluateExpression(node.Children[1], ctx)
+	newval.pointer.temp = false
 	pointerToValueBits := arrayVar.pointer.address + type_sizes[TYPE_NUMBER] + type_sizes[TYPE_POINTER]*int(index)
-	pointerToValue := byteArrayToPointer(heapSlice(pointerToValueBits, type_sizes[TYPE_POINTER]))
-	unsafeWriteBits(pointerToValue, numberByteArray(getNumber(newval)))
+	freePtr(pointers[byteArrayToPointer(heapSlice(pointerToValueBits, type_sizes[TYPE_POINTER]))])
+	unsafeWriteBits(pointerToValueBits, pointerByteArray(newval.pointer.address))
 	return newval
 }
 
