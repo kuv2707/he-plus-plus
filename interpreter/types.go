@@ -7,6 +7,7 @@ var TYPE_NUMBER = "number"
 var TYPE_CHAR = "char"//unused for now
 var TYPE_BOOLEAN = "bool"
 var TYPE_POINTER = "pointer"
+var TYPE_STRING = "string"
 
 //composite
 var TYPE_ARRAY = "array"

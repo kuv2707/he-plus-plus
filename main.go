@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 	"toylingo/interpreter"
 	"toylingo/lexer"
 	"toylingo/parser"
@@ -15,7 +16,7 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		panic("Error loading .env file. Make sure you have a .env file in the root directory in the format specified in the .env.example file")
 	}
-	var tokens *lexer.Node = lexer.Lexify("./samples/"+os.Getenv("SOURCE_FILE"))
+	var tokens *lexer.Node = lexer.Lexify("./samples/" + os.Getenv("SOURCE_FILE"))
 	tokens = tokens.Next
 	if os.Getenv("DEBUG_LEXER") == "1" {
 		PrintLexemes(tokens)
@@ -40,6 +41,8 @@ func PrintLexemes(tokens *lexer.Node) {
 
 func StartInterpreting(treeNode *parser.TreeNode) {
 	fmt.Println(utils.Colors["BOLDYELLOW"] + "starting execution" + utils.Colors["RESET"])
+	startTime := time.Now().UnixMilli()
 	interpreter.Interpret(treeNode)
-	fmt.Println("\n" + utils.Colors["BOLDYELLOW"] + "execution complete" + utils.Colors["RESET"])
+	endTime := time.Now().UnixMilli()
+	fmt.Println("\n" + utils.Colors["BOLDYELLOW"] + "execution completed in " + fmt.Sprint(endTime-startTime) + "ms" + utils.Colors["RESET"])
 }

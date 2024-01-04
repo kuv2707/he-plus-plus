@@ -5,7 +5,7 @@ let b=[0,0,0,0];
 b[1]=90;
 let i=0;
 loop i<len(b){
-    (b[i]=random());
+    (b[i]=random()*10);
     ++i;
 }
 i=0;

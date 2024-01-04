@@ -1,6 +1,6 @@
 //find k-root of number n by bisection method
-findroot(readNumber(),2);
-
+// findroot(readNumber("Enter a number:"),2);
+findroot(1600,2);
 function findroot (n,k){
     // println(n);
     // println(k);
@@ -16,7 +16,8 @@ function findroot (n,k){
             low=mid;
         }
     }
-    print(high);
+    print("The square root is:");
+    println(high);
     
     function abs(arg){
         if arg>=0 {

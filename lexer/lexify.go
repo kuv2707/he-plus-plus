@@ -34,11 +34,11 @@ func Lexify(path string) *Node {
 	stringliterals := make([]string, 0)
 	//placeholder for strings
 	for i := 0; i < len(filecontent); i++ {
-		if filecontent[i] == '`' {
+		if utils.InQuotes(string(filecontent[i])) {
 			for j := i + 1; j < len(filecontent); j++ {
-				if filecontent[j] == '`' {
+				if filecontent[j] == filecontent[i] {
 					str := string(filecontent[i : j+1])
-
+					filecontent = bytes.ReplaceAll(filecontent, []byte(str), []byte(" __STR__ "))
 					stringliterals = append(stringliterals, str)
 					i = j + 1
 					break
@@ -63,7 +63,7 @@ func Lexify(path string) *Node {
 
 	// fmt.Println(string(filecontent))
 	// fmt.Println(stringliterals)
-	tokens := &Node{TokenType{"start", "",0}, nil}
+	tokens := &Node{TokenType{"start", "", 0}, nil}
 	ret := tokens
 	temp := ""
 	for i := 0; i < len(filecontent); i++ {
@@ -112,7 +112,7 @@ func Lexify(path string) *Node {
 		if node.Val.Type == "IDENTIFIER" && node.Val.Ref == "__STR__" {
 			node.Val.Ref = utils.ParseEscapeSequence(stringliterals[count])
 			count++
-			node.Val.Type = "STRING_LITERAL"
+			node.Val.Type = "STRING"
 		}
 	}
 

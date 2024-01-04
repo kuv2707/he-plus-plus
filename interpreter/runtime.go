@@ -39,6 +39,8 @@ func getValue(variable Variable) float64 {
 		return 0
 	//DOUBT: shouldnt expose pointer like this right? just return 0
 	case TYPE_ARRAY:
+		fallthrough
+	case TYPE_STRING:
 		return float64(variable.pointer.address)
 	}
 
@@ -84,6 +86,15 @@ func numberByteArray(value float64) []byte {
 	bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bytes, math.Float64bits(value))
 	return bytes
+}
+
+func stringByteArray(value string) []byte {
+	bytes := []byte(value)
+	return bytes
+}
+
+func byteArrayString(value []byte) string {
+	return string(value)
 }
 
 func pointerByteArray(value int) []byte {

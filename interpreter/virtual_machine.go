@@ -11,7 +11,10 @@ var reserved = make([]bool, MEMSIZE)
 var pointers = make(map[int]*Pointer, 0)
 
 func malloc(size int, scid string, temp bool) *Pointer {
-
+	if size > MEMSIZE {
+		interrupt("requested more memory than available", size, ">", MEMSIZE)
+	}
+	debug_info("requested to malloc", size, "bytes for", scid)
 	cap := 0
 	for i := len(HEAP) - 1; i >= 0; i-- {
 		if HEAP[i] == 0 && !reserved[i] {

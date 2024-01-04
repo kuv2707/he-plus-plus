@@ -40,7 +40,7 @@ func IsOneOfArr(str string, options []string) bool {
 	return false
 }
 
-var QUOTES = []string{"`"}
+var QUOTES = []string{"`","\"",}
 
 // todo use regex
 func InQuotes(s string) bool {
@@ -103,7 +103,7 @@ func ParseEscapeSequence(s string) string {
 }
 
 func IsLiteral(s string) bool {
-	return IsOneOf(s, []string{"NUMBER", "BOOLEAN"})
+	return IsOneOf(s, []string{"NUMBER", "BOOLEAN","STRING"})
 }
 
 func IsOperator(temp string) bool {
@@ -112,6 +112,10 @@ func IsOperator(temp string) bool {
 
 func IsBoolean(temp string) bool {
 	return IsOneOf(temp, globals.Booleans)
+}
+
+func IsString(temp string) bool {
+	return InQuotes(temp)
 }
 
 func ClosingBracket(bracket string) string {

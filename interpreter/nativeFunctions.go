@@ -1,14 +1,14 @@
 package interpreter
 
 import (
-	"math/rand"
 	"fmt"
+	"math/rand"
 	"toylingo/parser"
 	"toylingo/utils"
 )
 
 type funcDef struct {
-	exec func(*scopeContext) Variable//doesnt need to return variable though
+	exec func(*scopeContext) Variable //doesnt need to return variable though
 	args []string
 }
 
@@ -23,17 +23,17 @@ var nativeFunctions = map[string]funcDef{
 	},
 	"readNumber": {
 		exec: nativeReadNumber,
-		args: []string{},
+		args: []string{"prompt"},
 	},
-	"len":{
+	"len": {
 		exec: nativeLen,
 		args: []string{"a"},
 	},
-	"makeArray":{
+	"makeArray": {
 		exec: nativeMakeArray,
 		args: []string{"size"},
 	},
-	"random":{
+	"random": {
 		exec: nativeRandom,
 		args: []string{},
 	},
@@ -43,7 +43,7 @@ func isNativeFunction(name string) bool {
 	_, ok := nativeFunctions[name]
 	return ok
 }
-
+//todo: call the actual implementation of function with specified arguments instead of having them retrieve from context
 func addNativeFuncDeclarations(ctx *scopeContext) {
 	for k, v := range nativeFunctions {
 		name := k
@@ -76,7 +76,7 @@ func addNativeFuncDeclarations(ctx *scopeContext) {
 }
 
 func nativePrint(ctx *scopeContext) Variable {
-	value,exists := ctx.variables["a"]
+	value, exists := ctx.variables["a"]
 	if !exists {
 		interrupt("missing argument to print in function call print")
 	}
@@ -85,6 +85,9 @@ func nativePrint(ctx *scopeContext) Variable {
 		interrupt("cannot print pointer")
 	case TYPE_ARRAY:
 		return nativePrintArray(ctx, value)
+	case TYPE_STRING:
+		fmt.Print(utils.Colors["WHITE"], string(heapSlice(value.pointer.address, value.pointer.size)), utils.Colors["RESET"])
+		return value
 	}
 
 	val := getValue(value)
@@ -117,6 +120,10 @@ func nativePrintln(ctx *scopeContext) Variable {
 }
 
 func nativeReadNumber(ctx *scopeContext) Variable {
+	prompt,exists:=ctx.variables["prompt"]
+	if exists && prompt.vartype==TYPE_STRING{
+		fmt.Print(utils.Colors["WHITE"], string(heapSlice(prompt.pointer.address, prompt.pointer.size)), utils.Colors["RESET"])
+	}
 	var value float64
 	fmt.Scan(&value)
 	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, false)
@@ -146,25 +153,31 @@ func nativePrintArray(ctx *scopeContext, arrvar Variable) Variable {
 	return arrvar
 }
 
-
 func nativeLen(ctx *scopeContext) Variable {
-	value,exists := ctx.variables["a"]
+	value, exists := ctx.variables["a"]
 	if !exists {
 		interrupt("missing argument in function call len")
 	}
-	if value.vartype != TYPE_ARRAY {
-		interrupt("len expects array as argument")
+	switch value.vartype {
+	case TYPE_ARRAY:
+		a := heapSlice(value.pointer.address, type_sizes[TYPE_NUMBER])
+		size := byteArrayToFloat64(a)
+		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+		writeBits(*memaddr, numberByteArray(size))
+		ctx.returnValue = &Variable{memaddr, TYPE_NUMBER}
+	case TYPE_STRING:
+		val:=value.pointer.size
+		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+		writeBits(*memaddr, numberByteArray(float64(val)))
+		ctx.returnValue = &Variable{memaddr, TYPE_NUMBER}
+	default:
+		interrupt("function len expects array or string as argument")
 	}
-	a := heapSlice(value.pointer.address, type_sizes[TYPE_NUMBER])
-	size := byteArrayToFloat64(a)
-	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
-	writeBits(*memaddr, numberByteArray(size))
-	ctx.returnValue = &Variable{memaddr, TYPE_NUMBER}
 	return *ctx.returnValue
 }
 
 func nativeMakeArray(ctx *scopeContext) Variable {
-	value,exists := ctx.variables["size"]
+	value, exists := ctx.variables["size"]
 	if !exists {
 		interrupt("missing argument in function call len")
 	}
@@ -175,7 +188,7 @@ func nativeMakeArray(ctx *scopeContext) Variable {
 }
 
 func nativeRandom(ctx *scopeContext) Variable {
-	memaddr:=malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
 	writeBits(*memaddr, numberByteArray(rand.Float64()))
 	ctx.returnValue = &Variable{memaddr, TYPE_NUMBER}
 	return *ctx.returnValue

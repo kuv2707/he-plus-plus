@@ -134,7 +134,14 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
 		writeBits(*memaddr, numberByteArray(value))
 		return Variable{memaddr, TYPE_NUMBER}
-	} else {
+	} else if left.vartype == TYPE_STRING && right.vartype == TYPE_STRING {
+		leftVal := byteArrayString(heapSlice(left.pointer.address, left.pointer.size))
+		rightVal := byteArrayString(heapSlice(right.pointer.address, right.pointer.size))
+		newval := leftVal + rightVal
+		memaddr := malloc(type_sizes[TYPE_CHAR]*len(newval), ctx.scopeId, true)
+		writeBits(*memaddr, stringByteArray(newval))
+		return Variable{memaddr, TYPE_STRING}
+	}else {
 		interrupt("invalid operands to binary operator " + operator)
 	}
 	return Variable{}
@@ -230,6 +237,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		//func call or array or object
 		return evaluateCompositeDS(node, ctx)
 	}
+	//todo: redundant to verify type here: done in AST phase
 	if utils.IsNumber(val) {
 		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
 		writeBits(*memaddr, numberByteArray(StringToNumber(val)))
@@ -242,7 +250,11 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		}
 		writeBits(*memaddr, []byte{boolnum})
 		return Variable{memaddr, TYPE_BOOLEAN}
-	} else {
+	} else if utils.IsString(val) {
+		memaddr := malloc(type_sizes[TYPE_CHAR]*(len(val)-2) , ctx.scopeId, true)
+		writeBits(*memaddr, stringByteArray(val[1:len(val)-1]))
+		return Variable{memaddr, TYPE_STRING}
+	}	else {
 		if v, exists := ctx.variables[val]; exists {
 			if v.vartype == TYPE_ARRAY {
 				//leads to array being freed twice
