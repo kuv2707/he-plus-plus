@@ -135,13 +135,34 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		writeBits(*memaddr, numberByteArray(value))
 		return Variable{memaddr, TYPE_NUMBER}
 	} else if left.vartype == TYPE_STRING && right.vartype == TYPE_STRING {
+		if operator != "+" {
+			interrupt("Invalid operator", operator, "for string operands")
+		}
 		leftVal := byteArrayString(heapSlice(left.pointer.address, left.pointer.size))
 		rightVal := byteArrayString(heapSlice(right.pointer.address, right.pointer.size))
 		newval := leftVal + rightVal
 		memaddr := malloc(type_sizes[TYPE_CHAR]*len(newval), ctx.scopeId, true)
 		writeBits(*memaddr, stringByteArray(newval))
 		return Variable{memaddr, TYPE_STRING}
-	}else {
+	} else if left.vartype == TYPE_STRING && right.vartype == TYPE_NUMBER {
+		leftVal := byteArrayString(heapSlice(left.pointer.address, left.pointer.size))
+		rightVal := getValue(right)
+		newval := ""
+		switch operator {
+		case "+":
+			newval = leftVal + fmt.Sprint(rightVal)
+		case "*":
+			for rightVal > 0 {
+				newval += leftVal
+				rightVal -= 1
+			}
+		default:
+			interrupt("Invalid operator for string and number operands")
+		}
+		memaddr := malloc(type_sizes[TYPE_CHAR]*len(newval), ctx.scopeId, true)
+		writeBits(*memaddr, stringByteArray(newval))
+		return Variable{memaddr, TYPE_STRING}
+	} else {
 		interrupt("invalid operands to binary operator " + operator)
 	}
 	return Variable{}
@@ -251,10 +272,10 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) Variable {
 		writeBits(*memaddr, []byte{boolnum})
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else if utils.IsString(val) {
-		memaddr := malloc(type_sizes[TYPE_CHAR]*(len(val)-2) , ctx.scopeId, true)
+		memaddr := malloc(type_sizes[TYPE_CHAR]*(len(val)-2), ctx.scopeId, true)
 		writeBits(*memaddr, stringByteArray(val[1:len(val)-1]))
 		return Variable{memaddr, TYPE_STRING}
-	}	else {
+	} else {
 		if v, exists := ctx.variables[val]; exists {
 			if v.vartype == TYPE_ARRAY {
 				//leads to array being freed twice

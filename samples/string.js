@@ -1,3 +1,3 @@
 let a="hello";
-println((a)+" hi");
+println(a+5);
 // let ch='a';
