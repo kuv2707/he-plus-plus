@@ -43,7 +43,8 @@ func isNativeFunction(name string) bool {
 	_, ok := nativeFunctions[name]
 	return ok
 }
-//todo: call the actual implementation of function with specified arguments instead of having them retrieve from context
+
+// todo: call the actual implementation of function with specified arguments instead of having them retrieve from context
 func addNativeFuncDeclarations(ctx *scopeContext) {
 	for k, v := range nativeFunctions {
 		name := k
@@ -120,8 +121,8 @@ func nativePrintln(ctx *scopeContext) Variable {
 }
 
 func nativeReadNumber(ctx *scopeContext) Variable {
-	prompt,exists:=ctx.variables["prompt"]
-	if exists && prompt.vartype==TYPE_STRING{
+	prompt, exists := ctx.variables["prompt"]
+	if exists && prompt.vartype == TYPE_STRING {
 		fmt.Print(utils.Colors["WHITE"], string(heapSlice(prompt.pointer.address, prompt.pointer.size)), utils.Colors["RESET"])
 	}
 	var value float64
@@ -134,20 +135,16 @@ func nativeReadNumber(ctx *scopeContext) Variable {
 }
 
 func nativePrintArray(ctx *scopeContext, arrvar Variable) Variable {
-	a := heapSlice(arrvar.pointer.address, type_sizes[TYPE_NUMBER])
-	size := byteArrayToFloat64(a)
-	addr := arrvar.pointer.address
 	fmt.Print(utils.Colors["BOLDBLUE"] + "[ " + utils.Colors["RESET"])
-	addr += type_sizes[TYPE_NUMBER]
-	for i := 1; i <= int(size); i++ {
-		ptr := byteArrayToPointer(heapSlice(addr, type_sizes[TYPE_POINTER]))
+	for i := 0; i < int(arrvar.pointer.size); i += type_sizes[TYPE_POINTER] {
+		ptr := byteArrayToPointer(heapSlice(arrvar.pointer.address+i, type_sizes[TYPE_POINTER]))
 		//todo: somehow retrieve the type of variable pointed to by the pointer ptr - currently assuming number
 		num := byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
 		printNumber(num)
-		if i != int(size) {
+		if i+type_sizes[TYPE_POINTER] < int(arrvar.pointer.size) {
 			fmt.Print(", ")
 		}
-		addr += type_sizes[TYPE_POINTER]
+
 	}
 	fmt.Print(utils.Colors["BOLDBLUE"] + " ]" + utils.Colors["RESET"])
 	return arrvar
@@ -158,24 +155,22 @@ func nativeLen(ctx *scopeContext) Variable {
 	if !exists {
 		interrupt("missing argument in function call len")
 	}
+	val := 0
 	switch value.vartype {
 	case TYPE_ARRAY:
-		a := heapSlice(value.pointer.address, type_sizes[TYPE_NUMBER])
-		size := byteArrayToFloat64(a)
-		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
-		writeBits(*memaddr, numberByteArray(size))
-		ctx.returnValue = &Variable{memaddr, TYPE_NUMBER}
+		val = value.pointer.size/type_sizes[TYPE_POINTER]
 	case TYPE_STRING:
-		val:=value.pointer.size
-		memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
-		writeBits(*memaddr, numberByteArray(float64(val)))
-		ctx.returnValue = &Variable{memaddr, TYPE_NUMBER}
+		val = value.pointer.size
 	default:
 		interrupt("function len expects array or string as argument")
 	}
+	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+	writeBits(*memaddr, numberByteArray(float64(val)))
+	ctx.returnValue = &Variable{memaddr, TYPE_NUMBER}
 	return *ctx.returnValue
 }
 
+// todo: implement
 func nativeMakeArray(ctx *scopeContext) Variable {
 	value, exists := ctx.variables["size"]
 	if !exists {

@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math"
 	"toylingo/parser"
 	"toylingo/utils"
 )
@@ -352,10 +353,8 @@ func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
 
 func evaluateArray(node parser.TreeNode, ctx *scopeContext) Variable {
 	len := len(node.Children)
-	memaddr := malloc(type_sizes[TYPE_POINTER]*len+type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+	memaddr := malloc(type_sizes[TYPE_POINTER]*len, ctx.scopeId, true)
 	addr := memaddr.address
-	unsafeWriteBits(addr, numberByteArray(float64(len)))
-	addr += type_sizes[TYPE_NUMBER]
 	for i := range node.Children {
 		val := evaluateExpression(node.Children[i], ctx)
 		val.pointer.temp = false
@@ -372,11 +371,12 @@ func evaluateArrayIndex(node parser.TreeNode, ctx *scopeContext) Variable {
 		interrupt("array " + node.Properties["array"].Description + " does not exist in current scope")
 	}
 	index := getNumber(evaluateExpression(node.Properties["index"], ctx))
-	size := byteArrayToFloat64(heapSlice(array.pointer.address, type_sizes[TYPE_NUMBER]))
-	if index >= size || index < 0 {
+	size := array.pointer.size
+	if int(math.Round(index)) >= size || index < 0 {
 		interrupt("array index", index, " out of bounds for length", size)
 	}
-	ptr := byteArrayToPointer(heapSlice(array.pointer.address+type_sizes[TYPE_NUMBER]+type_sizes[TYPE_POINTER]*int(index), type_sizes[TYPE_POINTER]))
+	ptr := byteArrayToPointer(heapSlice(array.pointer.address+type_sizes[TYPE_POINTER]*int(index), type_sizes[TYPE_POINTER]))
+	//assuming number is stored at ptr
 	value := byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
 	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
 	writeBits(*memaddr, numberByteArray(value))

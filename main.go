@@ -27,6 +27,7 @@ func main() {
 		treeNode.PrintTree("")
 	}
 	if os.Getenv("INTERPRET") == "1" {
+		fmt.Println(utils.Colors["YELLOW"] + "--> " + os.Getenv("SOURCE_FILE"))
 		StartInterpreting(treeNode)
 	}
 	fmt.Println(utils.Colors["RESET"])
