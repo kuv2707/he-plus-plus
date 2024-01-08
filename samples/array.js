@@ -1,7 +1,13 @@
-let a=[11,2,3,4,5];
+let size=readNumber("Enter size of array:");
+let a=makeArray(size);
+println("Made array of length:"+len(a));
+i=0;
+loop i<len(a) {
+    a[i]=readNumber("Enter element "+i+":");// !!bug in parser
+    // a[i]=readNumber("Enter element "+i);
+    ++i;
+}
 println(a);
-// println(a[0]);
-// println(len(a));
 i=0;
 loop i<len(a) {
     println(a[i]);

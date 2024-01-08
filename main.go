@@ -18,6 +18,7 @@ func main() {
 	}
 	var tokens *lexer.Node = lexer.Lexify("./samples/" + os.Getenv("SOURCE_FILE"))
 	tokens = tokens.Next
+	// return
 	if os.Getenv("DEBUG_LEXER") == "1" {
 		PrintLexemes(tokens)
 	}

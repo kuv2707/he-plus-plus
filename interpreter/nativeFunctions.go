@@ -179,7 +179,14 @@ func nativeMakeArray(ctx *scopeContext) Variable {
 	if value.vartype != TYPE_NUMBER {
 		interrupt("illegal value for array size")
 	}
-	return Variable{}
+	size := int(getValue(value))
+	if size < 0 {
+		interrupt("illegal value for array size")
+	}
+	fmt.Println("making array of size", size)
+	memaddr:=malloc(size*type_sizes[TYPE_POINTER], ctx.scopeId, true)
+	ctx.returnValue = &Variable{memaddr, TYPE_ARRAY}
+	return *ctx.returnValue
 }
 
 func nativeRandom(ctx *scopeContext) Variable {

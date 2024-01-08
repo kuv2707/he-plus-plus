@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"math"
 	"toylingo/parser"
 	"toylingo/utils"
 )
@@ -77,15 +76,18 @@ func assignToArrayIndex(ctx *scopeContext, node parser.TreeNode) Variable {
 	if !exists {
 		interrupt("array " + arrayVarname + " does not exist in current scope")
 	}
+	if arrayVar.vartype != TYPE_ARRAY {
+		interrupt("variable " + arrayVarname + " is not an array")
+	}
 	indexVar := evaluateExpression(node.Children[0].Properties["index"], ctx)
-	index := getNumber(indexVar)
-	size := byteArrayToFloat64(heapSlice(arrayVar.pointer.address, type_sizes[TYPE_NUMBER]))
+	index := int(getNumber(indexVar))
+	size := arrayVar.pointer.size / type_sizes[TYPE_POINTER]
 	if index >= size || index < 0 {
 		interrupt("cannot assign to index ", index, " of array ", arrayVarname, " of length", size)
 	}
 	newval := evaluateExpression(node.Children[1], ctx)
 	newval.pointer.temp = false
-	pointerToValueBits := arrayVar.pointer.address + type_sizes[TYPE_NUMBER] + type_sizes[TYPE_POINTER]*int(index)
+	pointerToValueBits := arrayVar.pointer.address + type_sizes[TYPE_POINTER]*int(index)
 	freePtr(pointers[byteArrayToPointer(heapSlice(pointerToValueBits, type_sizes[TYPE_POINTER]))])
 	unsafeWriteBits(pointerToValueBits, pointerByteArray(newval.pointer.address))
 	return newval
@@ -115,6 +117,9 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) V
 	return Variable{}
 }
 
+
+
+//todo: cleanup, optimize, simplify
 func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
@@ -158,11 +163,25 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 				rightVal -= 1
 			}
 		default:
-			interrupt("Invalid operator for string and number operands")
+			interrupt("string and number operands cannot be used with operator", operator)
 		}
 		memaddr := malloc(type_sizes[TYPE_CHAR]*len(newval), ctx.scopeId, true)
 		writeBits(*memaddr, stringByteArray(newval))
 		return Variable{memaddr, TYPE_STRING}
+	} else if left.vartype == TYPE_NUMBER && right.vartype == TYPE_STRING{
+		leftVal := getValue(left)
+		rightVal := byteArrayString(heapSlice(right.pointer.address, right.pointer.size))
+		newval := ""
+		switch operator {
+		case "+":
+			newval = fmt.Sprint(leftVal) + rightVal
+		default:
+			interrupt("number and string operands cannot be used with operator", operator)
+		}
+		memaddr := malloc(type_sizes[TYPE_CHAR]*len(newval), ctx.scopeId, true)
+		writeBits(*memaddr, stringByteArray(newval))
+		return Variable{memaddr, TYPE_STRING}
+
 	} else {
 		interrupt("invalid operands to binary operator " + operator)
 	}
@@ -372,7 +391,7 @@ func evaluateArrayIndex(node parser.TreeNode, ctx *scopeContext) Variable {
 	}
 	index := getNumber(evaluateExpression(node.Properties["index"], ctx))
 	size := array.pointer.size
-	if int(math.Round(index)) >= size || index < 0 {
+	if int(index) >= size || index < 0 {
 		interrupt("array index", index, " out of bounds for length", size)
 	}
 	ptr := byteArrayToPointer(heapSlice(array.pointer.address+type_sizes[TYPE_POINTER]*int(index), type_sizes[TYPE_POINTER]))

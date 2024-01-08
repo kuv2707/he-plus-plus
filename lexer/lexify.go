@@ -32,15 +32,16 @@ func Lexify(path string) *Node {
 
 	// fmt.Println(string(filecontent))
 	stringliterals := make([]string, 0)
+	STRMARKER:=" __STR__ "
 	//placeholder for strings
 	for i := 0; i < len(filecontent); i++ {
 		if utils.InQuotes(string(filecontent[i])) {
 			for j := i + 1; j < len(filecontent); j++ {
 				if filecontent[j] == filecontent[i] {
 					str := string(filecontent[i : j+1])
-					filecontent = bytes.ReplaceAll(filecontent, []byte(str), []byte(" __STR__ "))
+					filecontent = bytes.ReplaceAll(filecontent, []byte(str), []byte(STRMARKER))
 					stringliterals = append(stringliterals, str)
-					i = j + 1
+					i+= len(STRMARKER)
 					break
 				}
 			}
