@@ -3,7 +3,7 @@ let a=makeArray(size);
 println("Made array of length:"+len(a));
 i=0;
 loop i<len(a) {
-    a[i]=readNumber("Enter element "+i+":");// !!bug in parser
+    a[i]=readNumber("Enter element "+i+":");
     // a[i]=readNumber("Enter element "+i);
     ++i;
 }

@@ -1,2 +1,1 @@
-// a=0xdeadbeef;
-print(-0xdabba);
+println([1,2,3]);

@@ -1,10 +1,13 @@
 # TOYLINGO
-An interpreted language built on top of golang.
+An interpreted general-purpose programming language built on top of golang.
 
 
 ## Quick Start
 * Clone the repository
+* Setup the .env fild taking reference from the .env.example file
 * Run the main.go file to see the interpreter in action (it executes a sample program in the samples folder)
+* There are many sample programs in the samples directory to try out
+* The file to be executed can be specified in the .env file
 
 # Features
 
@@ -16,7 +19,8 @@ An interpreted language built on top of golang.
 to be implemented soon
 
 ## Conditionals
-Support for if, else if, else statements
+* Support for if, else if, else statements
+* parentheses around the boolean expression are optional
 
 ```
 if(true){
@@ -29,13 +33,14 @@ if(true){
 ```
 
 ## Loops
-Support for a basic loop structure with break statement
+* Support for a basic loop structure with break statement
+* parentheses around the boolean expression are optional
 ```
 loop(boolean_expression){
     //statements
     if(condition){
         break;
-    }else{}
+    }
 }
 ```
 
@@ -48,9 +53,7 @@ All functions in a scope are hoisted to the top of the scope
 function add(a,b){
     return a+b;
 }
-```
-function calls also have the inversion of function name and arguments
-```
+
 let k=add(5,6);
 ```
 
@@ -82,15 +85,15 @@ print([1,2,3]);
 
 
 # Notes
-
+* Expression parsing is terrible!
+* The VM runs on 1kb of memory
 
 
 # TODO
 * coalesce Variable and Pointer structs
-* Implement arrays
- - add index operator a[] and a[][] for multidimensional arrays
-* Implement strings
-* Implement objects
-* comma operator
-* implement template strings
-* implement module system
+* Implement multidimensional arrays
+* Implement template strings
+* Implement objects (dot operator)
+* Implement tuples (comma operator)
+* implement module system and imports
+* improve memory management
