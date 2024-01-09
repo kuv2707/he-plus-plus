@@ -61,7 +61,7 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) Variable {
 	val, alreadyExists := ctx.variables[variableName]
 	if alreadyExists {
 		//todo: make a function to copy value from one pointer to another: memcpy
-		writeBits(*val.pointer, numberByteArray(getNumber(variableValue)))
+		writeBits(*val.pointer, heapSlice(variableValue.pointer.address, variableValue.pointer.size))
 		return val
 	}
 	ctx.variables[variableName] = variableValue

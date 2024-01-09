@@ -151,7 +151,7 @@ func popScopeContext() {
 }
 
 func freeArrPtr(ptr *Pointer) {
-	for i := type_sizes[TYPE_NUMBER]; i < ptr.size; i += type_sizes[TYPE_POINTER] {
+	for i := 0; i < ptr.size; i += type_sizes[TYPE_POINTER] {
 		p:=byteArrayToPointer(heapSlice(ptr.address+i, type_sizes[TYPE_POINTER]))
 		freePtr(pointers[p])
 	}
