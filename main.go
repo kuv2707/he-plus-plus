@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"he++/interpreter"
+	"he++/lexer"
+	"he++/parser"
+	"he++/utils"
 	"os"
 	"time"
-	"toylingo/interpreter"
-	"toylingo/lexer"
-	"toylingo/parser"
-	"toylingo/utils"
 
 	"github.com/joho/godotenv"
 )

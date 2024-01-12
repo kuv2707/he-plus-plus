@@ -1,4 +1,4 @@
-module toylingo
+module he++
 
 go 1.21.1
 

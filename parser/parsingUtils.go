@@ -2,8 +2,8 @@ package parser
 
 import (
 	"fmt"
-	"toylingo/lexer"
-	"toylingo/utils"
+	"he++/lexer"
+	"he++/utils"
 )
 
 var i, length int = 0, 0
@@ -58,7 +58,7 @@ func collectTill(tokenType string) []lexer.TokenType {
 	return tokens
 }
 
-func collectTillIn(tokenType string, tokens []lexer.TokenType) ([]lexer.TokenType , int) {
+func collectTillIn(tokenType string, tokens []lexer.TokenType) ([]lexer.TokenType, int) {
 	toks := make([]lexer.TokenType, 0)
 	i := 0
 	for ; i < len(tokens); i++ {
@@ -68,10 +68,8 @@ func collectTillIn(tokenType string, tokens []lexer.TokenType) ([]lexer.TokenTyp
 		toks = append(toks, tokens[i])
 	}
 	i++
-	return toks,i
+	return toks, i
 }
-
-
 
 func matchCurrent(tokenType string) bool {
 	if index() >= maxIndex() {
@@ -94,7 +92,7 @@ func consume(tokenType string) {
 	}
 }
 
-func seekClosingParen(tokens []lexer.TokenType,bracket string) int {
+func seekClosingParen(tokens []lexer.TokenType, bracket string) int {
 	balance := 1
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Ref == bracket {
@@ -108,7 +106,6 @@ func seekClosingParen(tokens []lexer.TokenType,bracket string) int {
 	}
 	panic("unbalanced parentheses")
 }
-
 
 func (treeNode *TreeNode) PrintTree(space string) {
 	color := utils.GetRandomColor()
@@ -140,5 +137,3 @@ func printTokensArr(tokens []lexer.TokenType) {
 	}
 	fmt.Println()
 }
-
-

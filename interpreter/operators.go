@@ -2,8 +2,8 @@ package interpreter
 
 import (
 	"fmt"
-	"toylingo/parser"
-	"toylingo/utils"
+	"he++/parser"
+	"he++/utils"
 )
 
 func evaluateOperator(node parser.TreeNode, ctx *scopeContext) Variable {
@@ -117,9 +117,7 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) V
 	return Variable{}
 }
 
-
-
-//todo: cleanup, optimize, simplify
+// todo: cleanup, optimize, simplify
 func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Variable {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
@@ -168,7 +166,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		memaddr := malloc(type_sizes[TYPE_CHAR]*len(newval), ctx.scopeId, true)
 		writeBits(*memaddr, stringByteArray(newval))
 		return Variable{memaddr, TYPE_STRING}
-	} else if left.vartype == TYPE_NUMBER && right.vartype == TYPE_STRING{
+	} else if left.vartype == TYPE_NUMBER && right.vartype == TYPE_STRING {
 		leftVal := getValue(left)
 		rightVal := byteArrayString(heapSlice(right.pointer.address, right.pointer.size))
 		newval := ""

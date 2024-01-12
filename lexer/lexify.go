@@ -2,10 +2,10 @@ package lexer
 
 import (
 	"bytes"
+	g "he++/globals"
+	"he++/utils"
 	"os"
 	"strings"
-	g "toylingo/globals"
-	"toylingo/utils"
 )
 
 func Lexify(path string) *Node {
@@ -32,7 +32,7 @@ func Lexify(path string) *Node {
 
 	// fmt.Println(string(filecontent))
 	stringliterals := make([]string, 0)
-	STRMARKER:=" __STR__ "
+	STRMARKER := " __STR__ "
 	//placeholder for strings
 	for i := 0; i < len(filecontent); i++ {
 		if utils.InQuotes(string(filecontent[i])) {
@@ -41,7 +41,7 @@ func Lexify(path string) *Node {
 					str := string(filecontent[i : j+1])
 					filecontent = bytes.ReplaceAll(filecontent, []byte(str), []byte(STRMARKER))
 					stringliterals = append(stringliterals, str)
-					i+= len(STRMARKER)
+					i += len(STRMARKER)
 					break
 				}
 			}

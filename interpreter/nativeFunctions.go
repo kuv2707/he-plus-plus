@@ -2,9 +2,9 @@ package interpreter
 
 import (
 	"fmt"
+	"he++/parser"
+	"he++/utils"
 	"math/rand"
-	"toylingo/parser"
-	"toylingo/utils"
 )
 
 type funcDef struct {
@@ -158,7 +158,7 @@ func nativeLen(ctx *scopeContext) Variable {
 	val := 0
 	switch value.vartype {
 	case TYPE_ARRAY:
-		val = value.pointer.size/type_sizes[TYPE_POINTER]
+		val = value.pointer.size / type_sizes[TYPE_POINTER]
 	case TYPE_STRING:
 		val = value.pointer.size
 	default:
@@ -183,7 +183,7 @@ func nativeMakeArray(ctx *scopeContext) Variable {
 		interrupt("illegal value for array size")
 	}
 	fmt.Println("making array of size", size)
-	memaddr:=malloc(size*type_sizes[TYPE_POINTER], ctx.scopeId, true)
+	memaddr := malloc(size*type_sizes[TYPE_POINTER], ctx.scopeId, true)
 	ctx.returnValue = &Variable{memaddr, TYPE_ARRAY}
 	return *ctx.returnValue
 }

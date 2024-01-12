@@ -2,10 +2,10 @@ package parser
 
 import (
 	"fmt"
+	_ "he++/globals"
+	"he++/lexer"
+	"he++/utils"
 	"sort"
-	_ "toylingo/globals"
-	"toylingo/lexer"
-	"toylingo/utils"
 )
 
 var tokensArr = make([]lexer.TokenType, 0)
@@ -166,7 +166,7 @@ var precedence = [][]string{
 	{"==", "!=", "<", ">", "<=", ">="},
 	{"+", "-"},
 	{"*", "/"},
-	{"!", "-", "#","++","--"},
+	{"!", "-", "#", "++", "--"},
 }
 
 func parseExpression(tokens []lexer.TokenType, rank int) *TreeNode {

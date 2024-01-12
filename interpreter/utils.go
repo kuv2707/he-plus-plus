@@ -2,11 +2,11 @@ package interpreter
 
 import (
 	"fmt"
+	"he++/parser"
+	"he++/utils"
 	"math"
 	"os"
 	"strings"
-	"toylingo/parser"
-	"toylingo/utils"
 
 	"github.com/gofrs/uuid"
 )
@@ -44,8 +44,7 @@ func printVariableList(variables map[string]Variable) {
 	}
 }
 
-
-//todo: move to parsing phase for faster execution
+// todo: move to parsing phase for faster execution
 func StringToNumber(str string) float64 {
 	base := 10
 	num := ""
@@ -71,9 +70,9 @@ func StringToNumber(str string) float64 {
 	dotsep := strings.Split(num, ".")
 	if len(dotsep) > 2 {
 		interrupt("invalid number " + str)
-	}else if len(dotsep) == 2 {
+	} else if len(dotsep) == 2 {
 		parsedNum = parseNumber(dotsep[0], base) + parseFraction(dotsep[1], base)
-	}else if len(dotsep) == 1 {
+	} else if len(dotsep) == 1 {
 		parsedNum = parseNumber(dotsep[0], base)
 	} else {
 		interrupt("invalid number " + str)
@@ -110,7 +109,6 @@ func numVal(c byte) int {
 	interrupt("invalid number")
 	return -1
 }
-
 
 func generateId() string {
 	return uuid.Must(uuid.NewV4()).String()

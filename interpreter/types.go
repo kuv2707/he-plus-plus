@@ -1,10 +1,10 @@
 package interpreter
 
-import "toylingo/parser"
+import "he++/parser"
 
 //primitive
 var TYPE_NUMBER = "number"
-var TYPE_CHAR = "char"//unused for now
+var TYPE_CHAR = "char" //unused for now
 var TYPE_BOOLEAN = "bool"
 var TYPE_POINTER = "pointer"
 var TYPE_STRING = "string"
@@ -40,4 +40,3 @@ type scopeContext struct {
 	functions   map[string]parser.TreeNode
 	returnValue *Variable
 }
-

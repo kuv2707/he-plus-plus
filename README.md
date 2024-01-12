@@ -1,4 +1,4 @@
-# TOYLINGO
+# he++
 An interpreted general-purpose programming language built on top of golang.
 
 

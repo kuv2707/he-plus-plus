@@ -1,12 +1,13 @@
 package utils
 
 import (
+	"he++/globals"
 	"strconv"
-	"toylingo/globals"
 )
 
 func DoNothing(args ...interface{}) {}
-//valid numbers: 12, 12.23, 0x12, 0b101, 0o12, 0x12.23, 0b101.23, 0o12.23
+
+// valid numbers: 12, 12.23, 0x12, 0b101, 0o12, 0x12.23, 0b101.23, 0o12.23
 func IsNumber(temp string) bool {
 	return temp[0] >= '0' && temp[0] <= '9'
 }
@@ -40,7 +41,7 @@ func IsOneOfArr(str string, options []string) bool {
 	return false
 }
 
-var QUOTES = []string{"`","\"",}
+var QUOTES = []string{"`", "\""}
 
 // todo use regex
 func InQuotes(s string) bool {
@@ -103,7 +104,7 @@ func ParseEscapeSequence(s string) string {
 }
 
 func IsLiteral(s string) bool {
-	return IsOneOf(s, []string{"NUMBER", "BOOLEAN","STRING"})
+	return IsOneOf(s, []string{"NUMBER", "BOOLEAN", "STRING"})
 }
 
 func IsOperator(temp string) bool {

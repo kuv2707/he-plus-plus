@@ -3,10 +3,10 @@ package interpreter
 import (
 	"encoding/binary"
 	"fmt"
+	"he++/parser"
+	"he++/utils"
 	"math"
 	"os"
-	"toylingo/parser"
-	"toylingo/utils"
 )
 
 var type_sizes = map[string]int{
@@ -152,7 +152,7 @@ func popScopeContext() {
 
 func freeArrPtr(ptr *Pointer) {
 	for i := 0; i < ptr.size; i += type_sizes[TYPE_POINTER] {
-		p:=byteArrayToPointer(heapSlice(ptr.address+i, type_sizes[TYPE_POINTER]))
+		p := byteArrayToPointer(heapSlice(ptr.address+i, type_sizes[TYPE_POINTER]))
 		freePtr(pointers[p])
 	}
 	freePtr(ptr)

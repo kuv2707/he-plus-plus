@@ -2,12 +2,12 @@ package interpreter
 
 import (
 	"fmt"
-	"toylingo/parser"
+	"he++/parser"
 )
 
 func Interpret(root *parser.TreeNode) {
-	pushScopeContext("scope","root")
-	ctx:=contextStack.GetStack()[0].(scopeContext)
+	pushScopeContext("scope", "root")
+	ctx := contextStack.GetStack()[0].(scopeContext)
 	addNativeFuncDeclarations(&ctx)
 	// for _,v := range ctx.functions{
 	// 	v.PrintTree("->")
@@ -15,8 +15,6 @@ func Interpret(root *parser.TreeNode) {
 	executeScope(root, &ctx)
 	printMemoryStats()
 }
-
-
 
 const REASON_NATURAL Reason = "natural"
 const REASON_RETURN Reason = "return"
@@ -40,7 +38,7 @@ SCOPE_EXECUTION:
 			ctx.functions[child.Description] = *child
 
 		case "scope":
-			rzn, val := executeScope(child, pushScopeContext(TYPE_SCOPE,"simple_scope"))
+			rzn, val := executeScope(child, pushScopeContext(TYPE_SCOPE, "simple_scope"))
 			ctx.returnValue = val
 			if rzn != REASON_NATURAL {
 				if rzn == REASON_BREAK {
@@ -56,7 +54,7 @@ SCOPE_EXECUTION:
 		case "conditional_block":
 			debug_info("conditional block")
 			k := 0
-			executed:=false
+			executed := false
 			for ; ; k++ {
 				condnode, exists := child.Properties["condition"+fmt.Sprint(k)]
 				if !exists {
@@ -66,7 +64,7 @@ SCOPE_EXECUTION:
 				if condition == 0 {
 					continue
 				}
-				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_CONDITIONAL,"if-elif"))
+				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_CONDITIONAL, "if-elif"))
 				ctx.returnValue = val
 				if rzn != REASON_NATURAL {
 					if rzn == REASON_BREAK {
@@ -79,13 +77,13 @@ SCOPE_EXECUTION:
 						break SCOPE_EXECUTION
 					}
 				}
-				executed=true
+				executed = true
 				break
 			}
-			if child.Properties["else"] == nil || executed{
+			if child.Properties["else"] == nil || executed {
 				continue SCOPE_EXECUTION
 			}
-			rzn, val := executeScope(child.Properties["else"], pushScopeContext(TYPE_CONDITIONAL,"else"))
+			rzn, val := executeScope(child.Properties["else"], pushScopeContext(TYPE_CONDITIONAL, "else"))
 			ctx.returnValue = val
 			if rzn != REASON_NATURAL {
 				if rzn == REASON_BREAK {
@@ -105,7 +103,7 @@ SCOPE_EXECUTION:
 				if num == 0 {
 					break
 				}
-				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP,"lp"))
+				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP, "lp"))
 				if rzn == REASON_BREAK {
 					break
 				}
@@ -140,7 +138,7 @@ SCOPE_EXECUTION:
 			expr := evaluateExpression(child.Children[0], ctx)
 			expr.pointer.temp = false
 			ctx.returnValue = &expr
-			debug_info("return value is",expr.pointer)
+			debug_info("return value is", expr.pointer)
 			returnReason = REASON_RETURN
 			break SCOPE_EXECUTION
 		default:
