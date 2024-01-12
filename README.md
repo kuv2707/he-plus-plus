@@ -86,7 +86,7 @@ print([1,2,3]);
 
 # Notes
 * Expression parsing is terrible!
-* The VM runs on 1kb of memory
+* The VM runs on 1kb of memory.
 
 
 # TODO

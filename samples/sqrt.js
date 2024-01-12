@@ -4,7 +4,7 @@ findroot(readNumber("Enter a number:"),2);
 function findroot (n,k){
     // println(n);
     // println(k);
-    let low=0;
+     low=0;
     let high=n;
     let mid=0;    
     let TOLERANCE=0.000000001;
@@ -16,8 +16,7 @@ function findroot (n,k){
             low=mid;
         }
     }
-    print("The square root is:");
-    println(high);
+    println("The square root is:"+high);
     
     function abs(arg){
         if arg>=0 {

@@ -170,7 +170,6 @@ func nativeLen(ctx *scopeContext) Variable {
 	return *ctx.returnValue
 }
 
-// todo: implement
 func nativeMakeArray(ctx *scopeContext) Variable {
 	value, exists := ctx.variables["size"]
 	if !exists {
