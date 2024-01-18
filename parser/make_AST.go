@@ -147,7 +147,6 @@ func parseActualArgs(tokens []lexer.TokenType) *TreeNode {
 		}
 
 		if tokens[i].Type == "COMMA" && balance == 0 {
-			fmt.Println("parsing args", coll)
 			argsNode.Children = append(argsNode.Children, parseExpression(coll, 0))
 			coll = make([]lexer.TokenType, 0)
 			continue
@@ -256,9 +255,9 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		balance := 1
 		last := 2
 		for k := 2; k < len(tokens); k++ {
-			if tokens[k].Type == "OPEN_PAREN" {
+			if utils.IsOpenBracket(tokens[k].Ref) {
 				balance++
-			} else if tokens[k].Type == "CLOSE_PAREN" {
+			} else if utils.IsCloseBracket(tokens[k].Ref) {
 				balance--
 			}
 
@@ -295,7 +294,6 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 
 func parseArray(tokens []lexer.TokenType) *TreeNode {
 	arrNode := makeTreeNode("primary", nil, "array", -1)
-	// fmt.Println("parsing array", tokens)
 	balance := 0
 	last := 0
 	for k := 0; k < len(tokens); k++ {

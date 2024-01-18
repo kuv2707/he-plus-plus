@@ -112,7 +112,7 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) V
 		writeBits(*memaddr, []byte{val})
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		interrupt("invalid operands to binary operator " + operator)
+		interrupt("invalid operands for binary operator " + operator)
 	}
 	return Variable{}
 }
@@ -181,7 +181,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) Vari
 		return Variable{memaddr, TYPE_STRING}
 
 	} else {
-		interrupt("invalid operands to binary operator " + operator)
+		interrupt("invalid operands for binary operator " + operator)
 	}
 	return Variable{}
 }
@@ -215,7 +215,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		writeBits(*memaddr, []byte{val})
 		return Variable{memaddr, TYPE_BOOLEAN}
 	} else {
-		interrupt("invalid operands to binary operator " + operator)
+		interrupt("invalid operands for binary operator " + operator)
 	}
 	return Variable{}
 }

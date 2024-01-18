@@ -72,12 +72,6 @@ But only the expression succeeding the last occurence of a string in an expressi
 * 8/9\*18 not evaluated correctly (9*18 evaluated first): 
 operators of same precedence are evaluated right to left instead of left to right
 
-* many bugs in parsing brackets in expressions, like:
-- an array declaration in the arguments of a function call
-```
-print([1,2,3]);
-```
-* original array returned instead of copy when exp is evaluated, so its memory is freed whenever a scope is exited
 * unassigned array is not cleaned up when scope is exited
 * empty array declaration crashes interpreter
 * line numbers in error messages are not correct sometimes

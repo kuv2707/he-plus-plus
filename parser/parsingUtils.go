@@ -104,6 +104,7 @@ func seekClosingParen(tokens []lexer.TokenType, bracket string) int {
 			return i
 		}
 	}
+	fmt.Println(tokens)
 	panic("unbalanced parentheses")
 }
 
