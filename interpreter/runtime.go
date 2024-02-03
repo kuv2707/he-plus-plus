@@ -9,69 +9,47 @@ import (
 	"os"
 )
 
-var type_sizes = map[string]int{
-	TYPE_NUMBER:  8,
-	TYPE_CHAR:    1,
-	TYPE_BOOLEAN: 1,
-	TYPE_POINTER: 4,
-}
-var LineNo = -1
-
-// returns new variable with pointer to different address but same value is stored in both addresses
-func copyVariable(variable Variable, sid string) Variable {
-	addr := malloc(variable.pointer.size, sid, true)
-	writeBits(*addr, heapSlice(variable.pointer.address, variable.pointer.size))
-	return Variable{addr, variable.vartype}
+var type_sizes = map[DataType]int{
+	NUMBER:  8,
+	CHAR:    1,
+	BOOLEAN: 1,
+	POINTER: 4,
 }
 
-// returns the number equivalent of the variable
-func getValue(variable Variable) float64 {
-	switch variable.vartype {
-	case TYPE_NUMBER:
-		return getNumber(variable)
-	// case "char":
-	// 	return getChar(variable)
-	case TYPE_BOOLEAN:
-		b := getBool(variable)
-		if b {
-			return 1
-		}
-		return 0
-	//DOUBT: shouldnt expose pointer like this right? just return 0
-	case TYPE_ARRAY:
-		fallthrough
-	case TYPE_STRING:
-		return float64(variable.pointer.address)
-	}
+var NULL_POINTER = &Pointer{-1, "", false}
 
-	interrupt("invalid variable type " + variable.vartype)
-	return 0
-}
-
-//todo:accept a byte array as value
-func writeBits(ptr Pointer, value []byte) {
+func writeDataContent(ptr *Pointer, value []byte) {
 	validatePointer(ptr)
+	datalen := ptr.getDataLength()
+	//the implication of the following check is that the data length of a pointer cannot be changed
+	//meaning that STRING and ARRAY types cannot be resized
+	if len(value) != datalen {
+		interrupt("invalid data length", len(value), "expected", datalen)
+	}
 	for i := range value {
-		HEAP[ptr.address+i] = value[i]
+		HEAP[ptr.address+5+i] = value[i]
 	}
 }
 
-func unsafeWriteBits(ptr int, value []byte) {
+// creates a shallow copy of the data pointed to by src into dest
+func writeContentFromOnePointerToAnother(dest *Pointer, src *Pointer) {
+	validatePointer(dest)
+	validatePointer(src)
+	// copy metadata
+	HEAP[dest.address] = HEAP[src.address]
+	for i := 1; i < 5; i++ {
+		HEAP[dest.address+i] = HEAP[src.address+i]
+	}
+
+	for i := 0; i < src.getDataLength(); i++ {
+		HEAP[dest.address+5+i] = HEAP[src.address+5+i]
+	}
+}
+
+func unsafeWriteBytes(ptr int, value []byte) {
 	for i := range value {
 		HEAP[ptr+i] = value[i]
 	}
-}
-
-func getNumber(variable Variable) float64 {
-	if variable.vartype != TYPE_NUMBER {
-		interrupt("invalid number type " + variable.vartype)
-	}
-	ptr := variable.pointer
-	validatePointer(*ptr)
-	// Take 8 bytes from HEAP starting at ptr.address and convert to float64
-	bytes := HEAP[ptr.address : ptr.address+8]
-	parsedFloat := byteArrayToFloat64(bytes)
-	return parsedFloat
 }
 
 func byteArrayToFloat64(bytes []byte) float64 {
@@ -82,39 +60,57 @@ func byteArrayToPointer(bytes []byte) int {
 	return int(binary.LittleEndian.Uint32(bytes))
 }
 
+func bytesToInt(bytes []byte) int {
+	return int(binary.LittleEndian.Uint32(bytes))
+}
+
+func intToBytes(value int) []byte {
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, uint32(value))
+	return bytes
+}
+
 func numberByteArray(value float64) []byte {
 	bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bytes, math.Float64bits(value))
 	return bytes
 }
 
-func stringByteArray(value string) []byte {
+func stringAsBytes(value string) []byte {
 	bytes := []byte(value)
 	return bytes
 }
 
-func byteArrayString(value []byte) string {
+func bytesAsString(value []byte) string {
 	return string(value)
 }
 
-func pointerByteArray(value int) []byte {
+func pointerAsBytes(value int) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(value))
 	return bytes
 }
 
-func getBool(variable Variable) bool {
-	pointer := variable.pointer
-	validatePointer(*pointer)
-	// Take 1 byte from HEAP from end side of block pointed to by ptr
-	parsedBool := HEAP[pointer.address+pointer.size-1] == 1
-	return parsedBool
+func booleanValue(p *Pointer) bool {
+	return HEAP[p.address+PTR_DATA_OFFSET] == 1
+}
+
+func numberValue(p *Pointer) float64 {
+	return byteArrayToFloat64(HEAP[p.address+PTR_DATA_OFFSET : p.address+PTR_DATA_OFFSET+8])
+}
+
+func charValue(p *Pointer) rune {
+	return rune(HEAP[p.address+PTR_DATA_OFFSET])
+}
+
+func stringValue(p *Pointer) string {
+	return bytesAsString(HEAP[p.address+PTR_DATA_OFFSET : p.address+PTR_DATA_OFFSET+p.getDataLength()])
 }
 
 var contextStack = utils.MakeStack()
 
 func pushScopeContext(scopetype string, scopename string) *scopeContext {
-	ctx := scopeContext{generateId(), scopetype, scopename, make(map[string]Variable), make(map[string]parser.TreeNode), nil}
+	ctx := scopeContext{generateId(), scopetype, scopename, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
 	if contextStack.IsEmpty() {
 		contextStack.Push(ctx)
 		return &ctx
@@ -136,26 +132,13 @@ func popScopeContext() {
 	ctx := contextStack.Peek().(scopeContext)
 	contextStack.Pop()
 	for k, v := range ctx.variables {
-		// debug_error("freeing?", k, v, "in", ctx.scopeType)
-		if v.pointer.scopeId == ctx.scopeId {
-			debug_info("freeing", k, v.pointer, v.vartype, "in", ctx.scopeName)
-			if v.vartype == TYPE_ARRAY {
-				freeArrPtr(v.pointer)
-			} else {
-				freePtr(v.pointer)
-			}
+		if v.scopeId == ctx.scopeId {
+			debug_info("freeing?", k, v, "in", ctx.scopeName)
+			debug_info("freeing", k, "in", ctx.scopeName)
+			freePtr(v)
 		}
 	}
-	//free memory of inScopeVars
-
-}
-
-func freeArrPtr(ptr *Pointer) {
-	for i := 0; i < ptr.size; i += type_sizes[TYPE_POINTER] {
-		p := byteArrayToPointer(heapSlice(ptr.address+i, type_sizes[TYPE_POINTER]))
-		freePtr(pointers[p])
-	}
-	freePtr(ptr)
+	gc()
 }
 
 func getScopeContext(depth int) scopeContext {

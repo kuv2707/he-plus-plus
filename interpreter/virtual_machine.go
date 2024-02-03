@@ -10,7 +10,8 @@ var reserved = make([]bool, MEMSIZE)
 
 var pointers = make(map[int]*Pointer, 0)
 
-func malloc(size int, scid string, temp bool) *Pointer {
+func malloc(datalen int, scid string, temp bool) *Pointer {
+	size := datalen + PTR_DATA_OFFSET
 	if size > MEMSIZE {
 		interrupt("requested more memory than available", size, ">", MEMSIZE)
 	}
@@ -27,9 +28,10 @@ func malloc(size int, scid string, temp bool) *Pointer {
 			for j := i; j < i+size; j++ {
 				reserved[j] = true
 			}
-			p := Pointer{i, size, scid, temp}
+			p := Pointer{i, scid, temp}
+			p.setDataLength(datalen)
 			pointers[i] = &p
-			debug_info("allocated", size, "bytes at", i, "for", scid)
+			// debug_info("allocated", size, "data bytes at", i, "for", scid)
 			return &p
 		}
 	}
@@ -40,19 +42,12 @@ func malloc(size int, scid string, temp bool) *Pointer {
 }
 
 func freePtr(ptr *Pointer) {
-	if ptr == nil {
-		debug_error("freeing nil")
-		return
-	}
-	if pointers[ptr.address] == nil {
-		return
-	}
+	validatePointer(ptr)
 	delete(pointers, ptr.address)
-	for i := ptr.address; i < ptr.address+ptr.size; i++ {
+	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
+	for i := ptr.address; i < end; i++ {
 		reserved[i] = false
-		HEAP[i] = 0
 	}
-	debug_info("freed", ptr.size, "bytes at", ptr.address, "for", ptr.scopeId)
 }
 
 func heapSlice(start int, size int) []byte {
@@ -78,7 +73,7 @@ func gc() {
 	}
 }
 
-func validatePointer(ptr Pointer) {
+func validatePointer(ptr *Pointer) {
 	if !reserved[ptr.address] {
 		interrupt("invalid pointer " + fmt.Sprint(ptr))
 	}

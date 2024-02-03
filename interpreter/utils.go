@@ -11,6 +11,8 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+var LineNo = -1
+
 func debug_error(k ...interface{}) {
 	if os.Getenv("DEBUG_ERROR") == "0" {
 		return
@@ -38,11 +40,6 @@ func debug_warn(k ...interface{}) {
 	fmt.Print(utils.Colors["RESET"])
 }
 
-func printVariableList(variables map[string]Variable) {
-	for k, v := range variables {
-		debug_info(k, v.pointer, getNumber(v))
-	}
-}
 
 // todo: move to parsing phase for faster execution
 func StringToNumber(str string) float64 {

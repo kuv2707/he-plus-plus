@@ -2,41 +2,75 @@ package interpreter
 
 import "he++/parser"
 
-//primitive
-var TYPE_NUMBER = "number"
-var TYPE_CHAR = "char" //unused for now
-var TYPE_BOOLEAN = "bool"
-var TYPE_POINTER = "pointer"
-var TYPE_STRING = "string"
+type DataType byte
 
-//composite
-var TYPE_ARRAY = "array"
+const (
+	NUMBER DataType = iota
+	CHAR
+	BOOLEAN
+	POINTER
+	STRING
+	ARRAY
+	STRUCT
+)
 
 type Reason string
 
+/*
+Pointer schema:
+From the base address pointed to by the pointer:
+* 1 byte: data type
+* 4 bytes: data length  -  for primitive types, the data length is known beforehand, but for arrays and structs, it is not known and is hence included in the metadata
+* n bytes: data
+*/
 type Pointer struct {
 	address int
-	size    int
 	scopeId string
 	temp    bool
 }
-type Variable struct {
-	pointer *Pointer
-	vartype string
-}
 
-type Callable interface {
-	call(ctx *scopeContext, args []parser.TreeNode) (Reason, *Variable)
-}
-
-// func(v Variable) call(ctx *scopeContext, args []parser.TreeNode) (Reason, *Variable) {
-// }
+var PTR_DATA_OFFSET = 5
 
 type scopeContext struct {
 	scopeId     string
 	scopeTyp    string
 	scopeName   string
-	variables   map[string]Variable
+	variables   map[string]*Pointer
 	functions   map[string]parser.TreeNode
-	returnValue *Variable
+	returnValue *Pointer
+}
+
+func (p *Pointer) getDataType() DataType {
+	return DataType(HEAP[p.address])
+}
+
+func (p *Pointer) getDataLength() int {
+	return bytesToInt(HEAP[p.address+1 : p.address+5])
+}
+
+func (p *Pointer) setDataLength(length int) {
+	bts := intToBytes(length)
+	for k:=range(bts){
+		HEAP[p.address+1+k] = bts[k]
+	}
+
+}
+
+func (p *Pointer) setDataType(dt DataType) {
+	HEAP[p.address] = byte(dt)
+}
+
+func (p *Pointer) clone() *Pointer{
+	if(p == NULL_POINTER) {
+		return NULL_POINTER
+	}
+	//allocate new memory
+	newptr := malloc(p.getDataLength(), p.scopeId, true)
+	//copy metadata
+	newptr.setDataType(p.getDataType())
+	//copy data
+	for i := 0; i < p.getDataLength(); i++ {
+		HEAP[newptr.address+PTR_DATA_OFFSET+i] = HEAP[p.address+PTR_DATA_OFFSET+i]
+	}
+	return newptr
 }

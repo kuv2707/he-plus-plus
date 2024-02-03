@@ -9,9 +9,6 @@ func Interpret(root *parser.TreeNode) {
 	pushScopeContext("scope", "root")
 	ctx := contextStack.GetStack()[0].(scopeContext)
 	addNativeFuncDeclarations(&ctx)
-	// for _,v := range ctx.functions{
-	// 	v.PrintTree("->")
-	// }
 	executeScope(root, &ctx)
 	printMemoryStats()
 }
@@ -25,7 +22,7 @@ const TYPE_FUNCTION string = "function"
 const TYPE_SCOPE string = "scope"
 const TYPE_CONDITIONAL string = "conditional"
 
-func executeScope(node *parser.TreeNode, ctx *scopeContext) (Reason, *Variable) {
+func executeScope(node *parser.TreeNode, ctx *scopeContext) (Reason, *Pointer) {
 	debug_info("entered", ctx.scopeName)
 	var returnReason Reason = REASON_NATURAL
 	scopeType := ctx.scopeTyp
@@ -60,8 +57,9 @@ SCOPE_EXECUTION:
 				if !exists {
 					break
 				}
-				condition := evaluateExpressionClean(condnode, ctx)
-				if condition == 0 {
+				res := evaluateExpressionClean(condnode, ctx)
+				result:=booleanValue(res)
+				if !result{
 					continue
 				}
 				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_CONDITIONAL, "if-elif"))
@@ -99,8 +97,9 @@ SCOPE_EXECUTION:
 
 		case "loop":
 			for true {
-				num := evaluateExpressionClean(child.Properties["condition"], ctx)
-				if num == 0 {
+				res := evaluateExpressionClean(child.Properties["condition"], ctx)
+				result:=booleanValue(res)
+				if !result {
 					break
 				}
 				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP, "lp"))
@@ -136,9 +135,9 @@ SCOPE_EXECUTION:
 
 		case "return":
 			expr := evaluateExpression(child.Children[0], ctx)
-			expr.pointer.temp = false
-			ctx.returnValue = &expr
-			debug_info("return value is", expr.pointer)
+			expr.temp = false
+			ctx.returnValue = expr
+			// debug_info("return value is", expr.pointer)
 			returnReason = REASON_RETURN
 			break SCOPE_EXECUTION
 		default:
@@ -153,9 +152,7 @@ SCOPE_EXECUTION:
 }
 
 // will only return number value from evaluated variable
-func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) float64 {
+func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 	variable := evaluateExpression(node, ctx)
-	ret := getValue(variable)
-	gc()
-	return ret
+	return variable
 }
