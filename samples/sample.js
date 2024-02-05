@@ -1,8 +1,6 @@
-let a=700;
+let a=getA();
+getA();
 println(a);
-b=4;
-loop a>0{
-    a=a-1;
-    println(a);
+function getA(){
+    return 5;
 }
-println(a);

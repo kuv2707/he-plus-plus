@@ -122,7 +122,7 @@ func nativeReadNumber(ctx *scopeContext) {
 	}
 	var value float64
 	fmt.Scan(&value)
-	ptr := malloc(type_sizes[NUMBER], ctx.scopeId, false)
+	ptr := malloc(type_sizes[NUMBER], false)
 	ptr.setDataType(NUMBER)
 	writeDataContent(ptr, numberByteArray(value))
 	ctx.returnValue = ptr
@@ -183,7 +183,7 @@ func nativeReadNumber(ctx *scopeContext) {
 // }
 
 func nativeRandom(ctx *scopeContext) {
-	memaddr := malloc(type_sizes[NUMBER], ctx.scopeId, true)
+	memaddr := malloc(type_sizes[NUMBER], true)
 	writeDataContent(memaddr, numberByteArray(rand.Float64()))
 	ctx.returnValue = memaddr
 }

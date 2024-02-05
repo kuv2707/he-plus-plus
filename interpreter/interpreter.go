@@ -127,8 +127,10 @@ SCOPE_EXECUTION:
 			evaluateExpression(child, ctx)
 		case "call":
 
-			evaluateFuncCall(*child, ctx)
-			gc()
+			garb := evaluateFuncCall(*child, ctx)
+			if !garb.isNull() {
+				freePtr(garb)
+			}
 		case "break":
 			returnReason = REASON_BREAK
 			break SCOPE_EXECUTION
@@ -137,7 +139,7 @@ SCOPE_EXECUTION:
 			expr := evaluateExpression(child.Children[0], ctx)
 			expr.temp = false
 			ctx.returnValue = expr
-			// debug_info("return value is", expr.pointer)
+			debug_info("return value is", expr)
 			returnReason = REASON_RETURN
 			break SCOPE_EXECUTION
 		default:

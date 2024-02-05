@@ -47,7 +47,6 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 		if ret == NULL_POINTER {
 			interrupt("function " + node.Description + " does not return a value but is expected to")
 		}
-		ret.scopeId = ctx.scopeId
 	default:
 		node.PrintTree("->")
 		panic("invalid expression " + node.Label)
@@ -75,7 +74,7 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) *Pointer {
 		ctx.variables[variableName] = variableValue
 	}
 	debug_info("assigned", variableName, "to", variableValue)
-	return variableValue
+	return ctx.variables[variableName]
 }
 
 // func assignToArrayIndex(ctx *scopeContext, node parser.TreeNode) Variable {
@@ -112,7 +111,7 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) *
 		case "||":
 			value = booleanValue(left) || booleanValue(right)
 		}
-		ptr := malloc(type_sizes[BOOLEAN], ctx.scopeId, true)
+		ptr := malloc(type_sizes[BOOLEAN], true)
 		ptr.setDataType(BOOLEAN)
 		var val byte = 0
 		if value {
@@ -121,7 +120,7 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) *
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		interrupt("invalid operands to logical operator",operator,":", left.getDataType().String(), right.getDataType().String())
+		interrupt("invalid operands to logical operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -143,7 +142,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 		case "/":
 			value = leftVal / rightVal
 		}
-		ptr := malloc(type_sizes[NUMBER], ctx.scopeId, true)
+		ptr := malloc(type_sizes[NUMBER], true)
 		ptr.setDataType(NUMBER)
 		writeDataContent(ptr, numberByteArray(value))
 		return ptr
@@ -154,7 +153,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 		leftVal := stringValue(left)
 		rightVal := stringValue(right)
 		newval := leftVal + rightVal
-		ptr := malloc(type_sizes[CHAR]*len(newval), ctx.scopeId, true)
+		ptr := malloc(type_sizes[CHAR]*len(newval), true)
 		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(newval))
 		return ptr
@@ -173,7 +172,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 		default:
 			interrupt("string and number operands cannot be used with operator", operator)
 		}
-		ptr := malloc(type_sizes[CHAR]*len(newval), ctx.scopeId, true)
+		ptr := malloc(type_sizes[CHAR]*len(newval), true)
 		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(newval))
 		return ptr
@@ -187,13 +186,13 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 		default:
 			interrupt("number and string operands cannot be used with operator", operator)
 		}
-		ptr := malloc(type_sizes[CHAR]*len(newval), ctx.scopeId, true)
+		ptr := malloc(type_sizes[CHAR]*len(newval), true)
 		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(newval))
 		return ptr
 
 	} else {
-		interrupt("invalid operands to arithmetic operator",operator,":", left.getDataType().String(), right.getDataType().String())
+		interrupt("invalid operands to arithmetic operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -224,7 +223,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		case "!=":
 			value = leftVal != rightVal
 		}
-		ptr := malloc(type_sizes[BOOLEAN], ctx.scopeId, true)
+		ptr := malloc(type_sizes[BOOLEAN], true)
 		ptr.setDataType(BOOLEAN)
 		var val byte = 0
 		if value {
@@ -233,7 +232,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		interrupt("invalid operands to relational operator",operator,":", left.getDataType().String(), right.getDataType().String())
+		interrupt("invalid operands to relational operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -265,7 +264,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 		case "+":
 			return val
 		case "-":
-			ptr := malloc(type_sizes[NUMBER], ctx.scopeId, true)
+			ptr := malloc(type_sizes[NUMBER], true)
 			ptr.setDataType(NUMBER)
 			writeDataContent(ptr, numberByteArray(-numberValue(val)))
 			return ptr
@@ -276,7 +275,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 	} else if val.getDataType() == BOOLEAN {
 		switch operator {
 		case "!":
-			memaddr := malloc(type_sizes[BOOLEAN], ctx.scopeId, true)
+			memaddr := malloc(type_sizes[BOOLEAN], true)
 			var valb byte = 1
 			if !booleanValue(val) {
 				valb = 0
@@ -287,7 +286,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 			interrupt("invalid unary operator " + operator)
 		}
 	}
-	interrupt("invalid operand to unary operator", operator,":", val.getDataType().String())
+	interrupt("invalid operand to unary operator", operator, ":", val.getDataType().String())
 	return NULL_POINTER
 }
 
@@ -300,12 +299,12 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	// }
 	//todo: redundant to verify type here: done in AST phase
 	if utils.IsNumber(val) {
-		ptr := malloc(type_sizes[NUMBER], ctx.scopeId, true)
+		ptr := malloc(type_sizes[NUMBER], true)
 		ptr.setDataType(NUMBER)
 		writeDataContent(ptr, numberByteArray(StringToNumber(val)))
 		return ptr
 	} else if utils.IsBoolean(val) {
-		ptr := malloc(type_sizes[BOOLEAN], ctx.scopeId, true)
+		ptr := malloc(type_sizes[BOOLEAN], true)
 		ptr.setDataType(BOOLEAN)
 		var boolnum byte = 0
 		if utils.StringToBoolean(val) {
@@ -314,7 +313,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 		writeDataContent(ptr, []byte{boolnum})
 		return ptr
 	} else if utils.IsString(val) {
-		ptr := malloc(type_sizes[CHAR]*(len(val)-2), ctx.scopeId, true)
+		ptr := malloc(type_sizes[CHAR]*(len(val)-2), true)
 		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(val[1:len(val)-1]))
 		return ptr
@@ -348,9 +347,6 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 		lastValidLine = argNode.LineNo
 		argValue := evaluateExpression(argNode, newCtx)
 		argValue.temp = false
-		if argValue.getDataType() != ARRAY {
-			argValue.scopeId = newCtx.scopeId
-		}
 		newCtx.variables[argName] = argValue
 	}
 	debug_info("calling", funcNode.Description)
@@ -385,7 +381,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 
 // func evaluateArray(node parser.TreeNode, ctx *scopeContext) Variable {
 // 	len := len(node.Children)
-// 	memaddr := malloc(type_sizes[TYPE_POINTER]*len, ctx.scopeId, true)
+// 	memaddr := malloc(type_sizes[TYPE_POINTER]*len, true)
 // 	addr := memaddr.address
 // 	for i := range node.Children {
 // 		val := evaluateExpression(node.Children[i], ctx)
@@ -410,7 +406,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 // 	ptr := byteArrayToPointer(heapSlice(array.pointer.address+type_sizes[TYPE_POINTER]*int(index), type_sizes[TYPE_POINTER]))
 // 	//assuming number is stored at ptr
 // 	value := byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
-// 	memaddr := malloc(type_sizes[TYPE_NUMBER], ctx.scopeId, true)
+// 	memaddr := malloc(type_sizes[TYPE_NUMBER], true)
 // 	writeBytes(*memaddr, numberByteArray(value))
 // 	return Variable{memaddr, TYPE_NUMBER}
 // }

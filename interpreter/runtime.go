@@ -16,7 +16,7 @@ var type_sizes = map[DataType]int{
 	POINTER: 4,
 }
 
-var NULL_POINTER = &Pointer{-1, "", false}
+var NULL_POINTER = &Pointer{-1, false}
 
 func writeDataContent(ptr *Pointer, value []byte) {
 	validatePointer(ptr)
@@ -110,14 +110,13 @@ func stringValue(p *Pointer) string {
 var contextStack = utils.MakeStack()
 
 func pushScopeContext(scopetype string, scopename string) *scopeContext {
-	ctx := scopeContext{generateId(), scopetype, scopename, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
+	ctx := scopeContext{"", scopetype, scopename, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
 	contextStack.Push(ctx)
 	return &ctx
 }
 
-
-//should be used to get a variable instead of raw ctx.variables[name]
-//nativefunctions can use ctx.variables[name] directly coz they are guaranteed to exist in the same scope
+// should be used to get a variable instead of raw ctx.variables[name]
+// nativefunctions can use ctx.variables[name] directly coz they are guaranteed to exist in the same scope
 func findVariable(name string) *Pointer {
 	for i := contextStack.Len() - 1; i >= 0; i-- {
 		ctx := contextStack.Get(i).(scopeContext)
@@ -147,9 +146,7 @@ func popScopeContext() {
 	ctx := contextStack.Peek().(scopeContext)
 	contextStack.Pop()
 	for _, v := range ctx.variables {
-		if v.scopeId == ctx.scopeId {
-			freePtr(v)
-		}
+		freePtr(v)
 	}
 	gc()
 }

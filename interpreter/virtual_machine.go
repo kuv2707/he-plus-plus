@@ -14,33 +14,28 @@ var pointers = make(map[int]*Pointer, 0)
 a pointer returned by malloc will always have dataLength set to the requested length
 and the data region will be zeroed out
 type needs to be set by the caller
-
+todo: include type in the params
 */
 
-func malloc(datalen int, scid string, temp bool) *Pointer {
+func malloc(datalen int, temp bool) *Pointer {
 	size := datalen + PTR_DATA_OFFSET
 	if size > MEMSIZE {
 		interrupt("requested more memory than available", size, ">", MEMSIZE)
 	}
-	// debug_info("requested to malloc", size, "bytes for", scid)
 	cap := 0
 	for i := len(HEAP) - 1; i >= 0; i-- {
 		if !reserved[i] {
 			cap++
 		} else {
 			cap = 0
-			// debug_error("non empty at", i)
 		}
 		if cap == size {
 			//reserve [i:i+size] and return pointer to i
 			for j := i; j < i+size; j++ {
 				reserved[j] = true
 			}
-			p := Pointer{i, scid, temp}
+			p := Pointer{i, temp}
 			p.setDataLength(datalen)
-			// for j:=i+PTR_DATA_OFFSET;j<i+PTR_DATA_OFFSET+datalen;j++{
-			// 	HEAP[j] = 0
-			// }
 			pointers[i] = &p
 			debug_info("allocated", size, "data bytes at", i)
 			return &p
@@ -57,6 +52,7 @@ func freePtr(ptr *Pointer) {
 	delete(pointers, ptr.address)
 	// fmt.Print("freeing ")
 	// ptr.print()
+	debug_info("freeing", ptr.address)
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
 	cnt := 0
 	for i := ptr.address; i < end; i++ {
@@ -102,9 +98,6 @@ func printMemoryStats() {
 
 		if v {
 			rvd = rvd + 1
-			// fmt.Print("1")
-		} else {
-			// fmt.Print("0")
 		}
 	}
 
