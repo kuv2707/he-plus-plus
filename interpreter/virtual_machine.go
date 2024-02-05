@@ -10,18 +10,26 @@ var reserved = make([]bool, MEMSIZE)
 
 var pointers = make(map[int]*Pointer, 0)
 
+/*
+a pointer returned by malloc will always have dataLength set to the requested length
+and the data region will be zeroed out
+type needs to be set by the caller
+
+*/
+
 func malloc(datalen int, scid string, temp bool) *Pointer {
 	size := datalen + PTR_DATA_OFFSET
 	if size > MEMSIZE {
 		interrupt("requested more memory than available", size, ">", MEMSIZE)
 	}
-	debug_info("requested to malloc", size, "bytes for", scid)
+	// debug_info("requested to malloc", size, "bytes for", scid)
 	cap := 0
 	for i := len(HEAP) - 1; i >= 0; i-- {
-		if HEAP[i] == 0 && !reserved[i] {
+		if !reserved[i] {
 			cap++
 		} else {
 			cap = 0
+			// debug_error("non empty at", i)
 		}
 		if cap == size {
 			//reserve [i:i+size] and return pointer to i
@@ -30,23 +38,31 @@ func malloc(datalen int, scid string, temp bool) *Pointer {
 			}
 			p := Pointer{i, scid, temp}
 			p.setDataLength(datalen)
+			// for j:=i+PTR_DATA_OFFSET;j<i+PTR_DATA_OFFSET+datalen;j++{
+			// 	HEAP[j] = 0
+			// }
 			pointers[i] = &p
-			// debug_info("allocated", size, "data bytes at", i, "for", scid)
+			debug_info("allocated", size, "data bytes at", i)
 			return &p
 		}
 	}
 	//todo: try to defragment memory and try again
-
-	interrupt("out of memory")
+	printMemoryStats()
+	interrupt("out of memory: failed to allocate", size, "bytes")
 	return nil
 }
 
 func freePtr(ptr *Pointer) {
 	validatePointer(ptr)
 	delete(pointers, ptr.address)
+	// fmt.Print("freeing ")
+	// ptr.print()
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
+	cnt := 0
 	for i := ptr.address; i < end; i++ {
 		reserved[i] = false
+		HEAP[i] = 0
+		cnt++
 	}
 }
 
@@ -57,12 +73,13 @@ func heapSlice(start int, size int) []byte {
 	return HEAP[start : start+size]
 }
 
-func freeAll() {
-	debug_error("freeing all pointers")
-	for _, ptr := range pointers {
-		freePtr(ptr)
-	}
-}
+// should not be needed
+// func freeAll() {
+// 	debug_error("freeing all pointers")
+// 	for _, ptr := range pointers {
+// 		freePtr(ptr)
+// 	}
+// }
 
 // frees all temp pointers
 func gc() {
@@ -82,9 +99,14 @@ func validatePointer(ptr *Pointer) {
 func printMemoryStats() {
 	rvd := 0
 	for _, v := range reserved {
+
 		if v {
 			rvd = rvd + 1
+			// fmt.Print("1")
+		} else {
+			// fmt.Print("0")
 		}
 	}
+
 	debug_info("Occupied", rvd, "/", MEMSIZE, "bytes")
 }

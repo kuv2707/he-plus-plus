@@ -34,20 +34,20 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) *Pointer {
 
 func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 	LineNo = node.LineNo
-	ret:=NULL_POINTER
+	ret := NULL_POINTER
 	switch node.Label {
 	case "operator":
-		ret= evaluateOperator(*node, ctx)
+		ret = evaluateOperator(*node, ctx)
 	case "literal":
 		fallthrough
 	case "primary":
-		ret= evaluatePrimary(*node, ctx)
-	// case "call":
-	// 	ret := evaluateFuncCall(*node, ctx)
-	// 	if ret.pointer == nil {
-	// 		interrupt("function " + node.Description + " does not return a value but is expected to")
-	// 	}
-	// 	return ret
+		ret = evaluatePrimary(*node, ctx)
+	case "call":
+		ret = evaluateFuncCall(*node, ctx)
+		if ret == NULL_POINTER {
+			interrupt("function " + node.Description + " does not return a value but is expected to")
+		}
+		ret.scopeId = ctx.scopeId
 	default:
 		node.PrintTree("->")
 		panic("invalid expression " + node.Label)
@@ -61,14 +61,20 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) *Pointer {
 	// }
 	variableName := node.Children[0].Description
 	variableValue := evaluateExpression(node.Children[1], ctx)
-	val, alreadyExists := ctx.variables[variableName]
-	if alreadyExists {
-		//todo: make a function to copy value from one pointer to another: memcpy
+	val := findVariable(variableName)
+	// fmt.Println(variableName, " exists:", !val.isNull())
+	if !val.isNull() {
+		if val.getDataType() != variableValue.getDataType() {
+			interrupt("cannot assign", variableValue.getDataType().String(), "to", val.getDataType().String())
+		}
 		writeContentFromOnePointerToAnother(val, variableValue)
-		return val
+		freePtr(variableValue)
+	} else {
+
+		variableValue.temp = false
+		ctx.variables[variableName] = variableValue
 	}
-	variableValue.temp = false
-	ctx.variables[variableName] = variableValue
+	debug_info("assigned", variableName, "to", variableValue)
 	return variableValue
 }
 
@@ -193,7 +199,12 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 
 func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
+	left.temp = false
 	right := evaluateExpression(node.Children[1], ctx)
+	defer func() {
+		left.temp = true
+		right.temp = true
+	}()
 	if left.getDataType() == NUMBER && right.getDataType() == NUMBER {
 		leftVal := numberValue(left)
 		rightVal := numberValue(right)
@@ -234,8 +245,8 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 		fallthrough
 	case "++":
 		varname := node.Children[0].Description
-		varval, exists := ctx.variables[varname]
-		if !exists {
+		varval := findVariable(varname)
+		if varval.isNull() {
 			interrupt("cannot increment variable " + varname + " as it does not exist in current scope")
 		}
 		if varval.getDataType() != NUMBER {
@@ -256,12 +267,12 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 			ptr := malloc(type_sizes[NUMBER], ctx.scopeId, true)
 			ptr.setDataType(NUMBER)
 			writeDataContent(ptr, numberByteArray(-numberValue(val)))
+			return ptr
 
 		default:
 			interrupt("invalid unary operator " + operator)
 		}
-	}
-	if val.getDataType() == BOOLEAN {
+	} else if val.getDataType() == BOOLEAN {
 		switch operator {
 		case "!":
 			memaddr := malloc(type_sizes[BOOLEAN], ctx.scopeId, true)
@@ -275,11 +286,11 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 			interrupt("invalid unary operator " + operator)
 		}
 	}
-	interrupt("invalid operand to unary operator " + operator)
+	interrupt("invalid operand", val.getDataType().String(), " to unary operator "+operator)
 	return NULL_POINTER
 }
 
-//todo: use regex and simplify checks
+// todo: use regex and simplify checks
 func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	val := node.Description
 	// if isCompositeDS(node) {
@@ -307,7 +318,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 		writeDataContent(ptr, stringAsBytes(val[1:len(val)-1]))
 		return ptr
 	} else {
-		if v, exists := ctx.variables[val]; exists {
+		if v := findVariable(val); !v.isNull() {
 			return v.clone()
 		} else {
 			LineNo = node.LineNo
@@ -319,8 +330,9 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 
 func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 
-	funcNode, exists := ctx.functions[node.Description]
-	if !exists {
+	function := findFunction(node.Description)
+	funcNode := function
+	if function == nil {
 		interrupt("function " + node.Description + " does not exist in current scope")
 	}
 	newCtx := pushScopeContext(TYPE_FUNCTION, node.Description)
@@ -351,7 +363,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	} else {
 		panic("SEVERE: internal logical error. func definition should have been present in either of the maps")
 	}
-	return newCtx.returnValue.clone()
+	return newCtx.returnValue
 }
 
 // func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {

@@ -57,9 +57,9 @@ SCOPE_EXECUTION:
 				if !exists {
 					break
 				}
-				res := evaluateExpressionClean(condnode, ctx)
-				result:=booleanValue(res)
-				if !result{
+				res := evaluateExpression(condnode, ctx)
+				result := booleanValue(res)
+				if !result {
 					continue
 				}
 				rzn, val := executeScope(child.Properties["ifnode"+fmt.Sprint(k)], pushScopeContext(TYPE_CONDITIONAL, "if-elif"))
@@ -97,8 +97,8 @@ SCOPE_EXECUTION:
 
 		case "loop":
 			for true {
-				res := evaluateExpressionClean(child.Properties["condition"], ctx)
-				result:=booleanValue(res)
+				res := evaluateExpression(child.Properties["condition"], ctx)
+				result := booleanValue(res)
 				if !result {
 					break
 				}
@@ -124,7 +124,7 @@ SCOPE_EXECUTION:
 		case "operator":
 			fallthrough
 		case "primary":
-			evaluateExpressionClean(child, ctx)
+			evaluateExpression(child, ctx)
 		case "call":
 
 			evaluateFuncCall(*child, ctx)
@@ -145,14 +145,9 @@ SCOPE_EXECUTION:
 		}
 
 	}
+	gc()
 	printMemoryStats()
 	debug_info("exited", ctx.scopeName)
 	popScopeContext()
 	return returnReason, ctx.returnValue
-}
-
-// will only return number value from evaluated variable
-func evaluateExpressionClean(node *parser.TreeNode, ctx *scopeContext) *Pointer {
-	variable := evaluateExpression(node, ctx)
-	return variable
 }

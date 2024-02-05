@@ -40,9 +40,9 @@ func writeContentFromOnePointerToAnother(dest *Pointer, src *Pointer) {
 	for i := 1; i < 5; i++ {
 		HEAP[dest.address+i] = HEAP[src.address+i]
 	}
-
+	// copy data
 	for i := 0; i < src.getDataLength(); i++ {
-		HEAP[dest.address+5+i] = HEAP[src.address+5+i]
+		HEAP[dest.address+PTR_DATA_OFFSET+i] = HEAP[src.address+PTR_DATA_OFFSET+i]
 	}
 }
 
@@ -111,18 +111,33 @@ var contextStack = utils.MakeStack()
 
 func pushScopeContext(scopetype string, scopename string) *scopeContext {
 	ctx := scopeContext{generateId(), scopetype, scopename, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
-	if contextStack.IsEmpty() {
-		contextStack.Push(ctx)
-		return &ctx
-	}
-	for k, v := range contextStack.Peek().(scopeContext).variables {
-		ctx.variables[k] = v
-	}
-	for k, v := range contextStack.Peek().(scopeContext).functions {
-		ctx.functions[k] = v
-	}
 	contextStack.Push(ctx)
 	return &ctx
+}
+
+
+//should be used to get a variable instead of raw ctx.variables[name]
+//nativefunctions can use ctx.variables[name] directly coz they are guaranteed to exist in the same scope
+func findVariable(name string) *Pointer {
+	for i := contextStack.Len() - 1; i >= 0; i-- {
+		ctx := contextStack.Get(i).(scopeContext)
+		ptr, exists := ctx.variables[name]
+		if exists {
+			return ptr
+		}
+	}
+	return NULL_POINTER
+}
+
+func findFunction(name string) *parser.TreeNode {
+	for i := contextStack.Len() - 1; i >= 0; i-- {
+		ctx := contextStack.Get(i).(scopeContext)
+		fn, exists := ctx.functions[name]
+		if exists {
+			return &fn
+		}
+	}
+	return nil
 }
 
 func popScopeContext() {
@@ -131,10 +146,8 @@ func popScopeContext() {
 	}
 	ctx := contextStack.Peek().(scopeContext)
 	contextStack.Pop()
-	for k, v := range ctx.variables {
+	for _, v := range ctx.variables {
 		if v.scopeId == ctx.scopeId {
-			debug_info("freeing?", k, v, "in", ctx.scopeName)
-			debug_info("freeing", k, "in", ctx.scopeName)
 			freePtr(v)
 		}
 	}
