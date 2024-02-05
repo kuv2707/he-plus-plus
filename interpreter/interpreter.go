@@ -122,8 +122,9 @@ SCOPE_EXECUTION:
 				}
 			}
 		case "operator":
-			fallthrough
-		case "primary":
+			if child.Description != "=" {
+				interrupt("Only assignment is allowed as a statement, not", child.Description)
+			}
 			evaluateExpression(child, ctx)
 		case "call":
 
