@@ -121,7 +121,7 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) *
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		interrupt("invalid operands for binary operator " + operator)
+		interrupt("invalid operands to logical operator",operator,":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -177,7 +177,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(newval))
 		return ptr
-	} else if left.getDataType() == NUMBER && right.getDataType() == NUMBER {
+	} else if left.getDataType() == NUMBER && right.getDataType() == STRING {
 		leftVal := numberValue(left)
 		rightVal := stringValue(right)
 		newval := ""
@@ -188,11 +188,12 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 			interrupt("number and string operands cannot be used with operator", operator)
 		}
 		ptr := malloc(type_sizes[CHAR]*len(newval), ctx.scopeId, true)
+		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(newval))
 		return ptr
 
 	} else {
-		interrupt("invalid operands for binary operator " + operator)
+		interrupt("invalid operands to arithmetic operator",operator,":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -232,7 +233,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		interrupt("invalid operands for binary operator " + operator)
+		interrupt("invalid operands to relational operator",operator,":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -286,7 +287,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 			interrupt("invalid unary operator " + operator)
 		}
 	}
-	interrupt("invalid operand", val.getDataType().String(), " to unary operator "+operator)
+	interrupt("invalid operand to unary operator", operator,":", val.getDataType().String())
 	return NULL_POINTER
 }
 
