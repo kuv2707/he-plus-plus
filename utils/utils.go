@@ -48,10 +48,7 @@ func InQuotes(s string) bool {
 	return IsOneOf(s[0:1], QUOTES) && IsOneOf(s[len(s)-1:], QUOTES)
 }
 
-// todo use regex and add more constraints
-func IsValidVariableName(s string) bool {
-	return !InQuotes(s)
-}
+
 
 func StringVal(s interface{}) string {
 	if s == nil {

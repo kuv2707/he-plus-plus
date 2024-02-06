@@ -40,7 +40,11 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 		ret = evaluateOperator(*node, ctx)
 	case "literal":
 		fallthrough
-	case "primary":
+	case "number":
+		ret = evaluatePrimary(*node, ctx)
+	case "boolean":
+		ret = evaluatePrimary(*node, ctx)
+	case "string":
 		ret = evaluatePrimary(*node, ctx)
 	case "call":
 		ret = evaluateFuncCall(*node, ctx)
@@ -291,6 +295,8 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 }
 
 // todo: use regex and simplify checks
+// todo: this makes the whole language terribly slow!
+// shift checking what kind of primary it is to the AST phase
 func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	val := node.Description
 	// if isCompositeDS(node) {
@@ -337,9 +343,13 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	}
 	newCtx := pushScopeContext(TYPE_FUNCTION, node.Description)
 	lastValidLine := LineNo
+	actualArgs := node.Properties["args"]
+	if len(actualArgs.Children) != len(funcNode.Properties["args"].Children) {
+		interrupt("invalid number of arguments in function call "+funcNode.Description, "expected", len(funcNode.Properties["args"].Children), "got", len(actualArgs.Children))
+	}
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
-		argNode := node.Properties["args"+fmt.Sprint(i)]
+		argNode := actualArgs.Children[i]
 		if argNode == nil {
 			LineNo = lastValidLine
 			interrupt("missing argument " + argName + " in function call " + funcNode.Description)

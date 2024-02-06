@@ -8,6 +8,7 @@ An interpreted general-purpose programming language built on top of golang.
 * Run the main.go file to see the interpreter in action (it executes a sample program in the samples folder)
 * There are many sample programs in the samples directory to try out
 * The file to be executed can be specified in the .env file
+* A command line interpreter is coming soon
 
 # Features
 

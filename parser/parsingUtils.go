@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"he++/lexer"
 	"he++/utils"
+	"os"
+	"regexp"
 )
 
 var i, length int = 0, 0
@@ -37,19 +39,44 @@ func expect(tokenType string) {
 	}
 }
 
+// the opening bracket should be included in the tokens passed, at the first position
+func collectTillBalanced(close string, tokens []lexer.TokenType) ([]lexer.TokenType, int) {
+	open := tokens[0].Ref
+	balance := 1
+	for i := 1; i < len(tokens); i++ {
+		if tokens[i].Ref == open {
+			balance++
+		} else if tokens[i].Ref == close {
+			balance--
+		}
+		if balance == 0 {
+			return tokens[1:i], i
+		}
+	}
+	if balance != 0 {
+		abort(tokens[0].LineNo, "unbalanced parentheses", open)
+	}
+	return []lexer.TokenType{}, len(tokens)-1
+}
+
+func splitTokens(tokens []lexer.TokenType, separator string) [][]lexer.TokenType {
+	tokensArr := make([][]lexer.TokenType, 0)
+	start := 0
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == separator {
+			tokensArr = append(tokensArr, tokens[start:i])
+			start = i + 1
+		}
+	}
+	tokensArr = append(tokensArr, tokens[start:])
+	return tokensArr
+}
+
 // collects tokens till a token of type tokenType is found and consumes but does not include it in returned array
 func collectTill(tokenType string) []lexer.TokenType {
 	tokens := make([]lexer.TokenType, 0)
-	balance := 0
 	for ; i < len(tokensArr); i++ {
-		//todo balanced brackets
-		// if utils.IsOpenBracket(tokensArr[i].Ref){
-		// 	balance++
-		// }
-		// if utils.IsCloseBracket(tokensArr[i].Ref){
-		// 	balance--
-		// }
-		if tokensArr[i].Type == tokenType && balance == 0 {
+		if tokensArr[i].Type == tokenType {
 			break
 		}
 		tokens = append(tokens, tokensArr[i])
@@ -137,4 +164,36 @@ func printTokensArr(tokens []lexer.TokenType) {
 		fmt.Print(tokens[i].Ref, " ")
 	}
 	fmt.Println()
+}
+
+func isBalancedExpression(tokens []lexer.TokenType) bool {
+	balance := 0
+	for i := 0; i < len(tokens); i++ {
+		if tokens[i].Ref == "(" {
+			balance++
+		} else if tokens[i].Ref == ")" {
+			balance--
+		}
+	}
+	return balance == 0
+}
+
+func abort(lineNo int, k ...interface{}) {
+	fmt.Print(utils.Colors["RED"])
+	fmt.Print("syntax error at line", fmt.Sprint(lineNo), ": ")
+	fmt.Println(k...)
+	fmt.Print(utils.Colors["RESET"])
+	fmt.Print(utils.Colors["BOLDRED"])
+	fmt.Println("execution interrupted")
+	fmt.Print(utils.Colors["RESET"])
+	os.Exit(1)
+}
+
+func isValidVariableName(variableName string) bool {
+	regexPattern := `^[a-zA-Z_][a-zA-Z0-9_]*$`
+	regExp, err := regexp.Compile(regexPattern)
+	if err != nil {
+		return false
+	}
+	return regExp.MatchString(variableName)
 }

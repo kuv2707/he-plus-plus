@@ -1,6 +1,9 @@
 package interpreter
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 // import "fmt"
 
@@ -17,6 +20,8 @@ type needs to be set by the caller
 todo: include type in the params
 */
 
+//todo: this makes the whole language terribly slow
+// automatically allocates extra memory for metadata
 func malloc(datalen int, temp bool) *Pointer {
 	size := datalen + PTR_DATA_OFFSET
 	if size > MEMSIZE {
@@ -93,6 +98,9 @@ func validatePointer(ptr *Pointer) {
 }
 
 func printMemoryStats() {
+	if os.Getenv("MEMSTATS") == "0" {
+		return;
+	}
 	rvd := 0
 	for _, v := range reserved {
 

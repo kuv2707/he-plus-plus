@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"he++/parser"
+	"he++/utils"
 )
 
 func Interpret(root *parser.TreeNode) {
@@ -102,7 +103,7 @@ SCOPE_EXECUTION:
 				if !result {
 					break
 				}
-				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP, "lp"))
+				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP, "loop"))
 				if rzn == REASON_BREAK {
 					break
 				}
@@ -122,8 +123,8 @@ SCOPE_EXECUTION:
 				}
 			}
 		case "operator":
-			if child.Description != "=" {
-				interrupt("Only assignment is allowed as a statement, not", child.Description)
+			if !utils.IsOneOf(child.Description,[]string{"++","--","="}) {
+				interrupt("Operator", child.Description,"is not allowed in statements")
 			}
 			evaluateExpression(child, ctx)
 		case "call":
