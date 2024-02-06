@@ -56,14 +56,20 @@ func collectTillBalanced(close string, tokens []lexer.TokenType) ([]lexer.TokenT
 	if balance != 0 {
 		abort(tokens[0].LineNo, "unbalanced parentheses", open)
 	}
-	return []lexer.TokenType{}, len(tokens)-1
+	return []lexer.TokenType{}, len(tokens) - 1
 }
 
 func splitTokens(tokens []lexer.TokenType, separator string) [][]lexer.TokenType {
 	tokensArr := make([][]lexer.TokenType, 0)
 	start := 0
+	balance := utils.MakeStack()
 	for i := 0; i < len(tokens); i++ {
-		if tokens[i].Ref == separator {
+		if utils.IsOpenBracket(tokens[i].Ref) {
+			balance.Push(utils.ClosingBracket(tokens[i].Ref))
+		} else if tokens[i].Ref == balance.Peek() {
+			balance.Pop()
+		}
+		if tokens[i].Type == separator && balance.IsEmpty() {
 			tokensArr = append(tokensArr, tokens[start:i])
 			start = i + 1
 		}

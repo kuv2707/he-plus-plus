@@ -169,7 +169,8 @@ func parseBinary(tokens []lexer.TokenType, operators []string, rank int) *TreeNo
 	op := ""
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Ref == "(" || tokens[i].Ref == "[" || tokens[i].Ref == "{" {
-			i += seekClosingParen(tokens[i+1:], tokens[i].Ref)
+			_,end:=collectTillBalanced(utils.ClosingBracket(tokens[i].Ref), tokens[i:])
+			i+=end
 			continue
 		}
 		if utils.IsOneOf(tokens[i].Ref, operators) {
@@ -196,9 +197,6 @@ func parseUnary(tokens []lexer.TokenType, operators []string) *TreeNode {
 }
 
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
-
-	fmt.Println(tokens)
-
 	if !isBalancedExpression(tokens) {
 		abort(tokens[0].LineNo, "unbalanced expression")
 	}
@@ -212,7 +210,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		return makeTreeNode("number", nil, tokens[0].Ref, tokens[0].LineNo)
 	case "STRING":
 		return makeTreeNode("string", nil, tokens[0].Ref, tokens[0].LineNo)
-		case "BOOLEAN":
+	case "BOOLEAN":
 		return makeTreeNode("boolean", nil, tokens[0].Ref, tokens[0].LineNo)
 	}
 
@@ -243,7 +241,6 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 				i++
 			}
 		}
-		node.PrintTree("")
 		return node
 
 	} else {

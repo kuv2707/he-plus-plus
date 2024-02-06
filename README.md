@@ -85,10 +85,12 @@ operators of same precedence are evaluated right to left instead of left to righ
 
 
 # TODO
-* coalesce Variable and Pointer structs
 * Implement multidimensional arrays
 * Implement template strings
 * Implement objects (dot operator)
 * Implement tuples (comma operator)
 * implement module system and imports
 * improve memory management
+* implement default args to function
+* implement variadic args to function
+* improve primary value evaluation

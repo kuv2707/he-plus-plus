@@ -46,6 +46,8 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 		ret = evaluatePrimary(*node, ctx)
 	case "string":
 		ret = evaluatePrimary(*node, ctx)
+	case "variable":
+		ret = evaluatePrimary(*node, ctx)
 	case "call":
 		ret = evaluateFuncCall(*node, ctx)
 		if ret == NULL_POINTER {
@@ -298,18 +300,15 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 // todo: this makes the whole language terribly slow!
 // shift checking what kind of primary it is to the AST phase
 func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
+	LineNo = node.LineNo
 	val := node.Description
-	// if isCompositeDS(node) {
-	// 	//func call or array or object
-	// 	return evaluateCompositeDS(node, ctx)
-	// }
-	//todo: redundant to verify type here: done in AST phase
-	if utils.IsNumber(val) {
+	switch node.Label {
+	case "number":
 		ptr := malloc(type_sizes[NUMBER], true)
 		ptr.setDataType(NUMBER)
 		writeDataContent(ptr, numberByteArray(StringToNumber(val)))
 		return ptr
-	} else if utils.IsBoolean(val) {
+	case "boolean":
 		ptr := malloc(type_sizes[BOOLEAN], true)
 		ptr.setDataType(BOOLEAN)
 		var boolnum byte = 0
@@ -318,12 +317,13 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 		}
 		writeDataContent(ptr, []byte{boolnum})
 		return ptr
-	} else if utils.IsString(val) {
+	case "string":
+
 		ptr := malloc(type_sizes[CHAR]*(len(val)-2), true)
 		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(val[1:len(val)-1]))
 		return ptr
-	} else {
+	case "variable":
 		if v := findVariable(val); !v.isNull() {
 			return v.clone()
 		} else {
@@ -331,6 +331,12 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 			interrupt("variable " + val + " does not exist in current scope")
 		}
 	}
+
+	// if isCompositeDS(node) {
+	// 	//func call or array or object
+	// 	return evaluateCompositeDS(node, ctx)
+	// }
+
 	return NULL_POINTER
 }
 
