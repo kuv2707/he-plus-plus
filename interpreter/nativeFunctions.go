@@ -25,18 +25,57 @@ var nativeFunctions = map[string]funcDef{
 		exec: nativeReadNumber,
 		args: []string{"prompt"},
 	},
-	// "len": {
-	// 	exec: nativeLen,
-	// 	args: []string{"a"},
-	// },
-	// "makeArray": {
-	// 	exec: nativeMakeArray,
-	// 	args: []string{"size"},
-	// },
+	"len": {
+		exec: nativeLen,
+		args: []string{"array"},
+	},
+	"makeArray": {
+		exec: nativeMakeArray,
+		args: []string{"size"},
+	},
 	"random": {
 		exec: nativeRandom,
 		args: []string{},
 	},
+}
+
+func nativeMakeArray(ctx *scopeContext) {
+	value, exists := ctx.variables["size"]
+	if !exists {
+		interrupt("Size of array not passed")
+	}
+	if value.getDataType() != NUMBER {
+		interrupt("invalid argument, expected NUMBER, found", value.getDataType())
+	}
+	len := int(numberValue(value))
+	if len <= 0 {
+		interrupt("length of array must be greater than 0")
+	}
+	arrptr := malloc(type_sizes[POINTER]*len, false)
+	arrptr.setDataType(ARRAY)
+	arrptr.setDataLength(len * type_sizes[POINTER])
+	ctx.returnValue = arrptr
+}
+
+func nativeLen(ctx *scopeContext) {
+	value, exists := ctx.variables["array"]
+	if !exists {
+		interrupt("No array is passed to find the length of")
+	}
+	div := 0
+	switch value.getDataType() {
+	case ARRAY:
+		div = type_sizes[POINTER]
+	case STRING:
+		div = type_sizes[CHAR]
+	default:
+		interrupt("Can only find length of arrays and strings")
+	}
+	len := value.getDataLength() / div
+	memaddr := malloc(type_sizes[NUMBER], false)
+	memaddr.setDataType(NUMBER)
+	writeDataContent(memaddr, numberByteArray(float64(len)))
+	ctx.returnValue = memaddr
 }
 
 func isNativeFunction(name string) bool {
@@ -91,7 +130,6 @@ func nativePrint(ctx *scopeContext) {
 	printVar(value)
 }
 
-
 func nativePrintln(ctx *scopeContext) {
 	nativePrint(ctx)
 	fmt.Print("\n")
@@ -110,10 +148,8 @@ func nativeReadNumber(ctx *scopeContext) {
 	ctx.returnValue = ptr
 }
 
-
 func nativeRandom(ctx *scopeContext) {
 	memaddr := malloc(type_sizes[NUMBER], false)
 	writeDataContent(memaddr, numberByteArray(rand.Float64()))
 	ctx.returnValue = memaddr
 }
-

@@ -6,7 +6,7 @@ import (
 )
 
 func nPrintString(value *Pointer) {
-	fmt.Print(utils.Colors["WHITE"], stringValue(value), utils.Colors["RESET"])
+	fmt.Print(utils.Colors["CYAN"], stringValue(value), utils.Colors["RESET"])
 }
 
 func nPrintBoolean(value *Pointer) {
@@ -47,6 +47,8 @@ func nativePrintArray(value *Pointer) {
 
 func printVar(value *Pointer) {
 	switch value.getDataType() {
+	case NULL:
+		fmt.Print(utils.Colors["RED"], "<null>", utils.Colors["RESET"])
 	case POINTER:
 		interrupt("cannot print pointer")
 	case ARRAY:

@@ -16,7 +16,8 @@ var type_sizes = map[DataType]int{
 	POINTER: 4,
 }
 
-var NULL_POINTER = &Pointer{-1, false}
+var NULL_POINTER = &Pointer{0, false}
+
 
 func writeDataContent(ptr *Pointer, value []byte) {
 	validatePointer(ptr)

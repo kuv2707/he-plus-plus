@@ -7,6 +7,7 @@ import (
 )
 
 func Interpret(root *parser.TreeNode) {
+	pointers[0] = NULL_POINTER
 	pushScopeContext("scope", "root")
 	ctx := contextStack.GetStack()[0].(scopeContext)
 	addNativeFuncDeclarations(&ctx)
@@ -123,8 +124,8 @@ SCOPE_EXECUTION:
 				}
 			}
 		case "operator":
-			if !utils.IsOneOf(child.Description,[]string{"++","--","="}) {
-				interrupt("Operator", child.Description,"is not allowed in statements")
+			if !utils.IsOneOf(child.Description, []string{"++", "--", "="}) {
+				interrupt("Operator", child.Description, "is not allowed in statements")
 			}
 			evaluateExpression(child, ctx)
 		case "call":

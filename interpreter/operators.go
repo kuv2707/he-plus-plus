@@ -357,7 +357,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 		lastValidLine = argNode.LineNo
 		argValue := evaluateExpression(argNode, newCtx)
 		argValue.temp = false
-		newCtx.variables[argName] = argValue
+		newCtx.variables[argName] = argValue.clone()
 	}
 	debug_info("calling", funcNode.Description)
 	nfunc, nfexists := nativeFunctions[funcNode.Description]

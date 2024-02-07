@@ -5,7 +5,8 @@ import "he++/parser"
 type DataType byte
 
 const (
-	NUMBER DataType = iota
+	NULL DataType = iota
+	NUMBER 
 	CHAR
 	BOOLEAN
 	POINTER
