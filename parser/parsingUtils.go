@@ -59,7 +59,7 @@ func collectTillBalanced(close string, tokens []lexer.TokenType) ([]lexer.TokenT
 	return []lexer.TokenType{}, len(tokens) - 1
 }
 
-func splitTokens(tokens []lexer.TokenType, separator string) [][]lexer.TokenType {
+func splitTokensBalanced(tokens []lexer.TokenType, separator string) [][]lexer.TokenType {
 	tokensArr := make([][]lexer.TokenType, 0)
 	start := 0
 	balance := utils.MakeStack()

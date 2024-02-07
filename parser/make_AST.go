@@ -137,7 +137,7 @@ func parseFormalArgs(tokens []lexer.TokenType) *TreeNode {
 
 func parseActualArgs(tokens []lexer.TokenType) *TreeNode {
 	argsNode := makeTreeNode("args", nil, "args", -1)
-	argToks := splitTokens(tokens, "COMMA")
+	argToks := splitTokensBalanced(tokens, "COMMA")
 	for i := 0; i < len(argToks); i++ {
 		if len(argToks[i]) == 0 {
 			continue
@@ -169,8 +169,8 @@ func parseBinary(tokens []lexer.TokenType, operators []string, rank int) *TreeNo
 	op := ""
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Ref == "(" || tokens[i].Ref == "[" || tokens[i].Ref == "{" {
-			_,end:=collectTillBalanced(utils.ClosingBracket(tokens[i].Ref), tokens[i:])
-			i+=end
+			_, end := collectTillBalanced(utils.ClosingBracket(tokens[i].Ref), tokens[i:])
+			i += end
 			continue
 		}
 		if utils.IsOneOf(tokens[i].Ref, operators) {
@@ -203,6 +203,9 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 
 	if tokens[0].Type == "OPEN_PAREN" {
 		return parseExpression(tokens[1:len(tokens)-1], 0)
+	}
+	if tokens[0].Type == "OPEN_SQUARE" {
+		return parseArray(tokens)
 	}
 
 	switch tokens[0].Type {
@@ -247,93 +250,21 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		abort(tokens[0].LineNo, "invalid variable name "+tokens[0].Ref)
 	}
 
-	// if tokens[0].Type == "OPEN_PAREN" {
-	// 	return parseExpression(tokens[1:len(tokens)-1], 0)
-	// }
-	// if tokens[0].Type == "OPEN_SQUARE" {
-	// 	return parseArray(tokens[1 : len(tokens)-1])
-	// }
-	// if utils.IsLiteral(tokens[0].Type) {
-	// 	return makeTreeNode("literal", nil, tokens[0].Ref, tokens[0].LineNo)
-	// }
-
-	// if !utils.IsValidVariableName(tokens[0].Ref) {
-	// 	panic("invalid variable name " + tokens[0].Ref)
-	// }
-	// primNode := makeTreeNode("primary", nil, tokens[0].Ref, tokens[0].LineNo)
-	// if len(tokens) == 1 {
-	// 	return primNode
-	// }
-	// if !utils.IsOpenBracket(tokens[1].Ref) {
-	// 	printTokensArr(tokens)
-	// 	panic("invalid expression " + fmt.Sprint(tokens))
-	// }
-	// if tokens[1].Type == "OPEN_PAREN" {
-	// 	node := makeTreeNode("call", make([]*TreeNode, 0), tokens[0].Ref, tokens[0].LineNo)
-	// 	primNode.Children = append(primNode.Children, node)
-	// 	//parse args
-	// 	balance := 1
-	// 	last := 2
-	// 	for k := 2; k < len(tokens); k++ {
-	// 		if utils.IsOpenBracket(tokens[k].Ref) {
-	// 			balance++
-	// 		} else if utils.IsCloseBracket(tokens[k].Ref) {
-	// 			balance--
-	// 		}
-
-	// 		if tokens[k].Type == "COMMA" && balance == 1 {
-	// 			node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
-	// 			last = k + 1
-	// 		}
-	// 		if balance == 0 {
-	// 			if k > last {
-	// 				node.Properties["args"+fmt.Sprint(len(node.Properties))] = parseExpression(tokens[last:k], 0)
-	// 			}
-	// 			break
-	// 		}
-	// 	}
-	// 	if balance != 0 {
-	// 		panic("syntax error in function call: unclosed parenthesis")
-	// 	}
-	// 	return node
-
-	// }
-	// if tokens[1].Type == "OPEN_SQUARE" {
-	// 	node := makeTreeNode("primary", []*TreeNode{}, "index", tokens[0].LineNo)
-	// 	node.Properties["array"] = primNode
-	// 	node.Properties["index"] = parseExpression(tokens[2:len(tokens)-1], 0)
-	// 	if tokens[len(tokens)-1].Type != "CLOSE_SQUARE" {
-	// 		panic("syntax error in array index: unclosed square bracket")
-	// 	}
-	// 	return node
-	// }
-
-	// return primNode
 	return makeTreeNode("literal", nil, tokens[0].Ref, tokens[0].LineNo)
 }
 
 func parseArray(tokens []lexer.TokenType) *TreeNode {
-	arrNode := makeTreeNode("primary", nil, "array", -1)
-	balance := 0
-	last := 0
-	for k := 0; k < len(tokens); k++ {
-		if utils.IsOpenBracket(tokens[k].Ref) {
-			balance++
-		} else if utils.IsCloseBracket(tokens[k].Ref) {
-			balance--
-		}
-
-		if tokens[k].Type == "COMMA" && balance == 0 {
-			ch := parseExpression(tokens[last:k], 0)
-			// ch.PrintTree("")
-			arrNode.Children = append(arrNode.Children, ch)
-			last = k + 1
-		}
-
+	arrNode := makeTreeNode("array", nil, "array", tokens[0].LineNo)
+	if len(tokens) == 2 {
+		return arrNode
 	}
-	if last < len(tokens) {
-		arrNode.Children = append(arrNode.Children, parseExpression(tokens[last:], 0))
+	tokens = tokens[1 : len(tokens)-1]
+	elems := splitTokensBalanced(tokens, "COMMA")
+	for i := 0; i < len(elems); i++ {
+		if len(elems[i]) == 0 {
+			continue
+		}
+		arrNode.Children = append(arrNode.Children, parseExpression(elems[i], 0))
 	}
-
 	return arrNode
 }

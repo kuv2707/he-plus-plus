@@ -48,6 +48,11 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 		ret = evaluatePrimary(*node, ctx)
 	case "variable":
 		ret = evaluatePrimary(*node, ctx)
+	case "array":
+		ret = evaluateArray(*node, ctx)
+	case "index":
+		ind := evaluateArrayIndex(*node, ctx)
+		ret = pointers[bytesToInt(heapSlice(ind, type_sizes[POINTER]))]
 	case "call":
 		ret = evaluateFuncCall(*node, ctx)
 		if ret == NULL_POINTER {
@@ -61,11 +66,17 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 }
 
 func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) *Pointer {
-	// if node.Children[0].Description == "index" {
-	// 	return assignToArrayIndex(ctx, node)
-	// }
-	variableName := node.Children[0].Description
 	variableValue := evaluateExpression(node.Children[1], ctx)
+	if node.Children[0].Description == "index" {
+		addr := evaluateArrayIndex(*node.Children[0], ctx)
+		// fmt.Println(stringValue(pointers[bytesToInt(heapSlice(addr, 4))]))
+		// variableValue.print()
+		variableValue.temp = false
+		unsafeWriteBytes(addr, intToBytes(variableValue.address))
+		// fmt.Println(stringValue(pointers[bytesToInt(heapSlice(addr, 4))]))
+		return variableValue
+	}
+	variableName := node.Children[0].Description
 	val := findVariable(variableName)
 	// fmt.Println(variableName, " exists:", !val.isNull())
 	if !val.isNull() {
@@ -82,29 +93,6 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) *Pointer {
 	debug_info("assigned", variableName, "to", variableValue)
 	return ctx.variables[variableName]
 }
-
-// func assignToArrayIndex(ctx *scopeContext, node parser.TreeNode) Variable {
-// 	arrayVarname := node.Children[0].Properties["array"].Description
-// 	arrayVar, exists := ctx.variables[arrayVarname]
-// 	if !exists {
-// 		interrupt("array " + arrayVarname + " does not exist in current scope")
-// 	}
-// 	if arrayVar.vartype != TYPE_ARRAY {
-// 		interrupt("variable " + arrayVarname + " is not an array")
-// 	}
-// 	indexVar := evaluateExpression(node.Children[0].Properties["index"], ctx)
-// 	index := int(getNumber(indexVar))
-// 	size := arrayVar.pointer.size / type_sizes[TYPE_POINTER]
-// 	if index >= size || index < 0 {
-// 		interrupt("cannot assign to index ", index, " of array ", arrayVarname, " of length", size)
-// 	}
-// 	newval := evaluateExpression(node.Children[1], ctx)
-// 	newval.pointer.temp = false
-// 	pointerToValueBytes := arrayVar.pointer.address + type_sizes[TYPE_POINTER]*int(index)
-// 	freePtr(pointers[byteArrayToPointer(heapSlice(pointerToValueBytes, type_sizes[TYPE_POINTER]))])
-// 	unsafeWriteBytes(pointerToValueBytes, pointerAsBytes(newval.pointer.address))
-// 	return newval
-// }
 
 func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
@@ -325,6 +313,12 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 		return ptr
 	case "variable":
 		if v := findVariable(val); !v.isNull() {
+			/*
+				array also gets copied, but the elements referred to in it, are not. so if a is an array and we do b=a, then make changes
+			*/
+			if v.getDataType() == ARRAY {
+				return v
+			}
 			return v.clone()
 		} else {
 			LineNo = node.LineNo
@@ -379,50 +373,52 @@ func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	return newCtx.returnValue
 }
 
-// func evaluateCompositeDS(node parser.TreeNode, ctx *scopeContext) Variable {
-// 	switch node.Description {
-// 	case "array":
-// 		return evaluateArray(node, ctx)
-// 	case "index":
-// 		return evaluateArrayIndex(node, ctx)
-// 	}
-// 	panic("invalid composite data structure")
+/*
+structure of an array in memory:
+bit 0: data type
+bit 1-4: length (number of elements*sizeof(pointer type))
+bit 5-8: address of first element
+...
+*/
+func evaluateArray(node parser.TreeNode, ctx *scopeContext) *Pointer {
+	LineNo = node.LineNo
+	len := len(node.Children)
+	arrptr := malloc(type_sizes[POINTER]*len, false)
+	arrptr.setDataType(ARRAY)
+	arrptr.setDataLength(len * type_sizes[POINTER])
+	addr := arrptr.address + PTR_DATA_OFFSET
+	for i := 0; i < len; i++ {
+		ptri := evaluateExpression(node.Children[i], ctx)
+		ptri.temp = false
+		unsafeWriteBytes(addr, intToBytes(ptri.address))
+		addr += type_sizes[POINTER]
+	}
 
-// }
+	arrptr.temp = true
+	return arrptr
+}
 
-// returns a Variable with pointer to an array
-// the arrangement of an array variable is as follows:
-// 1. the first 8 bytes contain the length of the array
-// 2. the next 8*n bytes contain the pointer to the first element of the array, or actual elements if it is a primitive
-
-// func evaluateArray(node parser.TreeNode, ctx *scopeContext) Variable {
-// 	len := len(node.Children)
-// 	memaddr := malloc(type_sizes[TYPE_POINTER]*len, true)
-// 	addr := memaddr.address
-// 	for i := range node.Children {
-// 		val := evaluateExpression(node.Children[i], ctx)
-// 		val.pointer.temp = false
-// 		unsafeWriteBytes(addr, pointerAsBytes(val.pointer.address))
-// 		addr += type_sizes[TYPE_POINTER]
-// 	}
-// 	return Variable{memaddr, TYPE_ARRAY}
-// }
-
-// func evaluateArrayIndex(node parser.TreeNode, ctx *scopeContext) Variable {
-// 	// printVariableList(ctx.variables)
-// 	array, yes := ctx.variables[node.Properties["array"].Description]
-// 	if !yes {
-// 		interrupt("array " + node.Properties["array"].Description + " does not exist in current scope")
-// 	}
-// 	index := getNumber(evaluateExpression(node.Properties["index"], ctx))
-// 	size := array.pointer.size
-// 	if int(index) >= size || index < 0 {
-// 		interrupt("array index", index, " out of bounds for length", size)
-// 	}
-// 	ptr := byteArrayToPointer(heapSlice(array.pointer.address+type_sizes[TYPE_POINTER]*int(index), type_sizes[TYPE_POINTER]))
-// 	//assuming number is stored at ptr
-// 	value := byteArrayToFloat64(heapSlice(ptr, type_sizes[TYPE_NUMBER]))
-// 	memaddr := malloc(type_sizes[TYPE_NUMBER], true)
-// 	writeBytes(*memaddr, numberByteArray(value))
-// 	return Variable{memaddr, TYPE_NUMBER}
-// }
+/*
+b[i] returns a pointer to the part of the array b which stores the address of the ith element of the array
+*/
+func evaluateArrayIndex(node parser.TreeNode, ctx *scopeContext) int {
+	varname := node.Children[0].Description
+	LineNo = node.LineNo
+	ptr := evaluateExpression(node.Children[0], ctx)
+	if ptr.getDataType() != ARRAY {
+		interrupt("variable", varname, "is not an array")
+		return NULL_POINTER.address
+	}
+	index := evaluateExpression(node.Properties["index"], ctx)
+	if index.getDataType() != NUMBER {
+		interrupt("array cannot be indexed by", index.getDataType().String())
+		return NULL_POINTER.address
+	}
+	indexNo := int(numberValue(index))
+	if indexNo >= ptr.getDataLength()/type_sizes[POINTER] || indexNo < 0 {
+		interrupt("index", indexNo, "out of range for array length", ptr.getDataLength()/type_sizes[POINTER])
+		return NULL_POINTER.address
+	}
+	addr := ptr.address + PTR_DATA_OFFSET + indexNo*type_sizes[POINTER]
+	return addr
+}

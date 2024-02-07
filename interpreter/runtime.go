@@ -47,8 +47,8 @@ func writeContentFromOnePointerToAnother(dest *Pointer, src *Pointer) {
 }
 
 func unsafeWriteBytes(ptr int, value []byte) {
-	for i := range value {
-		HEAP[ptr+i] = value[i]
+	for i,v := range value {
+		HEAP[ptr+i] = v
 	}
 }
 
@@ -56,9 +56,6 @@ func byteArrayToFloat64(bytes []byte) float64 {
 	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
 }
 
-func byteArrayToPointer(bytes []byte) int {
-	return int(binary.LittleEndian.Uint32(bytes))
-}
 
 func bytesToInt(bytes []byte) int {
 	return int(binary.LittleEndian.Uint32(bytes))

@@ -58,7 +58,11 @@ function add(a,b){
 let k=add(5,6);
 ```
 
-
+## Arrays
+An array can have any number of elements of any type, including other arrays. There can be a trailing comma after the last element.
+```
+let arr=[1,2,3,4,5,];
+```
 
 
 # Peculiarities
@@ -94,3 +98,4 @@ operators of same precedence are evaluated right to left instead of left to righ
 * implement default args to function
 * implement variadic args to function
 * improve primary value evaluation
+* pass line no when printing error messages
