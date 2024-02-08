@@ -18,7 +18,6 @@ var type_sizes = map[DataType]int{
 
 var NULL_POINTER = &Pointer{0, false}
 
-
 func writeDataContent(ptr *Pointer, value []byte) {
 	validatePointer(ptr)
 	datalen := ptr.getDataLength()
@@ -48,7 +47,7 @@ func writeContentFromOnePointerToAnother(dest *Pointer, src *Pointer) {
 }
 
 func unsafeWriteBytes(ptr int, value []byte) {
-	for i,v := range value {
+	for i, v := range value {
 		HEAP[ptr+i] = v
 	}
 }
@@ -56,7 +55,6 @@ func unsafeWriteBytes(ptr int, value []byte) {
 func byteArrayToFloat64(bytes []byte) float64 {
 	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
 }
-
 
 func bytesToInt(bytes []byte) int {
 	return int(binary.LittleEndian.Uint32(bytes))
@@ -107,17 +105,26 @@ func stringValue(p *Pointer) string {
 
 var contextStack = utils.MakeStack()
 
-func pushScopeContext(scopetype string, scopename string) *scopeContext {
-	ctx := scopeContext{"", scopetype, scopename, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
+func makeScopeContext(scopetype string, scopename string) ScopeContext {
+	ctx := ScopeContext{"", scopetype, scopename, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
+	return ctx
+}
+
+func pushToContextStack(ctx ScopeContext) {
 	contextStack.Push(ctx)
-	return &ctx
+}
+
+func pushScopeContext(scopetype string, scopename string) *ScopeContext {
+	k := makeScopeContext(scopetype, scopename)
+	contextStack.Push(k)
+	return &k
 }
 
 // should be used to get a variable instead of raw ctx.variables[name]
 // nativefunctions can use ctx.variables[name] directly coz they are guaranteed to exist in the same scope
 func findVariable(name string) *Pointer {
 	for i := contextStack.Len() - 1; i >= 0; i-- {
-		ctx := contextStack.Get(i).(scopeContext)
+		ctx := contextStack.Get(i).(ScopeContext)
 		ptr, exists := ctx.variables[name]
 		if exists {
 			return ptr
@@ -128,7 +135,7 @@ func findVariable(name string) *Pointer {
 
 func findFunction(name string) *parser.TreeNode {
 	for i := contextStack.Len() - 1; i >= 0; i-- {
-		ctx := contextStack.Get(i).(scopeContext)
+		ctx := contextStack.Get(i).(ScopeContext)
 		fn, exists := ctx.functions[name]
 		if exists {
 			return &fn
@@ -141,7 +148,12 @@ func popScopeContext() {
 	if contextStack.IsEmpty() {
 		panic("no context to pop")
 	}
-	ctx := contextStack.Peek().(scopeContext)
+
+	ctx := contextStack.Peek().(ScopeContext)
+	if ctx.scopeName == "root" && os.Getenv("REPL") == "1" {
+		return
+	}
+
 	contextStack.Pop()
 	for _, v := range ctx.variables {
 		freePtr(v)
@@ -149,15 +161,15 @@ func popScopeContext() {
 	gc()
 }
 
-func getScopeContext(depth int) scopeContext {
-	return contextStack.Get(contextStack.Len() - 1 - depth).(scopeContext)
+func getScopeContext(depth int) ScopeContext {
+	return contextStack.Get(contextStack.Len() - 1 - depth).(ScopeContext)
 
 }
 
 func printStackTrace() {
 	s := contextStack.GetStack()
 	for i := range s {
-		fmt.Println(s[len(s)-1-i].(scopeContext).scopeName)
+		fmt.Println(s[len(s)-1-i].(ScopeContext).scopeName)
 	}
 }
 

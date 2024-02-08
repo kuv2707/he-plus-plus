@@ -7,7 +7,7 @@ import (
 	"math"
 )
 
-func evaluateOperator(node parser.TreeNode, ctx *scopeContext) *Pointer {
+func evaluateOperator(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	LineNo = node.LineNo
 	if node.Label == "literal" {
 		return evaluatePrimary(node, ctx)
@@ -32,7 +32,7 @@ func evaluateOperator(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	return NULL_POINTER
 }
 
-func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
+func evaluateExpression(node *parser.TreeNode, ctx *ScopeContext) *Pointer {
 	LineNo = node.LineNo
 	ret := NULL_POINTER
 	switch node.Label {
@@ -65,7 +65,7 @@ func evaluateExpression(node *parser.TreeNode, ctx *scopeContext) *Pointer {
 	return ret
 }
 
-func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) *Pointer {
+func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 	variableValue := evaluateExpression(node.Children[1], ctx)
 	if node.Children[0].Description == "index" {
 		addr := evaluateArrayIndex(*node.Children[0], ctx)
@@ -94,7 +94,7 @@ func evaluateAssignment(ctx *scopeContext, node parser.TreeNode) *Pointer {
 	return ctx.variables[variableName]
 }
 
-func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) *Pointer {
+func evaluateLogical(ctx *ScopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
 	if left.getDataType() == BOOLEAN && right.getDataType() == BOOLEAN {
@@ -119,7 +119,7 @@ func evaluateLogical(ctx *scopeContext, node parser.TreeNode, operator string) *
 	return NULL_POINTER
 }
 
-func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Pointer {
+func evaluateDMAS(ctx *ScopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
 	if left.getDataType() == NUMBER && right.getDataType() == NUMBER {
@@ -191,7 +191,7 @@ func evaluateDMAS(ctx *scopeContext, node parser.TreeNode, operator string) *Poi
 	return NULL_POINTER
 }
 
-func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string) *Pointer {
+func evaluateComparison(ctx *ScopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
 	left.temp = false
 	right := evaluateExpression(node.Children[1], ctx)
@@ -231,7 +231,7 @@ func evaluateComparison(ctx *scopeContext, node parser.TreeNode, operator string
 	return NULL_POINTER
 }
 
-func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Pointer {
+func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Pointer {
 	pm := 1.0
 	switch operator {
 	case "--":
@@ -287,7 +287,7 @@ func evaluateUnary(node parser.TreeNode, ctx *scopeContext, operator string) *Po
 // todo: use regex and simplify checks
 // todo: this makes the whole language terribly slow!
 // shift checking what kind of primary it is to the AST phase
-func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
+func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	LineNo = node.LineNo
 	val := node.Description
 	switch node.Label {
@@ -334,7 +334,7 @@ func evaluatePrimary(node parser.TreeNode, ctx *scopeContext) *Pointer {
 	return NULL_POINTER
 }
 
-func evaluateFuncCall(node parser.TreeNode, ctx *scopeContext) *Pointer {
+func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 
 	function := findFunction(node.Description)
 	funcNode := function
@@ -380,7 +380,7 @@ bit 1-4: length (number of elements*sizeof(pointer type))
 bit 5-8: address of first element
 ...
 */
-func evaluateArray(node parser.TreeNode, ctx *scopeContext) *Pointer {
+func evaluateArray(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	LineNo = node.LineNo
 	len := len(node.Children)
 	arrptr := malloc(type_sizes[POINTER]*len, false)
@@ -401,7 +401,7 @@ func evaluateArray(node parser.TreeNode, ctx *scopeContext) *Pointer {
 /*
 b[i] returns a pointer to the part of the array b which stores the address of the ith element of the array
 */
-func evaluateArrayIndex(node parser.TreeNode, ctx *scopeContext) int {
+func evaluateArrayIndex(node parser.TreeNode, ctx *ScopeContext) int {
 	varname := node.Children[0].Description
 	LineNo = node.LineNo
 	ptr := evaluateExpression(node.Children[0], ctx)

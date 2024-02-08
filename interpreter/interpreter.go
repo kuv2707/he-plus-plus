@@ -6,13 +6,17 @@ import (
 	"he++/utils"
 )
 
-func Interpret(root *parser.TreeNode) {
+func Init() *ScopeContext {
 	pointers[0] = NULL_POINTER
-	pushScopeContext("scope", "root")
-	ctx := contextStack.GetStack()[0].(scopeContext)
-	addNativeFuncDeclarations(&ctx)
-	executeScope(root, &ctx)
+	ctx := pushScopeContext("scope", "root")
+	addNativeFuncDeclarations(ctx)
+	return ctx
+}
+
+func Interpret(root *parser.TreeNode, ctx *ScopeContext) *ScopeContext {
+	executeScope(root, ctx)
 	printMemoryStats()
+	return ctx
 }
 
 const REASON_NATURAL Reason = "natural"
@@ -24,7 +28,7 @@ const TYPE_FUNCTION string = "function"
 const TYPE_SCOPE string = "scope"
 const TYPE_CONDITIONAL string = "conditional"
 
-func executeScope(node *parser.TreeNode, ctx *scopeContext) (Reason, *Pointer) {
+func executeScope(node *parser.TreeNode, ctx *ScopeContext) (Reason, *Pointer) {
 	debug_info("entered", ctx.scopeName)
 	var returnReason Reason = REASON_NATURAL
 	scopeType := ctx.scopeTyp

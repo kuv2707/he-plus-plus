@@ -8,7 +8,7 @@ import (
 )
 
 type funcDef struct {
-	exec func(*scopeContext)
+	exec func(*ScopeContext)
 	args []string
 }
 
@@ -39,7 +39,7 @@ var nativeFunctions = map[string]funcDef{
 	},
 }
 
-func nativeMakeArray(ctx *scopeContext) {
+func nativeMakeArray(ctx *ScopeContext) {
 	value, exists := ctx.variables["size"]
 	if !exists {
 		interrupt("Size of array not passed")
@@ -57,7 +57,7 @@ func nativeMakeArray(ctx *scopeContext) {
 	ctx.returnValue = arrptr
 }
 
-func nativeLen(ctx *scopeContext) {
+func nativeLen(ctx *ScopeContext) {
 	value, exists := ctx.variables["array"]
 	if !exists {
 		interrupt("No array is passed to find the length of")
@@ -84,7 +84,7 @@ func isNativeFunction(name string) bool {
 }
 
 // todo: call the actual implementation of function with specified arguments instead of having them retrieve from context
-func addNativeFuncDeclarations(ctx *scopeContext) {
+func addNativeFuncDeclarations(ctx *ScopeContext) {
 	for k, v := range nativeFunctions {
 		name := k
 		args := v.args
@@ -122,7 +122,7 @@ var printersMap = map[DataType]func(*Pointer){
 	CHAR:    nPrintChar,
 }
 
-func nativePrint(ctx *scopeContext) {
+func nativePrint(ctx *ScopeContext) {
 	value, exists := ctx.variables["arg"]
 	if !exists {
 		interrupt("missing argument to print in function call print")
@@ -130,12 +130,12 @@ func nativePrint(ctx *scopeContext) {
 	printVar(value)
 }
 
-func nativePrintln(ctx *scopeContext) {
+func nativePrintln(ctx *ScopeContext) {
 	nativePrint(ctx)
 	fmt.Print("\n")
 }
 
-func nativeReadNumber(ctx *scopeContext) {
+func nativeReadNumber(ctx *ScopeContext) {
 	prompt, exists := ctx.variables["prompt"]
 	if exists && prompt.getDataType() == STRING {
 		fmt.Print(utils.Colors["WHITE"], stringValue(prompt), utils.Colors["RESET"])
@@ -148,8 +148,9 @@ func nativeReadNumber(ctx *scopeContext) {
 	ctx.returnValue = ptr
 }
 
-func nativeRandom(ctx *scopeContext) {
+func nativeRandom(ctx *ScopeContext) {
 	memaddr := malloc(type_sizes[NUMBER], false)
+	memaddr.setDataType(NUMBER)
 	writeDataContent(memaddr, numberByteArray(rand.Float64()))
 	ctx.returnValue = memaddr
 }

@@ -21,7 +21,7 @@ func (dt DataType) String() string {
 
 type Reason string
 
-type scopeContext struct {
+type ScopeContext struct {
 	scopeId     string
 	scopeTyp    string
 	scopeName   string

@@ -4,16 +4,11 @@ import (
 	"bytes"
 	g "he++/globals"
 	"he++/utils"
-	"os"
 	"strings"
 )
 
-func Lexify(path string) *Node {
 
-	filecontent, err := os.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
+func Lexify(filecontent []byte) *Node {
 
 	//replace comments with spaces
 	for i := 0; i < len(filecontent); i++ {
