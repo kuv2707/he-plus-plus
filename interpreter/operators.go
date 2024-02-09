@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"he++/globals"
 	"he++/parser"
 	"he++/utils"
 	"math"
@@ -294,7 +295,8 @@ func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	case "number":
 		ptr := malloc(type_sizes[NUMBER], true)
 		ptr.setDataType(NUMBER)
-		writeDataContent(ptr, numberByteArray(StringToNumber(val)))
+		num := globals.NumMap[val]
+		writeDataContent(ptr, numberByteArray(num))
 		return ptr
 	case "boolean":
 		ptr := malloc(type_sizes[BOOLEAN], true)

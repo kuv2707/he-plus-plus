@@ -31,3 +31,6 @@ var Operators = []string{"=", "+", "-", "*", "/", "<", ">", "#", "!", "|", "&", 
 //todo bitwise operators
 
 var Booleans = []string{"true", "false"}
+
+
+var NumMap = map[string]float64{}

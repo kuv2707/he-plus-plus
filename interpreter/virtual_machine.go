@@ -7,7 +7,7 @@ import (
 
 // import "fmt"
 
-var MEMSIZE = 1024 //1kb
+var MEMSIZE = 1024*1024 //1kb
 var HEAP = make([]byte, MEMSIZE)
 var reserved = make([]bool, MEMSIZE)
 

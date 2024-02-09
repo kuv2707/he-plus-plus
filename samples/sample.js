@@ -1,5 +1,5 @@
-i=5;
+i=100000;
 loop(i>0){
     --i;
-    println(random());
+    print(i);
 }

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"he++/globals"
 	_ "he++/globals"
 	"he++/lexer"
 	"he++/utils"
@@ -210,6 +211,8 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 
 	switch tokens[0].Type {
 	case "NUMBER":
+		num := StringToNumber(tokens[0].Ref)
+		globals.NumMap[tokens[0].Ref] = num
 		return makeTreeNode("number", nil, tokens[0].Ref, tokens[0].LineNo)
 	case "STRING":
 		return makeTreeNode("string", nil, tokens[0].Ref, tokens[0].LineNo)
