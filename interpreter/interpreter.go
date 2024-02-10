@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"he++/parser"
 	"he++/utils"
-	"time"
 )
 
 func Init() *ScopeContext {
@@ -102,7 +101,6 @@ SCOPE_EXECUTION:
 			}
 
 		case "loop":
-			sta := time.Now().UnixNano()
 			for true {
 				res := evaluateExpression(child.Properties["condition"], ctx)
 				result := booleanValue(res)
@@ -128,8 +126,7 @@ SCOPE_EXECUTION:
 
 				}
 			}
-			end := time.Now().UnixNano()
-			fmt.Println("loop took", end-sta, "ns")
+			
 		case "operator":
 			if !utils.IsOneOf(child.Description, []string{"++", "--", "="}) {
 				interrupt(child.LineNo,"Operator", child.Description, "is not allowed in statements")
@@ -158,7 +155,7 @@ SCOPE_EXECUTION:
 
 	}
 	gc()
-	printMemoryStats()
+	// printMemoryStats()
 	//debug_info("exited", ctx.scopeName)
 	popScopeContext()
 	return returnReason, ctx.returnValue

@@ -35,6 +35,7 @@ func writeDataContent(ptr *Pointer, value []byte) {
 func writeContentFromOnePointerToAnother(dest *Pointer, src *Pointer) {
 	validatePointer(dest)
 	validatePointer(src)
+	//todo: merge both
 	// copy metadata
 	HEAP[dest.address] = HEAP[src.address]
 	for i := 1; i < 5; i++ {
