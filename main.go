@@ -15,7 +15,7 @@ import (
 
 import (
 	"os"
-	"runtime/pprof"
+	// "runtime/pprof"
 )
 
 func readFileContent(path string) []byte {
@@ -56,13 +56,13 @@ func main() {
 }
 
 func StartInterpreting(treeNode *parser.TreeNode) {
-	f, err := os.Create("cpu.pprof")
-	if err != nil {
-		fmt.Println("could not create CPU profile: ", err)
-		return
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	// f, err := os.Create("cpu.pprof")
+	// if err != nil {
+	// 	fmt.Println("could not create CPU profile: ", err)
+	// 	return
+	// }
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
 	fmt.Println(utils.Colors["BOLDYELLOW"] + "starting execution" + utils.Colors["RESET"])
 	startTime := time.Now().UnixMilli()
 	ctx := interpreter.Init()

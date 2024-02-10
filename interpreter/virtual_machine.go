@@ -7,7 +7,7 @@ import (
 
 // import "fmt"
 
-var MEMSIZE = 1024 * 1024 //1kb
+var MEMSIZE = 1024 * 1024 //1mb
 var HEAP = make([]byte, MEMSIZE)
 var reserved = make([]bool, MEMSIZE)
 
@@ -17,7 +17,6 @@ var pointers = make(map[int]*Pointer, 0)
 a pointer returned by malloc will always have dataLength set to the requested length
 and the data region will be zeroed out
 type needs to be set by the caller
-todo: include type in the params
 */
 
 // todo: this makes the whole language terribly slow
