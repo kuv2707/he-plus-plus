@@ -24,7 +24,7 @@ func writeDataContent(ptr *Pointer, value []byte) {
 	//the implication of the following check is that the data length of a pointer cannot be changed
 	//meaning that STRING and ARRAY types cannot be resized
 	if len(value) != datalen {
-		interrupt("invalid data length", len(value), "expected", datalen)
+		interrupt(-1,"invalid data length", len(value), "expected", datalen)
 	}
 	for i := range value {
 		HEAP[ptr.address+5+i] = value[i]
@@ -173,9 +173,9 @@ func printStackTrace() {
 	}
 }
 
-func interrupt(k ...interface{}) {
+func interrupt(lineNo int, k ...interface{}) {
 	fmt.Print(utils.Colors["RED"])
-	fmt.Print("error at line", fmt.Sprint(LineNo), ": ")
+	fmt.Print("error at line ", fmt.Sprint(lineNo), ": ")
 	fmt.Println(k...)
 	printStackTrace()
 	fmt.Print(utils.Colors["RESET"])

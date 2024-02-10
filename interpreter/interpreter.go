@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"he++/parser"
 	"he++/utils"
+	"time"
 )
 
 func Init() *ScopeContext {
@@ -29,13 +30,12 @@ const TYPE_SCOPE string = "scope"
 const TYPE_CONDITIONAL string = "conditional"
 
 func executeScope(node *parser.TreeNode, ctx *ScopeContext) (Reason, *Pointer) {
-	debug_info("entered", ctx.scopeName)
+	//debug_info("entered", ctx.scopeName)
 	var returnReason Reason = REASON_NATURAL
 	scopeType := ctx.scopeTyp
 SCOPE_EXECUTION:
 	for i := range node.Children {
 		child := node.Children[i]
-		LineNo = child.LineNo
 		switch child.Label {
 		case "function":
 			ctx.functions[child.Description] = *child
@@ -55,7 +55,7 @@ SCOPE_EXECUTION:
 				}
 			}
 		case "conditional_block":
-			debug_info("conditional block")
+			//debug_info("conditional block")
 			k := 0
 			executed := false
 			for ; ; k++ {
@@ -102,6 +102,7 @@ SCOPE_EXECUTION:
 			}
 
 		case "loop":
+			sta := time.Now().UnixNano()
 			for true {
 				res := evaluateExpression(child.Properties["condition"], ctx)
 				result := booleanValue(res)
@@ -127,9 +128,11 @@ SCOPE_EXECUTION:
 
 				}
 			}
+			end := time.Now().UnixNano()
+			fmt.Println("loop took", end-sta, "ns")
 		case "operator":
 			if !utils.IsOneOf(child.Description, []string{"++", "--", "="}) {
-				interrupt("Operator", child.Description, "is not allowed in statements")
+				interrupt(child.LineNo,"Operator", child.Description, "is not allowed in statements")
 			}
 			evaluateExpression(child, ctx)
 		case "call":
@@ -146,7 +149,7 @@ SCOPE_EXECUTION:
 			expr := evaluateExpression(child.Children[0], ctx)
 			expr.temp = false
 			ctx.returnValue = expr
-			debug_info("return value is", expr)
+			//debug_info("return value is", expr)
 			returnReason = REASON_RETURN
 			break SCOPE_EXECUTION
 		default:
@@ -156,7 +159,7 @@ SCOPE_EXECUTION:
 	}
 	gc()
 	printMemoryStats()
-	debug_info("exited", ctx.scopeName)
+	//debug_info("exited", ctx.scopeName)
 	popScopeContext()
 	return returnReason, ctx.returnValue
 }

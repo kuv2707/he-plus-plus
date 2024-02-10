@@ -1,11 +1,13 @@
 package parser
 
 import (
+	"encoding/binary"
 	"fmt"
 	"he++/globals"
 	_ "he++/globals"
 	"he++/lexer"
 	"he++/utils"
+	"math"
 	"sort"
 )
 
@@ -197,6 +199,12 @@ func parseUnary(tokens []lexer.TokenType, operators []string) *TreeNode {
 	}
 }
 
+func numberByteArray(value float64) []byte {
+	bytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bytes, math.Float64bits(value))
+	return bytes
+}
+
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 	if !isBalancedExpression(tokens) {
 		abort(tokens[0].LineNo, "unbalanced expression")
@@ -212,7 +220,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 	switch tokens[0].Type {
 	case "NUMBER":
 		num := StringToNumber(tokens[0].Ref)
-		globals.NumMap[tokens[0].Ref] = num
+		globals.NumMap[tokens[0].Ref] = numberByteArray(num)
 		return makeTreeNode("number", nil, tokens[0].Ref, tokens[0].LineNo)
 	case "STRING":
 		return makeTreeNode("string", nil, tokens[0].Ref, tokens[0].LineNo)

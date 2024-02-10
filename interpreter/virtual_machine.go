@@ -7,7 +7,7 @@ import (
 
 // import "fmt"
 
-var MEMSIZE = 1024*1024 //1kb
+var MEMSIZE = 1024 * 1024 //1kb
 var HEAP = make([]byte, MEMSIZE)
 var reserved = make([]bool, MEMSIZE)
 
@@ -20,12 +20,12 @@ type needs to be set by the caller
 todo: include type in the params
 */
 
-//todo: this makes the whole language terribly slow
+// todo: this makes the whole language terribly slow
 // automatically allocates extra memory for metadata
 func malloc(datalen int, temp bool) *Pointer {
 	size := datalen + PTR_DATA_OFFSET
 	if size > MEMSIZE {
-		interrupt("requested more memory than available", size, ">", MEMSIZE)
+		interrupt(-1, "requested more memory than available", size, ">", MEMSIZE)
 	}
 	cap := 0
 	for i := len(HEAP) - 1; i >= 0; i-- {
@@ -42,13 +42,13 @@ func malloc(datalen int, temp bool) *Pointer {
 			p := Pointer{i, temp}
 			p.setDataLength(datalen)
 			pointers[i] = &p
-			debug_info("allocated", size, "data bytes at", i)
+			//debug_info("allocated", size, "data bytes at", i)
 			return &p
 		}
 	}
 	//todo: try to defragment memory and try again
 	printMemoryStats()
-	interrupt("out of memory: failed to allocate", size, "bytes")
+	interrupt(-1, "out of memory: failed to allocate", size, "bytes")
 	return nil
 }
 
@@ -57,7 +57,7 @@ func freePtr(ptr *Pointer) {
 	delete(pointers, ptr.address)
 	// fmt.Print("freeing ")
 	// ptr.print()
-	debug_info("freeing", ptr.address)
+	//debug_info("freeing", ptr.address)
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
 	cnt := 0
 	for i := ptr.address; i < end; i++ {
@@ -69,7 +69,7 @@ func freePtr(ptr *Pointer) {
 
 func heapSlice(start int, size int) []byte {
 	if start+size > MEMSIZE {
-		interrupt("invalid heap slice access")
+		interrupt(-1, "invalid heap slice access")
 	}
 	return HEAP[start : start+size]
 }
@@ -93,13 +93,13 @@ func gc() {
 
 func validatePointer(ptr *Pointer) {
 	if !reserved[ptr.address] {
-		interrupt("invalid pointer " + fmt.Sprint(ptr))
+		interrupt(-1, "invalid pointer "+fmt.Sprint(ptr))
 	}
 }
 
 func printMemoryStats() {
 	if os.Getenv("MEMSTATS") == "0" {
-		return;
+		return
 	}
 	rvd := 0
 	for _, v := range reserved {
@@ -109,5 +109,5 @@ func printMemoryStats() {
 		}
 	}
 
-	debug_info("Occupied", rvd, "/", MEMSIZE, "bytes")
+	//debug_info("Occupied", rvd, "/", MEMSIZE, "bytes")
 }

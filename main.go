@@ -7,11 +7,15 @@ import (
 	"he++/lexer"
 	"he++/parser"
 	"he++/utils"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
+)
+
+import (
+	"os"
+	"runtime/pprof"
 )
 
 func readFileContent(path string) []byte {
@@ -52,6 +56,13 @@ func main() {
 }
 
 func StartInterpreting(treeNode *parser.TreeNode) {
+	f, err := os.Create("cpu.pprof")
+	if err != nil {
+		fmt.Println("could not create CPU profile: ", err)
+		return
+	}
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 	fmt.Println(utils.Colors["BOLDYELLOW"] + "starting execution" + utils.Colors["RESET"])
 	startTime := time.Now().UnixMilli()
 	ctx := interpreter.Init()
@@ -67,7 +78,7 @@ func startREPL() {
 		fmt.Print(utils.Colors["BOLDYELLOW"] + "he++> " + utils.Colors["RESET"])
 		reader := bufio.NewReader(os.Stdin)
 		input, _ := reader.ReadString('\n')
-		if strings.TrimSpace(input) == "exit"{
+		if strings.TrimSpace(input) == "exit" {
 			break
 		}
 		var tokens *lexer.Node = lexer.Lexify([]byte(input))

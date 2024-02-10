@@ -15,8 +15,11 @@ const (
 	STRUCT
 )
 
+var typeNameMap = []string{"NUMBER", "CHAR", "BOOLEAN", "POINTER", "STRING", "ARRAY", "STRUCT"}
+
+
 func (dt DataType) String() string {
-	return [...]string{"NUMBER", "CHAR", "BOOLEAN", "POINTER", "STRING", "ARRAY", "STRUCT"}[dt]
+	return typeNameMap[dt]
 }
 
 type Reason string

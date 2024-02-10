@@ -39,17 +39,19 @@ var nativeFunctions = map[string]funcDef{
 	},
 }
 
+//todo: line no for error message 
+
 func nativeMakeArray(ctx *ScopeContext) {
 	value, exists := ctx.variables["size"]
 	if !exists {
-		interrupt("Size of array not passed")
+		interrupt(-1,"Size of array not passed")
 	}
 	if value.getDataType() != NUMBER {
-		interrupt("invalid argument, expected NUMBER, found", value.getDataType())
+		interrupt(-1,"invalid argument, expected NUMBER, found", value.getDataType())
 	}
 	len := int(numberValue(value))
 	if len <= 0 {
-		interrupt("length of array must be greater than 0")
+		interrupt(-1,"length of array must be greater than 0")
 	}
 	arrptr := malloc(type_sizes[POINTER]*len, false)
 	arrptr.setDataType(ARRAY)
@@ -60,7 +62,7 @@ func nativeMakeArray(ctx *ScopeContext) {
 func nativeLen(ctx *ScopeContext) {
 	value, exists := ctx.variables["array"]
 	if !exists {
-		interrupt("No array is passed to find the length of")
+		interrupt(-1,"No array is passed to find the length of")
 	}
 	div := 0
 	switch value.getDataType() {
@@ -69,7 +71,7 @@ func nativeLen(ctx *ScopeContext) {
 	case STRING:
 		div = type_sizes[CHAR]
 	default:
-		interrupt("Can only find length of arrays and strings")
+		interrupt(-1,"Can only find length of arrays and strings")
 	}
 	len := value.getDataLength() / div
 	memaddr := malloc(type_sizes[NUMBER], false)
@@ -125,7 +127,7 @@ var printersMap = map[DataType]func(*Pointer){
 func nativePrint(ctx *ScopeContext) {
 	value, exists := ctx.variables["arg"]
 	if !exists {
-		interrupt("missing argument to print in function call print")
+		interrupt(-1,"missing argument to print in function call print")
 	}
 	printVar(value)
 }

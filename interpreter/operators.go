@@ -9,7 +9,6 @@ import (
 )
 
 func evaluateOperator(node parser.TreeNode, ctx *ScopeContext) *Pointer {
-	LineNo = node.LineNo
 	if node.Label == "literal" {
 		return evaluatePrimary(node, ctx)
 	}
@@ -29,12 +28,11 @@ func evaluateOperator(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	} else if utils.IsOneOf(node.Description, []string{"++", "--", "!"}) {
 		return evaluateUnary(node, ctx, node.Description)
 	}
-	interrupt("invalid operator " + node.Description)
+	interrupt(node.LineNo, "invalid operator "+node.Description)
 	return NULL_POINTER
 }
 
 func evaluateExpression(node *parser.TreeNode, ctx *ScopeContext) *Pointer {
-	LineNo = node.LineNo
 	ret := NULL_POINTER
 	switch node.Label {
 	case "operator":
@@ -57,7 +55,7 @@ func evaluateExpression(node *parser.TreeNode, ctx *ScopeContext) *Pointer {
 	case "call":
 		ret = evaluateFuncCall(*node, ctx)
 		if ret == NULL_POINTER {
-			interrupt("function " + node.Description + " does not return a value but is expected to")
+			interrupt(node.LineNo, "function "+node.Description+" does not return a value but is expected to")
 		}
 	default:
 		node.PrintTree("->")
@@ -82,7 +80,7 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 	// fmt.Println(variableName, " exists:", !val.isNull())
 	if !val.isNull() {
 		if val.getDataType() != variableValue.getDataType() {
-			interrupt("cannot assign", variableValue.getDataType().String(), "to", val.getDataType().String())
+			interrupt(node.LineNo, "cannot assign", variableValue.getDataType().String(), "to", val.getDataType().String())
 		}
 		writeContentFromOnePointerToAnother(val, variableValue)
 		freePtr(variableValue)
@@ -91,7 +89,7 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 		variableValue.temp = false
 		ctx.variables[variableName] = variableValue
 	}
-	debug_info("assigned", variableName, "to", variableValue)
+	//debug_info("assigned", variableName, "to", variableValue)
 	return ctx.variables[variableName]
 }
 
@@ -115,7 +113,7 @@ func evaluateLogical(ctx *ScopeContext, node parser.TreeNode, operator string) *
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		interrupt("invalid operands to logical operator", operator, ":", left.getDataType().String(), right.getDataType().String())
+		interrupt(node.LineNo, "invalid operands to logical operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -143,7 +141,7 @@ func evaluateDMAS(ctx *ScopeContext, node parser.TreeNode, operator string) *Poi
 		return ptr
 	} else if left.getDataType() == STRING && right.getDataType() == STRING {
 		if operator != "+" {
-			interrupt("Invalid operator", operator, "for string operands")
+			interrupt(node.LineNo, "Invalid operator", operator, "for string operands")
 		}
 		leftVal := stringValue(left)
 		rightVal := stringValue(right)
@@ -165,7 +163,7 @@ func evaluateDMAS(ctx *ScopeContext, node parser.TreeNode, operator string) *Poi
 				rightVal -= 1
 			}
 		default:
-			interrupt("string and number operands cannot be used with operator", operator)
+			interrupt(node.LineNo, "string and number operands cannot be used with operator", operator)
 		}
 		ptr := malloc(type_sizes[CHAR]*len(newval), true)
 		ptr.setDataType(STRING)
@@ -179,7 +177,7 @@ func evaluateDMAS(ctx *ScopeContext, node parser.TreeNode, operator string) *Poi
 		case "+":
 			newval = fmt.Sprint(leftVal) + rightVal
 		default:
-			interrupt("number and string operands cannot be used with operator", operator)
+			interrupt(node.LineNo, "number and string operands cannot be used with operator", operator)
 		}
 		ptr := malloc(type_sizes[CHAR]*len(newval), true)
 		ptr.setDataType(STRING)
@@ -187,7 +185,7 @@ func evaluateDMAS(ctx *ScopeContext, node parser.TreeNode, operator string) *Poi
 		return ptr
 
 	} else {
-		interrupt("invalid operands to arithmetic operator", operator, ":", left.getDataType().String(), right.getDataType().String())
+		interrupt(node.LineNo, "invalid operands to arithmetic operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -227,7 +225,7 @@ func evaluateComparison(ctx *ScopeContext, node parser.TreeNode, operator string
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		interrupt("invalid operands to relational operator", operator, ":", left.getDataType().String(), right.getDataType().String())
+		interrupt(-1, "invalid operands to relational operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -242,10 +240,10 @@ func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Po
 		varname := node.Children[0].Description
 		varval := findVariable(varname)
 		if varval.isNull() {
-			interrupt("cannot increment variable " + varname + " as it does not exist in current scope")
+			interrupt(node.LineNo, "cannot increment variable "+varname+" as it does not exist in current scope")
 		}
 		if varval.getDataType() != NUMBER {
-			interrupt("cannot increment variable " + varname + " as it is not a number")
+			interrupt(node.LineNo, "cannot increment variable "+varname+" as it is not a number")
 		}
 		val := numberValue(varval)
 		val += pm
@@ -265,7 +263,7 @@ func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Po
 			return ptr
 
 		default:
-			interrupt("invalid unary operator " + operator)
+			interrupt(node.LineNo, "invalid unary operator "+operator)
 		}
 	} else if val.getDataType() == BOOLEAN {
 		switch operator {
@@ -278,10 +276,10 @@ func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Po
 			writeDataContent(memaddr, []byte{valb})
 			return memaddr
 		default:
-			interrupt("invalid unary operator " + operator)
+			interrupt(node.LineNo, "invalid unary operator "+operator)
 		}
 	}
-	interrupt("invalid operand to unary operator", operator, ":", val.getDataType().String())
+	interrupt(node.LineNo, "invalid operand to unary operator", operator, ":", val.getDataType().String())
 	return NULL_POINTER
 }
 
@@ -289,14 +287,13 @@ func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Po
 // todo: this makes the whole language terribly slow!
 // shift checking what kind of primary it is to the AST phase
 func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
-	LineNo = node.LineNo
 	val := node.Description
 	switch node.Label {
 	case "number":
 		ptr := malloc(type_sizes[NUMBER], true)
 		ptr.setDataType(NUMBER)
 		num := globals.NumMap[val]
-		writeDataContent(ptr, numberByteArray(num))
+		writeDataContent(ptr, num)
 		return ptr
 	case "boolean":
 		ptr := malloc(type_sizes[BOOLEAN], true)
@@ -323,15 +320,10 @@ func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 			}
 			return v.clone()
 		} else {
-			LineNo = node.LineNo
-			interrupt("variable " + val + " does not exist in current scope")
+
+			interrupt(node.LineNo, "variable "+val+" does not exist in current scope")
 		}
 	}
-
-	// if isCompositeDS(node) {
-	// 	//func call or array or object
-	// 	return evaluateCompositeDS(node, ctx)
-	// }
 
 	return NULL_POINTER
 }
@@ -341,27 +333,24 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	function := findFunction(node.Description)
 	funcNode := function
 	if function == nil {
-		interrupt("function " + node.Description + " does not exist in current scope")
+		interrupt(node.LineNo, "function "+node.Description+" does not exist in current scope")
 	}
 	newCtx := pushScopeContext(TYPE_FUNCTION, node.Description)
-	lastValidLine := LineNo
 	actualArgs := node.Properties["args"]
 	if len(actualArgs.Children) != len(funcNode.Properties["args"].Children) {
-		interrupt("invalid number of arguments in function call "+funcNode.Description, "expected", len(funcNode.Properties["args"].Children), "got", len(actualArgs.Children))
+		interrupt(node.LineNo, "invalid number of arguments in function call "+funcNode.Description, "expected", len(funcNode.Properties["args"].Children), "got", len(actualArgs.Children))
 	}
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
 		argNode := actualArgs.Children[i]
 		if argNode == nil {
-			LineNo = lastValidLine
-			interrupt("missing argument " + argName + " in function call " + funcNode.Description)
+			interrupt(node.LineNo, "missing argument "+argName+" in function call "+funcNode.Description)
 		}
-		lastValidLine = argNode.LineNo
 		argValue := evaluateExpression(argNode, newCtx)
 		argValue.temp = false
 		newCtx.variables[argName] = argValue.clone()
 	}
-	debug_info("calling", funcNode.Description)
+	//debug_info("calling", funcNode.Description)
 	nfunc, nfexists := nativeFunctions[funcNode.Description]
 	body, bexists := funcNode.Properties["body"]
 	if bexists {
@@ -383,7 +372,7 @@ bit 5-8: address of first element
 ...
 */
 func evaluateArray(node parser.TreeNode, ctx *ScopeContext) *Pointer {
-	LineNo = node.LineNo
+
 	len := len(node.Children)
 	arrptr := malloc(type_sizes[POINTER]*len, false)
 	arrptr.setDataType(ARRAY)
@@ -405,20 +394,20 @@ b[i] returns a pointer to the part of the array b which stores the address of th
 */
 func evaluateArrayIndex(node parser.TreeNode, ctx *ScopeContext) int {
 	varname := node.Children[0].Description
-	LineNo = node.LineNo
+
 	ptr := evaluateExpression(node.Children[0], ctx)
 	if ptr.getDataType() != ARRAY {
-		interrupt("variable", varname, "is not an array")
+		interrupt(node.LineNo, "variable", varname, "is not an array")
 		return NULL_POINTER.address
 	}
 	index := evaluateExpression(node.Properties["index"], ctx)
 	if index.getDataType() != NUMBER {
-		interrupt("array cannot be indexed by", index.getDataType().String())
+		interrupt(node.LineNo, "array cannot be indexed by", index.getDataType().String())
 		return NULL_POINTER.address
 	}
 	indexNo := int(numberValue(index))
 	if indexNo >= ptr.getDataLength()/type_sizes[POINTER] || indexNo < 0 {
-		interrupt("index", indexNo, "out of range for array length", ptr.getDataLength()/type_sizes[POINTER])
+		interrupt(node.LineNo, "index", indexNo, "out of range for array length", ptr.getDataLength()/type_sizes[POINTER])
 		return NULL_POINTER.address
 	}
 	addr := ptr.address + PTR_DATA_OFFSET + indexNo*type_sizes[POINTER]

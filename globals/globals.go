@@ -33,4 +33,4 @@ var Operators = []string{"=", "+", "-", "*", "/", "<", ">", "#", "!", "|", "&", 
 var Booleans = []string{"true", "false"}
 
 
-var NumMap = map[string]float64{}
+var NumMap = map[string][]byte{}

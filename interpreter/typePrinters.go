@@ -50,7 +50,7 @@ func printVar(value *Pointer) {
 	case NULL:
 		fmt.Print(utils.Colors["RED"], "<null>", utils.Colors["RESET"])
 	case POINTER:
-		interrupt("cannot print pointer")
+		fmt.Print(utils.Colors["WHITE"], fmt.Sprintf("<pointer#%d>", value.address), utils.Colors["RESET"])
 	case ARRAY:
 		nativePrintArray(value)
 	default:

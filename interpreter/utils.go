@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-var LineNo = -1
 
 func debug_error(k ...interface{}) {
 	if "0" == "0" {

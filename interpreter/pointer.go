@@ -16,15 +16,12 @@ type Pointer struct {
 	temp    bool
 }
 
-//todo: a sophisticated struct storing function name, args, return type etc, and phase out the parser.TreeNode
+// todo: a sophisticated struct storing function name, args, return type etc, and phase out the parser.TreeNode
 type Function struct {
 	name string
-
 }
 
 var PTR_DATA_OFFSET = 5
-
-
 
 func (p *Pointer) getDataType() DataType {
 	return DataType(HEAP[p.address])
@@ -52,7 +49,7 @@ func (p *Pointer) isNull() bool {
 
 // prints the region in hex form
 func (p *Pointer) print() {
-	fmt.Print(p.address, " ",p.temp," ")
+	fmt.Print(p.address, " ", p.temp, " ")
 	fmt.Print(" ", p.getDataType())
 	datalen := p.getDataLength()
 	fmt.Print(" ", datalen, " ")
@@ -76,6 +73,6 @@ func (p *Pointer) clone() *Pointer {
 	for i := 0; i < p.getDataLength(); i++ {
 		HEAP[newptr.address+PTR_DATA_OFFSET+i] = HEAP[p.address+PTR_DATA_OFFSET+i]
 	}
-	debug_info("cloned", p.address, "to", newptr.address, "datalen", p.getDataLength())
+	//debug_info("cloned", p.address, "to", newptr.address, "datalen", p.getDataLength())
 	return newptr
 }
