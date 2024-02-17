@@ -176,6 +176,9 @@ func printStackTrace() {
 }
 
 func interrupt(lineNo int, k ...interface{}) {
+	if lineNo < 0 {
+		lineNo = getScopeContext(0).currentLine
+	}
 	fmt.Print(utils.Colors["RED"])
 	fmt.Print("error at line ", fmt.Sprint(lineNo), ": ")
 	fmt.Println(k...)

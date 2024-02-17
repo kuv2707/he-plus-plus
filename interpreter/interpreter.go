@@ -29,7 +29,8 @@ const TYPE_SCOPE string = "scope"
 const TYPE_CONDITIONAL string = "conditional"
 
 func executeScope(node *parser.TreeNode, ctx *ScopeContext) (Reason, *Pointer) {
-	//debug_info("entered", ctx.scopeName)
+	debug_info("entered", ctx.scopeId)
+	printMemoryStats()
 	var returnReason Reason = REASON_NATURAL
 	scopeType := ctx.scopeType
 SCOPE_EXECUTION:
@@ -65,6 +66,7 @@ SCOPE_EXECUTION:
 				}
 				res := evaluateExpression(condnode, ctx)
 				result := booleanValue(res)
+				freePtr(res)
 				if !result {
 					continue
 				}
@@ -164,8 +166,8 @@ SCOPE_EXECUTION:
 
 	}
 	gc()
-	// printMemoryStats()
-	//debug_info("exited", ctx.scopeName)
+	printMemoryStats()
+	debug_info("exited", ctx.scopeId)
 	popScopeContext()
 	return returnReason, ctx.returnValue
 }

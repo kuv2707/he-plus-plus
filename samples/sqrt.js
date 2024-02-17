@@ -1,10 +1,10 @@
 //find k-root of number n by bisection method
-findroot(readNumber("Enter a number:"),2);
-// findroot(1600,2);
+// findroot(readNumber("Enter a number:"),2);
+findroot(1600,2);
 function findroot (n,k){
     // println(n);
     // println(k);
-     low=0;
+    low=0;
     let high=n;
     let mid=0;    
     let TOLERANCE=0.000000001;

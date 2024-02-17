@@ -41,7 +41,7 @@ func malloc(datalen int, temp bool) *Pointer {
 			p := Pointer{i, temp}
 			p.setDataLength(datalen)
 			pointers[i] = &p
-			//debug_info("allocated", size, "data bytes at", i)
+			debug_info("allocated", size, "bytes at", i)
 			return &p
 		}
 	}
@@ -56,7 +56,7 @@ func freePtr(ptr *Pointer) {
 	delete(pointers, ptr.address)
 	// fmt.Print("freeing ")
 	// ptr.print()
-	//debug_info("freeing", ptr.address)
+	debug_info("freeing", ptr.address)
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
 	cnt := 0
 	for i := ptr.address; i < end; i++ {
@@ -85,6 +85,7 @@ func heapSlice(start int, size int) []byte {
 func gc() {
 	for _, ptr := range pointers {
 		if ptr.temp {
+			debug_info("gc: freeing temp pointer", ptr.address)
 			freePtr(ptr)
 		}
 	}
@@ -108,5 +109,5 @@ func printMemoryStats() {
 		}
 	}
 
-	//debug_info("Occupied", rvd, "/", MEMSIZE, "bytes")
+	debug_info("Occupied", rvd, "/", MEMSIZE, "bytes")
 }

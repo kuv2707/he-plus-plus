@@ -22,7 +22,7 @@ func debug_error(k ...interface{}) {
 }
 
 func debug_info(k ...interface{}) {
-	if "0" == "0" {
+	if os.Getenv("DEBUG_INFO") == "0" {
 		return
 	}
 	fmt.Print(utils.Colors["BOLDGREEN"])

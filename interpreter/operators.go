@@ -225,7 +225,9 @@ func evaluateComparison(ctx *ScopeContext, node parser.TreeNode, operator string
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		interrupt(-1, "invalid operands to relational operator", operator, ":", left.getDataType().String(), right.getDataType().String())
+		left.print()
+		right.print()
+		interrupt(node.LineNo, "invalid operands to relational operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
 }
@@ -347,8 +349,11 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 			interrupt(node.LineNo, "missing argument "+argName+" in function call "+funcNode.Description)
 		}
 		argValue := evaluateExpression(argNode, newCtx)
-		argValue.temp = false
-		newCtx.variables[argName] = argValue.clone()
+		cln := argValue.clone()
+		cln.temp = false
+		newCtx.variables[argName] = cln
+
+		freePtr(argValue)
 	}
 	//debug_info("calling", funcNode.Description)
 	nfunc, nfexists := nativeFunctions[funcNode.Description]
