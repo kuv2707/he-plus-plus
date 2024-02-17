@@ -26,8 +26,8 @@ type Reason string
 
 type ScopeContext struct {
 	scopeId     string
-	scopeTyp    string
-	scopeName   string
+	scopeType    string
+	currentLine int
 	variables   map[string]*Pointer
 	functions   map[string]parser.TreeNode
 	returnValue *Pointer

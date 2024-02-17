@@ -31,10 +31,11 @@ const TYPE_CONDITIONAL string = "conditional"
 func executeScope(node *parser.TreeNode, ctx *ScopeContext) (Reason, *Pointer) {
 	//debug_info("entered", ctx.scopeName)
 	var returnReason Reason = REASON_NATURAL
-	scopeType := ctx.scopeTyp
+	scopeType := ctx.scopeType
 SCOPE_EXECUTION:
 	for i := range node.Children {
 		child := node.Children[i]
+		ctx.currentLine = child.LineNo
 		switch child.Label {
 		case "function":
 			ctx.functions[child.Description] = *child
@@ -101,13 +102,21 @@ SCOPE_EXECUTION:
 			}
 
 		case "loop":
+			loopctx:=makeScopeContext(TYPE_LOOP, "loop")
 			for true {
 				res := evaluateExpression(child.Properties["condition"], ctx)
 				result := booleanValue(res)
 				if !result {
 					break
 				}
-				rzn, val := executeScope(child.Properties["body"], pushScopeContext(TYPE_LOOP, "loop"))
+				for k := range loopctx.functions {
+					delete(loopctx.functions, k)
+				}
+				for k := range loopctx.variables {
+					delete(loopctx.variables, k)
+				}
+				pushToContextStack(loopctx)
+				rzn, val := executeScope(child.Properties["body"], &loopctx)
 				if rzn == REASON_BREAK {
 					break
 				}

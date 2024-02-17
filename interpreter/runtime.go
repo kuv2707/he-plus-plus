@@ -24,7 +24,7 @@ func writeDataContent(ptr *Pointer, value []byte) {
 	//the implication of the following check is that the data length of a pointer cannot be changed
 	//meaning that STRING and ARRAY types cannot be resized
 	if len(value) != datalen {
-		interrupt(-1,"invalid data length", len(value), "expected", datalen)
+		interrupt(-1, "invalid data length", len(value), "expected", datalen)
 	}
 	for i := range value {
 		HEAP[ptr.address+5+i] = value[i]
@@ -107,7 +107,7 @@ func stringValue(p *Pointer) string {
 var contextStack = utils.MakeStack()
 
 func makeScopeContext(scopetype string, scopename string) ScopeContext {
-	ctx := ScopeContext{"", scopetype, scopename, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
+	ctx := ScopeContext{scopename, scopetype, 0, make(map[string]*Pointer), make(map[string]parser.TreeNode), NULL_POINTER}
 	return ctx
 }
 
@@ -151,7 +151,7 @@ func popScopeContext() {
 	}
 
 	ctx := contextStack.Peek().(ScopeContext)
-	if ctx.scopeName == "root" && os.Getenv("REPL") == "1" {
+	if ctx.scopeId == "root" && os.Getenv("REPL") == "1" {
 		return
 	}
 
@@ -170,7 +170,8 @@ func getScopeContext(depth int) ScopeContext {
 func printStackTrace() {
 	s := contextStack.GetStack()
 	for i := range s {
-		fmt.Println(s[len(s)-1-i].(ScopeContext).scopeName)
+		ctx:=s[len(s)-1-i].(ScopeContext)
+		fmt.Println(ctx.scopeId,"line",ctx.currentLine)
 	}
 }
 
