@@ -19,7 +19,7 @@ func nPrintBoolean(value *Pointer) {
 }
 
 func nPrintNumber(value *Pointer) {
-	fmt.Print(utils.Colors["WHITE"], numberValue(value), utils.Colors["RESET"])
+	fmt.Print(utils.Colors["MAGENTA"], numberValue(value), utils.Colors["RESET"])
 }
 
 func nPrintChar(value *Pointer) {

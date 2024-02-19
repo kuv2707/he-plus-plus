@@ -314,15 +314,8 @@ func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 		return ptr
 	case "variable":
 		if v := findVariable(val); !v.isNull() {
-			/*
-				array also gets copied, but the elements referred to in it, are not. so if a is an array and we do b=a, then make changes
-			*/
-			if v.getDataType() == ARRAY {
-				return v
-			}
 			return v.clone()
 		} else {
-
 			interrupt(node.LineNo, "variable "+val+" does not exist in current scope")
 		}
 	}
