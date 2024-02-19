@@ -12,7 +12,7 @@ const (
 	POINTER
 	STRING
 	ARRAY
-	STRUCT
+	OBJECT
 )
 
 var typeNameMap = []string{"NUMBER", "CHAR", "BOOLEAN", "POINTER", "STRING", "ARRAY", "STRUCT"}

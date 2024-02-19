@@ -154,12 +154,11 @@ func popScopeContext() {
 	if ctx.scopeId == "root" && os.Getenv("REPL") == "1" {
 		return
 	}
-
-	contextStack.Pop()
 	for _, v := range ctx.variables {
 		freePtr(v)
 	}
 	gc()
+	contextStack.Pop()
 }
 
 func getScopeContext(depth int) ScopeContext {
@@ -177,7 +176,7 @@ func printStackTrace() {
 
 func interrupt(lineNo int, k ...interface{}) {
 	if lineNo < 0 {
-		lineNo = getScopeContext(0).currentLine
+		// lineNo = getScopeContext(0).currentLine
 	}
 	fmt.Print(utils.Colors["RED"])
 	fmt.Print("error at line ", fmt.Sprint(lineNo), ": ")

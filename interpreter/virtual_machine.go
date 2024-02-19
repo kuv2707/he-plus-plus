@@ -12,6 +12,7 @@ var HEAP = make([]byte, MEMSIZE)
 var reserved = make([]bool, MEMSIZE)
 
 var pointers = make(map[int]*Pointer, 0)
+var referenceCount = make(map[*Pointer]int, 0)
 
 /*
 a pointer returned by malloc will always have dataLength set to the requested length
@@ -52,6 +53,10 @@ func malloc(datalen int, temp bool) *Pointer {
 }
 
 func freePtr(ptr *Pointer) {
+	referenceCount[ptr]--
+	if referenceCount[ptr] > 0 {
+		return
+	}
 	validatePointer(ptr)
 	delete(pointers, ptr.address)
 	// fmt.Print("freeing ")

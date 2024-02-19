@@ -27,6 +27,11 @@ func nPrintChar(value *Pointer) {
 
 }
 
+func mockPointer(address int, temp bool) *Pointer {
+	p := Pointer{address, temp}
+	return &p
+}
+
 func nativePrintArray(value *Pointer) {
 	len := value.getDataLength() / type_sizes[POINTER]
 	addr := value.address + PTR_DATA_OFFSET
@@ -35,7 +40,7 @@ func nativePrintArray(value *Pointer) {
 	for i := 0; i < len; i++ {
 		address := bytesToInt(heapSlice(addr, type_sizes[POINTER]))
 		addr += type_sizes[POINTER]
-		pointer := pointers[address]
+		pointer := mockPointer(address, true)
 		// fmt.Println(pointer)
 		printVar(pointer)
 		if i < len-1 {

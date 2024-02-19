@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"he++/parser"
 	"he++/utils"
 	// "math"
 	"os"
@@ -44,8 +43,8 @@ func generateId() string {
 	return uuid.Must(uuid.NewV4()).String()
 }
 
-func isCompositeDS(node parser.TreeNode) bool {
-	return len(node.Children) > 0 || len(node.Properties) > 0
+func isCompositeType(t DataType) bool {
+	return t == ARRAY || t == OBJECT
 }
 
 func StringToNumber(s string) (float64, bool) {

@@ -1,13 +1,11 @@
-function abs(arg){
-        if arg>=0 {
-            return arg;
-        }else{
-            return -arg;
-        }
-    }
-arr=[1,2,3,-4,-5,-6];
-i=0;
-loop i<len(arr){
-    print(abs(arr[i]));
-    i=i+1;
+// a=[1,2,3];
+// a[0] = 4;
+// println(a);
+// println(a);
+
+let a=[2,3];
+{
+
 }
+println(a);
+println(a);

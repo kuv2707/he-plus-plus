@@ -46,7 +46,7 @@ func evaluateExpression(node *parser.TreeNode, ctx *ScopeContext) *Pointer {
 	case "string":
 		ret = evaluatePrimary(*node, ctx)
 	case "variable":
-		ret = evaluatePrimary(*node, ctx)
+		ret = evaluateVariable(*node, ctx)
 	case "array":
 		ret = evaluateArray(*node, ctx)
 	case "index":
@@ -82,13 +82,12 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 		if val.getDataType() != variableValue.getDataType() {
 			interrupt(node.LineNo, "cannot assign", variableValue.getDataType().String(), "to", val.getDataType().String())
 		}
-		writeContentFromOnePointerToAnother(val, variableValue)
-		freePtr(variableValue)
+		freePtr(val)
 	} else {
-
 		variableValue.temp = false
-		ctx.variables[variableName] = variableValue
 	}
+	referenceCount[variableValue]++
+	ctx.variables[variableName] = variableValue
 	//debug_info("assigned", variableName, "to", variableValue)
 	return ctx.variables[variableName]
 }
@@ -312,14 +311,21 @@ func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 		ptr.setDataType(STRING)
 		writeDataContent(ptr, stringAsBytes(val[1:len(val)-1]))
 		return ptr
-	case "variable":
-		if v := findVariable(val); !v.isNull() {
-			return v.clone()
-		} else {
-			interrupt(node.LineNo, "variable "+val+" does not exist in current scope")
-		}
 	}
 
+	return NULL_POINTER
+}
+
+func evaluateVariable(node parser.TreeNode, ctx *ScopeContext) *Pointer {
+	val := node.Description
+	if v := findVariable(val); !v.isNull() {
+		if isCompositeType(v.getDataType()) {
+			return v
+		}
+		return v.clone()
+	} else {
+		interrupt(node.LineNo, "variable "+val+" does not exist in current scope")
+	}
 	return NULL_POINTER
 }
 
@@ -342,13 +348,12 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 			interrupt(node.LineNo, "missing argument "+argName+" in function call "+funcNode.Description)
 		}
 		argValue := evaluateExpression(argNode, newCtx)
-		cln := argValue.clone()
-		cln.temp = false
-		newCtx.variables[argName] = cln
+		referenceCount[argValue]++
+		argValue.temp = false
+		newCtx.variables[argName] = argValue
 
-		freePtr(argValue)
 	}
-	//debug_info("calling", funcNode.Description)
+	debug_info("calling", funcNode.Description)
 	nfunc, nfexists := nativeFunctions[funcNode.Description]
 	body, bexists := funcNode.Properties["body"]
 	if bexists {
@@ -359,6 +364,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	} else {
 		panic("SEVERE: internal logical error. func definition should have been present in either of the maps")
 	}
+	debug_info("exited", funcNode.Description)
 	return newCtx.returnValue
 }
 
