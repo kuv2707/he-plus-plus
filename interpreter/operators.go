@@ -68,27 +68,24 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 	variableValue := evaluateExpression(node.Children[1], ctx)
 	if node.Children[0].Description == "index" {
 		addr := evaluateArrayIndex(*node.Children[0], ctx)
-		// fmt.Println(stringValue(pointers[bytesToInt(heapSlice(addr, 4))]))
-		// variableValue.print()
 		variableValue.temp = false
+		freePtr(pointers[bytesToInt(heapSlice(addr, 4))])
 		unsafeWriteBytes(addr, intToBytes(variableValue.address))
-		// fmt.Println(stringValue(pointers[bytesToInt(heapSlice(addr, 4))]))
 		return variableValue
 	}
 	variableName := node.Children[0].Description
-	val := findVariable(variableName)
-	// fmt.Println(variableName, " exists:", !val.isNull())
+	val,_ := findVariable(variableName)
 	if !val.isNull() {
 		if val.getDataType() != variableValue.getDataType() {
 			interrupt(node.LineNo, "cannot assign", variableValue.getDataType().String(), "to", val.getDataType().String())
 		}
-		freePtr(val)
-	} else {
-		variableValue.temp = false
+		writeContentFromOnePointerToAnother(val, variableValue)
+		freePtr(variableValue)
+		return val
 	}
+	variableValue.temp = false
 	referenceCount[variableValue]++
 	ctx.variables[variableName] = variableValue
-	//debug_info("assigned", variableName, "to", variableValue)
 	return ctx.variables[variableName]
 }
 
@@ -239,7 +236,7 @@ func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Po
 		fallthrough
 	case "++":
 		varname := node.Children[0].Description
-		varval := findVariable(varname)
+		varval,_ := findVariable(varname)
 		if varval.isNull() {
 			interrupt(node.LineNo, "cannot increment variable "+varname+" as it does not exist in current scope")
 		}
@@ -318,11 +315,12 @@ func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 
 func evaluateVariable(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	val := node.Description
-	if v := findVariable(val); !v.isNull() {
+	if v,_ := findVariable(val); !v.isNull() {
 		if isCompositeType(v.getDataType()) {
 			return v
 		}
-		return v.clone()
+		cln:= v.clone()
+		return cln
 	} else {
 		interrupt(node.LineNo, "variable "+val+" does not exist in current scope")
 	}
@@ -385,6 +383,7 @@ func evaluateArray(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	for i := 0; i < len; i++ {
 		ptri := evaluateExpression(node.Children[i], ctx)
 		ptri.temp = false
+		referenceCount[ptri]++
 		unsafeWriteBytes(addr, intToBytes(ptri.address))
 		addr += type_sizes[POINTER]
 	}

@@ -24,7 +24,7 @@ func debug_info(k ...interface{}) {
 	if os.Getenv("DEBUG_INFO") == "0" {
 		return
 	}
-	fmt.Print(utils.Colors["BOLDGREEN"])
+	fmt.Print(utils.Colors["GREEN"])
 	fmt.Println(k...)
 	fmt.Print(utils.Colors["RESET"])
 }

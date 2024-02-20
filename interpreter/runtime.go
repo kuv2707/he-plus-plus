@@ -123,15 +123,16 @@ func pushScopeContext(scopetype string, scopename string) *ScopeContext {
 
 // should be used to get a variable instead of raw ctx.variables[name]
 // nativefunctions can use ctx.variables[name] directly coz they are guaranteed to exist in the same scope
-func findVariable(name string) *Pointer {
+// returns the pointer and the scope context in which the variable was found
+func findVariable(name string) (*Pointer, *ScopeContext) {
 	for i := contextStack.Len() - 1; i >= 0; i-- {
 		ctx := contextStack.Get(i).(ScopeContext)
 		ptr, exists := ctx.variables[name]
 		if exists {
-			return ptr
+			return ptr, &ctx
 		}
 	}
-	return NULL_POINTER
+	return NULL_POINTER, nil
 }
 
 func findFunction(name string) *parser.TreeNode {
@@ -169,8 +170,8 @@ func getScopeContext(depth int) ScopeContext {
 func printStackTrace() {
 	s := contextStack.GetStack()
 	for i := range s {
-		ctx:=s[len(s)-1-i].(ScopeContext)
-		fmt.Println(ctx.scopeId,"line",ctx.currentLine)
+		ctx := s[len(s)-1-i].(ScopeContext)
+		fmt.Println(ctx.scopeId, "line", ctx.currentLine)
 	}
 }
 

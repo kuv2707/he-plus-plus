@@ -1,11 +1,5 @@
-// a=[1,2,3];
-// a[0] = 4;
-// println(a);
-// println(a);
-
-let a=[2,3];
-{
-
+let a=5;
+loop a>1 {
+    a=a-1;
+    println(a);
 }
-println(a);
-println(a);

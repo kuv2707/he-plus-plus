@@ -59,15 +59,29 @@ func freePtr(ptr *Pointer) {
 	}
 	validatePointer(ptr)
 	delete(pointers, ptr.address)
-	// fmt.Print("freeing ")
-	// ptr.print()
+	delete(referenceCount, ptr)
+	
 	debug_info("freeing", ptr.address)
+	if ptr.getDataType() == ARRAY {
+		freeArray(ptr)
+	}
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
 	cnt := 0
 	for i := ptr.address; i < end; i++ {
 		reserved[i] = false
 		HEAP[i] = 0
 		cnt++
+	}
+}
+
+func freeArray(ptr *Pointer) {
+	len := ptr.getDataLength() / type_sizes[POINTER]
+	addr := ptr.address + PTR_DATA_OFFSET
+	for i := 0; i < len; i++ {
+		address := bytesToInt(heapSlice(addr, type_sizes[POINTER]))
+		addr += type_sizes[POINTER]
+		pointer := pointers[address]
+		freePtr(pointer)
 	}
 }
 
@@ -78,18 +92,11 @@ func heapSlice(start int, size int) []byte {
 	return HEAP[start : start+size]
 }
 
-// should not be needed
-// func freeAll() {
-// 	debug_error("freeing all pointers")
-// 	for _, ptr := range pointers {
-// 		freePtr(ptr)
-// 	}
-// }
 
 // frees all temp pointers
 func gc() {
 	for _, ptr := range pointers {
-		if ptr.temp {
+		if ptr.temp{
 			debug_info("gc: freeing temp pointer", ptr.address)
 			freePtr(ptr)
 		}
