@@ -32,5 +32,14 @@ var Operators = []string{"=", "+", "-", "*", "/", "<", ">", "#", "!", "|", "&", 
 
 var Booleans = []string{"true", "false"}
 
-
+//contains mapping of number strings to number values and strings to their hash values
 var NumMap = map[string][]byte{}
+
+
+func HashString(s string) int64 {
+	var val int64 = 0
+	for i := 0; i < len(s); i++ {
+		val += int64(s[i]) * 51
+	}
+	return val
+}

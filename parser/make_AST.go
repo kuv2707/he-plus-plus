@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"he++/globals"
-	_ "he++/globals"
 	"he++/lexer"
 	"he++/utils"
 	"math"
@@ -216,16 +215,13 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 	if tokens[0].Type == "OPEN_SQUARE" {
 		return parseArray(tokens)
 	}
+	if tokens[0].Type == "SCOPE_START" {
+		return parseObject(tokens)
+	}
 
-	switch tokens[0].Type {
-	case "NUMBER":
-		num := StringToNumber(tokens[0].Ref)
-		globals.NumMap[tokens[0].Ref] = numberByteArray(num)
-		return makeTreeNode("number", nil, tokens[0].Ref, tokens[0].LineNo)
-	case "STRING":
-		return makeTreeNode("string", nil, tokens[0].Ref, tokens[0].LineNo)
-	case "BOOLEAN":
-		return makeTreeNode("boolean", nil, tokens[0].Ref, tokens[0].LineNo)
+	dataval, valid := parseDataValue(tokens[0])
+	if valid {
+		return dataval
 	}
 
 	if isValidVariableName(tokens[0].Ref) {
@@ -278,4 +274,38 @@ func parseArray(tokens []lexer.TokenType) *TreeNode {
 		arrNode.Children = append(arrNode.Children, parseExpression(elems[i], 0))
 	}
 	return arrNode
+}
+
+func parseObject(tokens []lexer.TokenType) *TreeNode {
+	tokens = tokens[1:len(tokens)-1]
+	objNode := makeTreeNode("object", nil, "object", tokens[0].LineNo)
+	kvps := splitTokensBalanced(tokens, "COMMA")
+	for _, kvp := range kvps {
+		objNode.Children = append(objNode.Children, parseKeyValuePair(kvp))
+	}
+
+	return objNode
+}
+
+func parseDataValue(token lexer.TokenType) (*TreeNode, bool) {
+	switch token.Type {
+	case "NUMBER":
+		num := StringToNumber(token.Ref)
+		globals.NumMap[token.Ref] = numberByteArray(num)
+		return makeTreeNode("number", nil, token.Ref, token.LineNo), true
+	case "STRING":
+		return makeTreeNode("string", nil, token.Ref, token.LineNo), true
+	case "BOOLEAN":
+		return makeTreeNode("boolean", nil, token.Ref, token.LineNo), true
+	}
+	return nil, false
+}
+
+func parseKeyValuePair(tokens []lexer.TokenType) *TreeNode {
+	fmt.Println(tokens)
+	kvp := makeTreeNode("key_value", nil, "key_val", tokens[0].LineNo)
+	globals.NumMap[tokens[0].Ref] = numberByteArray(float64(globals.HashString(tokens[0].Ref)))
+	kvp.Properties["key"] = makeTreeNode("key", nil, tokens[0].Ref, tokens[0].LineNo)
+	kvp.Properties["value"] = parseExpression(tokens[2:], 0)
+	return kvp
 }

@@ -64,6 +64,9 @@ func Lexify(filecontent []byte) *Node {
 	temp := ""
 	for i := 0; i < len(filecontent); i++ {
 		c := filecontent[i]
+		if c == '\r'{
+			continue
+		}
 		if c == ' ' || c == '\n' || c == '\t' {
 			if c == '\n' {
 				lineNo++

@@ -76,7 +76,9 @@ func splitTokensBalanced(tokens []lexer.TokenType, separator string) [][]lexer.T
 			start = i + 1
 		}
 	}
-	tokensArr = append(tokensArr, tokens[start:])
+	if start < len(tokens)-1 {
+		tokensArr = append(tokensArr, tokens[start:])
+	}
 	return tokensArr
 }
 
@@ -205,8 +207,6 @@ func isValidVariableName(variableName string) bool {
 	}
 	return regExp.MatchString(variableName)
 }
-
-
 
 // todo: move to parsing phase for faster execution
 func StringToNumber(str string) float64 {
