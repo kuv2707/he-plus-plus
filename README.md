@@ -92,8 +92,8 @@ let b="wow"+2+3; //wow5
 operators of same precedence are evaluated right to left instead of left to right
 
 * unassigned array is not cleaned up when scope is exited
-* empty array declaration crashes interpreter
-* line numbers in error messages are not correct sometimes
+* line numbers in error messages are not correct 
+* lexer is crap
 
 
 
