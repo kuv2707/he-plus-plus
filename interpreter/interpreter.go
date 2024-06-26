@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	// "he++/globals"
 	"he++/parser"
 	"he++/utils"
 )
@@ -104,7 +105,7 @@ SCOPE_EXECUTION:
 			}
 
 		case "loop":
-			loopctx:=makeScopeContext(TYPE_LOOP, "loop")
+			loopctx := makeScopeContext(TYPE_LOOP, "loop")
 			for true {
 				res := evaluateExpression(child.Properties["condition"], ctx)
 				result := booleanValue(res)
@@ -137,10 +138,10 @@ SCOPE_EXECUTION:
 
 				}
 			}
-			
+
 		case "operator":
 			if !utils.IsOneOf(child.Description, []string{"++", "--", "="}) {
-				interrupt(child.LineNo,"Operator", child.Description, "is not allowed in statements")
+				interrupt(child.LineNo, "Operator", child.Description, "is not allowed in statements")
 			}
 			evaluateExpression(child, ctx)
 		case "call":
@@ -163,7 +164,6 @@ SCOPE_EXECUTION:
 		default:
 			debug_error("__unknown", child.Label)
 		}
-
 	}
 	gc()
 	printMemoryStats()

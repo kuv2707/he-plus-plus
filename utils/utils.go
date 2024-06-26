@@ -129,6 +129,19 @@ func ClosingBracket(bracket string) string {
 	}
 }
 
+func OpeningBracket(bracket string) string {
+	switch bracket {
+	case ")":
+		return "("
+	case "]":
+		return "["
+	case "}":
+		return "{"
+	default:
+		panic("invalid bracket " + bracket)
+	}
+}
+
 func IsOpenBracket(bracket string) bool {
 	return IsOneOf(bracket, []string{"(", "[", "{"})
 }

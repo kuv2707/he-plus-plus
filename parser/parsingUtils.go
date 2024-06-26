@@ -56,9 +56,31 @@ func collectTillBalanced(close string, tokens []lexer.TokenType) ([]lexer.TokenT
 		}
 	}
 	if balance != 0 {
-		abort(tokens[0].LineNo, "unbalanced parentheses", open)
+		abort(tokens[0].LineNo, "unbalanced parenthesess", open)
 	}
 	return []lexer.TokenType{}, len(tokens) - 1
+}
+
+// the closing bracket should be included in the tokens passed, at the last position
+func collectTillBalancedReverse(open string, tokens []lexer.TokenType) ([]lexer.TokenType, int) {
+    close := tokens[len(tokens)-1].Ref
+	// fmt.Println(tokens)
+    balance := 1
+    for i := len(tokens) - 2; i >= 0; i-- {
+        if tokens[i].Ref == close {
+            balance++
+        } else if tokens[i].Ref == open {
+            balance--
+        }
+        if balance == 0 {
+            return tokens[i+1 : len(tokens)-1], len(tokens)-1-i
+        }
+    }
+    if balance != 0 {
+		fmt.Println(">",tokens, close, open)
+        abort(tokens[len(tokens)-1].LineNo, "unbalanced parentheses", close)
+    }
+    return []lexer.TokenType{}, 0
 }
 
 func splitTokensBalanced(tokens []lexer.TokenType, separator string) [][]lexer.TokenType {
@@ -76,8 +98,8 @@ func splitTokensBalanced(tokens []lexer.TokenType, separator string) [][]lexer.T
 			start = i + 1
 		}
 	}
-	if start < len(tokens)-1 {
-		tokensArr = append(tokensArr, tokens[start:])
+	if start < len(tokens) {
+	tokensArr = append(tokensArr, tokens[start:])
 	}
 	return tokensArr
 }
@@ -142,7 +164,7 @@ func seekClosingParen(tokens []lexer.TokenType, bracket string) int {
 		}
 	}
 	fmt.Println(tokens)
-	panic("unbalanced parentheses")
+	panic("unbalanced parentheses"+bracket)
 }
 
 func (treeNode *TreeNode) PrintTree(space string) {
@@ -207,6 +229,7 @@ func isValidVariableName(variableName string) bool {
 	}
 	return regExp.MatchString(variableName)
 }
+
 
 // todo: move to parsing phase for faster execution
 func StringToNumber(str string) float64 {

@@ -161,6 +161,8 @@ func addToken(temp string, tokens *Node) bool {
 		tokens.Next = &Node{TokenType{"RETURN", g.RETURN, lineNo}, nil}
 	case g.FUNCTION:
 		tokens.Next = &Node{TokenType{"FUNCTION", g.FUNCTION, lineNo}, nil}
+	case g.STRUCT:
+		tokens.Next = &Node{TokenType{"STRUCT", g.STRUCT, lineNo}, nil}
 
 	default:
 		if utils.IsNumber(temp) {

@@ -10,3 +10,9 @@ type Node struct {
 	Val  TokenType
 	Next *Node
 }
+
+
+
+func (m TokenType) String() string {
+	return  "" + m.Ref
+}

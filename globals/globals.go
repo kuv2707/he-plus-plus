@@ -23,6 +23,7 @@ var RETURN = "return"
 var EQUALS = "="
 var OPEN_SQUARE = "["
 var CLOSE_SQUARE = "]"
+var STRUCT = "struct"
 
 var KEYWORDS = []string{"IF", "ELSE IF", "ELSE", "FUNCTION", "SCOPE_END", "LET"}
 
@@ -42,4 +43,8 @@ func HashString(s string) int64 {
 		val += int64(s[i]) * 51
 	}
 	return val
+}
+
+func BeginsWithCapital(s string) bool {
+	return s[0] >= 'A' && s[0] <= 'Z'
 }

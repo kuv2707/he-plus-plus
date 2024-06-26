@@ -53,6 +53,9 @@ func malloc(datalen int, temp bool) *Pointer {
 }
 
 func freePtr(ptr *Pointer) {
+	if ptr == NULL_POINTER {
+		return
+	}
 	referenceCount[ptr]--
 	if referenceCount[ptr] > 0 {
 		return
@@ -62,7 +65,7 @@ func freePtr(ptr *Pointer) {
 	delete(referenceCount, ptr)
 	
 	debug_info("freeing", ptr.address)
-	if ptr.getDataType() == ARRAY {
+	if isCompositeType(ptr.getDataType()){
 		freeArray(ptr)
 	}
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
@@ -81,6 +84,10 @@ func freeArray(ptr *Pointer) {
 		address := bytesToInt(heapSlice(addr, type_sizes[POINTER]))
 		addr += type_sizes[POINTER]
 		pointer := pointers[address]
+		if pointer == nil {
+			// fmt.Println(address,"pe nil h")
+			continue
+		}
 		freePtr(pointer)
 	}
 }
@@ -107,6 +114,10 @@ func validatePointer(ptr *Pointer) {
 	if !reserved[ptr.address] {
 		interrupt(-1, "invalid pointer "+fmt.Sprint(ptr))
 	}
+}
+
+func pointerAt(address int) *Pointer {
+	return pointers[address]
 }
 
 func printMemoryStats() {

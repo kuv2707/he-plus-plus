@@ -6,7 +6,7 @@ type DataType byte
 
 const (
 	NULL DataType = iota
-	NUMBER 
+	NUMBER
 	CHAR
 	BOOLEAN
 	POINTER
@@ -17,7 +17,6 @@ const (
 
 var typeNameMap = []string{"NUMBER", "CHAR", "BOOLEAN", "POINTER", "STRING", "ARRAY", "STRUCT"}
 
-
 func (dt DataType) String() string {
 	return typeNameMap[dt]
 }
@@ -26,7 +25,7 @@ type Reason string
 
 type ScopeContext struct {
 	scopeId     string
-	scopeType    string
+	scopeType   string
 	currentLine int
 	variables   map[string]*Pointer
 	functions   map[string]parser.TreeNode

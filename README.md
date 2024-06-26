@@ -1,6 +1,8 @@
 # he++
 An interpreted general-purpose programming language built on top of golang.
 
+The purpose of this project is to learn how to build a programming language from scratch. It is not meant to be used in the real world, and can thus have all kinds of whacky features.
+
 
 ## Quick Start
 * Clone the repository
@@ -73,7 +75,23 @@ An array can have any number of elements of any type, including other arrays. Th
 ```js
 let arr=[1,2,3,4,[5,6,7],"hello world!",];
 ```
-
+## Objects
+We can define structs and instantiate them. We can also access their fields using the dot operator.
+```js
+struct Point{
+    x,y
+}
+```
+Since he++ is not a strongly typed language, we can define a struct without specifying the types of its fields. We cannot add fields to a struct after it has been defined.
+The struct name should begin with a capital letter.
+A struct can be instantiated like this:
+```js
+let p=Point(5,6);
+```
+To access a field of a struct, we use the dot operator, but the syntax is a bit different from other languages:
+```js
+let x=x.p;// fieldname.structname
+```
 
 # Peculiarities
 

@@ -2,28 +2,27 @@ package interpreter
 
 import (
 	"fmt"
-	"he++/utils"
 )
 
 func nPrintString(value *Pointer) {
-	fmt.Print(utils.Colors["CYAN"], stringValue(value), utils.Colors["RESET"])
+	log(cyan(stringValue(value)))
 }
 
 func nPrintBoolean(value *Pointer) {
 	if booleanValue(value) {
 		//todo: replace with variables for true and false string representations
-		fmt.Print(utils.Colors["GREEN"], "true", utils.Colors["RESET"])
+		log(green("true"))
 	} else {
-		fmt.Print(utils.Colors["RED"], "false", utils.Colors["RESET"])
+		log(red("false"))
 	}
 }
 
 func nPrintNumber(value *Pointer) {
-	fmt.Print(utils.Colors["MAGENTA"], numberValue(value), utils.Colors["RESET"])
+	log(magenta(fmt.Sprint(numberValue(value))))
 }
 
 func nPrintChar(value *Pointer) {
-	fmt.Print(utils.Colors["WHITE"], charValue(value), utils.Colors["RESET"])
+	log(white(string(charValue(value))))
 
 }
 
@@ -36,7 +35,7 @@ func nativePrintArray(value *Pointer) {
 	len := value.getDataLength() / type_sizes[POINTER]
 	addr := value.address + PTR_DATA_OFFSET
 	// fmt.Println(len, addr)
-	fmt.Print(utils.Colors["GREEN"], "[ ")
+	log(bold("[ "))
 	for i := 0; i < len; i++ {
 		address := bytesToInt(heapSlice(addr, type_sizes[POINTER]))
 		addr += type_sizes[POINTER]
@@ -44,25 +43,27 @@ func nativePrintArray(value *Pointer) {
 		// fmt.Println(pointer)
 		printVar(pointer)
 		if i < len-1 {
-			fmt.Print(utils.Colors["GREEN"], " , ")
+			log(green(" , "))
 		}
 	}
-	fmt.Print(utils.Colors["GREEN"], " ]", utils.Colors["RESET"])
+	log(bold(" ]"))
 }
 
 func printVar(value *Pointer) {
 	switch value.getDataType() {
 	case NULL:
-		fmt.Print(utils.Colors["RED"], "<null>", utils.Colors["RESET"])
+		log(red("<null>"))
 	case POINTER:
-		fmt.Print(utils.Colors["WHITE"], fmt.Sprintf("<pointer#%d>", value.address), utils.Colors["RESET"])
+		log(white(fmt.Sprintf("<pointer#%d>", value.address)))
 	case ARRAY:
 		nativePrintArray(value)
+	case OBJECT:
+		log("can't print objects yet")
 	default:
 		f, exists := printersMap[value.getDataType()]
 		if !exists {
 
-			fmt.Print(utils.Colors["WHITE"], fmt.Sprintf("<var@%d>", value.address), utils.Colors["RESET"])
+			log(white(fmt.Sprintf("<var@%d>", value.address)))
 			return
 		}
 		f(value)

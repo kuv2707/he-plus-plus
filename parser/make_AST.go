@@ -44,6 +44,9 @@ OUT:
 		case "FUNCTION":
 			scopeNode.Children = append(scopeNode.Children, parseFunction())
 
+		case "STRUCT":
+			scopeNode.Children = append(scopeNode.Children, parseStruct())
+
 		case "SCOPE_START":
 			scopeNode.Children = append(scopeNode.Children, parseScope())
 
@@ -140,6 +143,7 @@ func parseFormalArgs(tokens []lexer.TokenType) *TreeNode {
 func parseActualArgs(tokens []lexer.TokenType) *TreeNode {
 	argsNode := makeTreeNode("args", nil, "args", -1)
 	argToks := splitTokensBalanced(tokens, "COMMA")
+	fmt.Println(">>>", argToks)
 	for i := 0; i < len(argToks); i++ {
 		if len(argToks[i]) == 0 {
 			continue
@@ -155,11 +159,15 @@ var precedence = [][]string{
 	{"==", "!=", "<", ">", "<=", ">="},
 	{"+", "-"},
 	{"*", "/"},
-	{"!", "-", "#", "++", "--"},
+	{"."},
+	{"!", "-", "#", "++", "--"}, //unary
 }
 
 func parseExpression(tokens []lexer.TokenType, rank int) *TreeNode {
+	// fmt.Println("::",tokens)
 	if rank != len(precedence)-1 {
+		if rank == 5 {
+		}
 		return parseBinary(tokens, precedence[rank], rank)
 	} else {
 		return parseUnary(tokens, precedence[rank])
@@ -169,10 +177,12 @@ func parseExpression(tokens []lexer.TokenType, rank int) *TreeNode {
 func parseBinary(tokens []lexer.TokenType, operators []string, rank int) *TreeNode {
 	opIndex := -1
 	op := ""
-	for i := 0; i < len(tokens); i++ {
-		if tokens[i].Ref == "(" || tokens[i].Ref == "[" || tokens[i].Ref == "{" {
-			_, end := collectTillBalanced(utils.ClosingBracket(tokens[i].Ref), tokens[i:])
-			i += end
+	for i := len(tokens)-1; i >= 0; i-- {
+		if tokens[i].Ref == ")" || tokens[i].Ref == "]" || tokens[i].Ref == "}" {
+			_, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
+			fmt.Println("end",end,i)
+			fmt.Println(tokens)
+			i -= end-1
 			continue
 		}
 		if utils.IsOneOf(tokens[i].Ref, operators) {
@@ -205,6 +215,7 @@ func numberByteArray(value float64) []byte {
 }
 
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
+	fmt.Println("here", tokens)
 	if !isBalancedExpression(tokens) {
 		abort(tokens[0].LineNo, "unbalanced expression")
 	}
@@ -230,25 +241,25 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		if len(tokens) == 1 {
 			return node
 		}
-		for i := 1; i < len(tokens); {
-			if tokens[i].Ref == "[" {
-				toks, end := collectTillBalanced(utils.ClosingBracket(tokens[i].Ref), tokens[i:])
+		for i := len(tokens)-1; i > 0; {
+			if tokens[i].Ref == "]" {
+				toks, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
 				ind := parseExpression(toks, 0)
 				index := makeTreeNode("index", nil, "index", tokens[i].LineNo)
 				index.Properties["index"] = ind
 				index.Children = append(index.Children, node)
 				node = index
-				i += end + 1
-			} else if tokens[i].Ref == "(" {
-				toks, end := collectTillBalanced(utils.ClosingBracket(tokens[i].Ref), tokens[i:])
+				i -= end - 1
+			} else if tokens[i].Ref == ")" {
+				toks, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
 				args := parseActualArgs(toks)
 				call := makeTreeNode("call", nil, name, tokens[i].LineNo)
 				call.Properties["args"] = args
 				call.Children = append(call.Children, node)
 				node = call
-				i += end + 1
+				i -= end - 1
 			} else {
-				i++
+				i--
 			}
 		}
 		return node
@@ -277,7 +288,7 @@ func parseArray(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parseObject(tokens []lexer.TokenType) *TreeNode {
-	tokens = tokens[1:len(tokens)-1]
+	tokens = tokens[1 : len(tokens)-1]
 	objNode := makeTreeNode("object", nil, "object", tokens[0].LineNo)
 	kvps := splitTokensBalanced(tokens, "COMMA")
 	for _, kvp := range kvps {
@@ -302,10 +313,32 @@ func parseDataValue(token lexer.TokenType) (*TreeNode, bool) {
 }
 
 func parseKeyValuePair(tokens []lexer.TokenType) *TreeNode {
-	fmt.Println(tokens)
+	// fmt.Println(tokens)
 	kvp := makeTreeNode("key_value", nil, "key_val", tokens[0].LineNo)
 	globals.NumMap[tokens[0].Ref] = numberByteArray(float64(globals.HashString(tokens[0].Ref)))
 	kvp.Properties["key"] = makeTreeNode("key", nil, tokens[0].Ref, tokens[0].LineNo)
 	kvp.Properties["value"] = parseExpression(tokens[2:], 0)
 	return kvp
+}
+
+func parseStruct() *TreeNode {
+	if !globals.BeginsWithCapital(tokensArr[i].Ref) {
+		abort(tokensArr[i].LineNo, "struct name must begin with a capital letter")
+	}
+	structNode := makeTreeNode("struct", nil, "struct", -1)
+	expect("IDENTIFIER")
+	structNode.Description = tokensArr[i].Ref
+	next()
+	expect("SCOPE_START")
+	next()
+	for matchCurrent("IDENTIFIER") {
+		structNode.Children = append(structNode.Children, makeTreeNode("field", nil, tokensArr[i].Ref, tokensArr[i].LineNo))
+		next()
+		if matchCurrent("SCOPE_END") {	
+			break
+		}
+		consume("COMMA")
+	}
+	consume("SCOPE_END")
+	return structNode
 }
