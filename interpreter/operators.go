@@ -52,6 +52,8 @@ func evaluateExpression(node *parser.TreeNode, ctx *ScopeContext) *Pointer {
 	case "index":
 		ind := evaluateArrayIndex(*node, ctx)
 		ret = pointers[bytesToInt(heapSlice(ind, type_sizes[POINTER]))]
+	case "object":
+		ret = evaluateObject(*node, ctx)
 	case "call":
 		ret = evaluateFuncCall(*node, ctx)
 		if ret == NULL_POINTER {
@@ -74,7 +76,7 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 		return variableValue
 	}
 	variableName := node.Children[0].Description
-	val,_ := findVariable(variableName)
+	val, _ := findVariable(variableName)
 	if !val.isNull() {
 		if val.getDataType() != variableValue.getDataType() {
 			interrupt(node.LineNo, "cannot assign", variableValue.getDataType().String(), "to", val.getDataType().String())
@@ -236,7 +238,7 @@ func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Po
 		fallthrough
 	case "++":
 		varname := node.Children[0].Description
-		varval,_ := findVariable(varname)
+		varval, _ := findVariable(varname)
 		if varval.isNull() {
 			interrupt(node.LineNo, "cannot increment variable "+varname+" as it does not exist in current scope")
 		}
@@ -315,11 +317,11 @@ func evaluatePrimary(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 
 func evaluateVariable(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	val := node.Description
-	if v,_ := findVariable(val); !v.isNull() {
+	if v, _ := findVariable(val); !v.isNull() {
 		if isCompositeType(v.getDataType()) {
 			return v
 		}
-		cln:= v.clone()
+		cln := v.clone()
 		return cln
 	} else {
 		interrupt(node.LineNo, "variable "+val+" does not exist in current scope")
@@ -415,4 +417,23 @@ func evaluateArrayIndex(node parser.TreeNode, ctx *ScopeContext) int {
 	}
 	addr := ptr.address + PTR_DATA_OFFSET + indexNo*type_sizes[POINTER]
 	return addr
+}
+
+func evaluateObject(node parser.TreeNode, ctx *ScopeContext) *Pointer {
+	numkeys := len(node.Children)
+	objptr := malloc(type_sizes[POINTER]*numkeys*2, false)
+	objptr.setDataType(OBJECT)
+	objptr.setDataLength(numkeys * 2 * type_sizes[POINTER])
+	addr := objptr.address + PTR_DATA_OFFSET
+	for i := 0; i < numkeys; i++ {
+		key := node.Children[i].Properties["key"].Description
+		value := evaluateExpression(node.Children[i].Properties["value"], ctx)
+		value.temp = false
+		referenceCount[value]++
+		unsafeWriteBytes(addr, intToBytes(globals.HashString(key)))
+		unsafeWriteBytes(addr+type_sizes[POINTER], intToBytes(value.address))
+		addr += type_sizes[POINTER] * 2
+	}
+	objptr.temp = true
+	return objptr
 }

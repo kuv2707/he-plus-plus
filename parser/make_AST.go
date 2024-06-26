@@ -177,12 +177,12 @@ func parseExpression(tokens []lexer.TokenType, rank int) *TreeNode {
 func parseBinary(tokens []lexer.TokenType, operators []string, rank int) *TreeNode {
 	opIndex := -1
 	op := ""
-	for i := len(tokens)-1; i >= 0; i-- {
+	for i := len(tokens) - 1; i >= 0; i-- {
 		if tokens[i].Ref == ")" || tokens[i].Ref == "]" || tokens[i].Ref == "}" {
 			_, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
-			fmt.Println("end",end,i)
+			fmt.Println("end", end, i)
 			fmt.Println(tokens)
-			i -= end-1
+			i -= end - 1
 			continue
 		}
 		if utils.IsOneOf(tokens[i].Ref, operators) {
@@ -241,7 +241,7 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 		if len(tokens) == 1 {
 			return node
 		}
-		for i := len(tokens)-1; i > 0; {
+		for i := len(tokens) - 1; i > 0; {
 			if tokens[i].Ref == "]" {
 				toks, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
 				ind := parseExpression(toks, 0)
@@ -288,13 +288,13 @@ func parseArray(tokens []lexer.TokenType) *TreeNode {
 }
 
 func parseObject(tokens []lexer.TokenType) *TreeNode {
+	fmt.Println("objj",tokens)
 	tokens = tokens[1 : len(tokens)-1]
 	objNode := makeTreeNode("object", nil, "object", tokens[0].LineNo)
 	kvps := splitTokensBalanced(tokens, "COMMA")
 	for _, kvp := range kvps {
 		objNode.Children = append(objNode.Children, parseKeyValuePair(kvp))
 	}
-
 	return objNode
 }
 
@@ -313,7 +313,7 @@ func parseDataValue(token lexer.TokenType) (*TreeNode, bool) {
 }
 
 func parseKeyValuePair(tokens []lexer.TokenType) *TreeNode {
-	// fmt.Println(tokens)
+	fmt.Println("kvp", tokens)
 	kvp := makeTreeNode("key_value", nil, "key_val", tokens[0].LineNo)
 	globals.NumMap[tokens[0].Ref] = numberByteArray(float64(globals.HashString(tokens[0].Ref)))
 	kvp.Properties["key"] = makeTreeNode("key", nil, tokens[0].Ref, tokens[0].LineNo)
@@ -334,7 +334,7 @@ func parseStruct() *TreeNode {
 	for matchCurrent("IDENTIFIER") {
 		structNode.Children = append(structNode.Children, makeTreeNode("field", nil, tokensArr[i].Ref, tokensArr[i].LineNo))
 		next()
-		if matchCurrent("SCOPE_END") {	
+		if matchCurrent("SCOPE_END") {
 			break
 		}
 		consume("COMMA")

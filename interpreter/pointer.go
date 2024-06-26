@@ -51,11 +51,11 @@ func (p *Pointer) isNull() bool {
 func (p *Pointer) print() {
 	fmt.Print(p.address, " ", p.temp, " ")
 	fmt.Print(" ", p.getDataType())
-	datalen := p.getDataLength()
-	fmt.Print(" ", datalen, " ")
-	for i := 0; i < datalen; i += 2 {
-		fmt.Printf("%x ", HEAP[p.address+PTR_DATA_OFFSET+i:p.address+PTR_DATA_OFFSET+i+2])
-	}
+	// datalen := p.getDataLength()
+	// fmt.Print(" ", datalen, " ")
+	// for i := 0; i < datalen; i += 2 {
+	// 	fmt.Printf("%x ", HEAP[p.address+PTR_DATA_OFFSET+i:p.address+PTR_DATA_OFFSET+i+2])
+	// }
 	fmt.Println()
 }
 

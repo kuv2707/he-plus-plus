@@ -58,7 +58,7 @@ func printVar(value *Pointer) {
 	case ARRAY:
 		nativePrintArray(value)
 	case OBJECT:
-		log("can't print objects yet")
+		printObject(value)
 	default:
 		f, exists := printersMap[value.getDataType()]
 		if !exists {
@@ -69,4 +69,27 @@ func printVar(value *Pointer) {
 		f(value)
 
 	}
+}
+
+func printObject(value *Pointer) {
+	len := value.getDataLength() / type_sizes[POINTER]
+	len = len / 2
+	keyAddr := value.address + PTR_DATA_OFFSET
+	log(bold("{\n"))
+	pushIndent()
+	for i := 0; i < len; i++ {
+		keyHash := bytesToInt(heapSlice(keyAddr, type_sizes[POINTER]))
+		keyAddr += type_sizes[POINTER]
+		indentLog(bold(fmt.Sprintf("%d", keyHash)))
+		log(green(" : "))
+		valueAddr := bytesToInt(heapSlice(keyAddr, type_sizes[POINTER]))
+		keyAddr += type_sizes[POINTER]
+		valuePointer := mockPointer(valueAddr, true)
+		printVar(valuePointer)
+		log("\n")
+
+	}
+	log(bold("}"))
+	popIndent()
+
 }
