@@ -82,11 +82,10 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 			interrupt(node.LineNo, "cannot assign", variableValue.getDataType().String(), "to", val.getDataType().String())
 		}
 		writeContentFromOnePointerToAnother(val, variableValue)
-		freePtr(variableValue)
 		return val
 	}
 	variableValue.temp = false
-	referenceCount[variableValue]++
+	variableValue.changeReferenceCount(true)
 	ctx.variables[variableName] = variableValue
 	return ctx.variables[variableName]
 }
@@ -348,7 +347,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 			interrupt(node.LineNo, "missing argument "+argName+" in function call "+funcNode.Description)
 		}
 		argValue := evaluateExpression(argNode, newCtx)
-		referenceCount[argValue]++
+		argValue.changeReferenceCount(true)
 		argValue.temp = false
 		newCtx.variables[argName] = argValue
 
@@ -385,7 +384,7 @@ func evaluateArray(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	for i := 0; i < len; i++ {
 		ptri := evaluateExpression(node.Children[i], ctx)
 		ptri.temp = false
-		referenceCount[ptri]++
+		ptri.changeReferenceCount(true)
 		unsafeWriteBytes(addr, intToBytes(ptri.address))
 		addr += type_sizes[POINTER]
 	}
@@ -429,7 +428,7 @@ func evaluateObject(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 		key := node.Children[i].Properties["key"].Description
 		value := evaluateExpression(node.Children[i].Properties["value"], ctx)
 		value.temp = false
-		referenceCount[value]++
+		value.changeReferenceCount(true)
 		unsafeWriteBytes(addr, intToBytes(globals.HashString(key)))
 		unsafeWriteBytes(addr+type_sizes[POINTER], intToBytes(value.address))
 		addr += type_sizes[POINTER] * 2

@@ -21,10 +21,14 @@ type Function struct {
 	name string
 }
 
-var PTR_DATA_OFFSET = 5
+var PTR_DATA_OFFSET = 7
 
 func (p *Pointer) getDataType() DataType {
 	return DataType(HEAP[p.address])
+}
+
+func (p *Pointer) setDataType(dt DataType) {
+	HEAP[p.address] = byte(dt)
 }
 
 func (p *Pointer) getDataLength() int {
@@ -36,11 +40,27 @@ func (p *Pointer) setDataLength(length int) {
 	for k := range bts {
 		HEAP[p.address+1+k] = bts[k]
 	}
-
 }
 
-func (p *Pointer) setDataType(dt DataType) {
-	HEAP[p.address] = byte(dt)
+func (p *Pointer) getReferenceCount() int {
+	return bytesToInt16(HEAP[p.address+5 : p.address+7])
+}
+
+func (p *Pointer) setReferenceCount(count int) {
+	bts := int16ToBytes(count)
+	for k := range bts {
+		HEAP[p.address+5+k] = bts[k]
+	}
+}
+
+func (p *Pointer) changeReferenceCount(plus bool) {
+	count := p.getReferenceCount()
+	if plus {
+		count++
+	} else {
+		count--
+	}
+	p.setReferenceCount(count)
 }
 
 func (p *Pointer) isNull() bool {
@@ -51,11 +71,8 @@ func (p *Pointer) isNull() bool {
 func (p *Pointer) print() {
 	fmt.Print(p.address, " ", p.temp, " ")
 	fmt.Print(" ", p.getDataType())
-	// datalen := p.getDataLength()
-	// fmt.Print(" ", datalen, " ")
-	// for i := 0; i < datalen; i += 2 {
-	// 	fmt.Printf("%x ", HEAP[p.address+PTR_DATA_OFFSET+i:p.address+PTR_DATA_OFFSET+i+2])
-	// }
+	fmt.Print(" ", p.getDataLength())
+	fmt.Print(" ", p.getReferenceCount())
 	fmt.Println()
 }
 

@@ -31,7 +31,7 @@ const TYPE_CONDITIONAL string = "conditional"
 
 func executeScope(node *parser.TreeNode, ctx *ScopeContext) (Reason, *Pointer) {
 	debug_info("entered", ctx.scopeId)
-	printMemoryStats()
+	// printMemoryStats()
 	var returnReason Reason = REASON_NATURAL
 	scopeType := ctx.scopeType
 SCOPE_EXECUTION:
@@ -166,7 +166,7 @@ SCOPE_EXECUTION:
 		}
 	}
 	gc()
-	printMemoryStats()
+	// printMemoryStats()
 	debug_info("exited", ctx.scopeId)
 	popScopeContext()
 	return returnReason, ctx.returnValue

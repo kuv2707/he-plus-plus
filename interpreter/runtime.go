@@ -27,7 +27,7 @@ func writeDataContent(ptr *Pointer, value []byte) {
 		interrupt(-1, "invalid data length", len(value), "expected", datalen)
 	}
 	for i := range value {
-		HEAP[ptr.address+5+i] = value[i]
+		HEAP[ptr.address+PTR_DATA_OFFSET+i] = value[i]
 	}
 }
 
@@ -36,11 +36,11 @@ func writeContentFromOnePointerToAnother(dest *Pointer, src *Pointer) {
 	validatePointer(dest)
 	validatePointer(src)
 	//todo: merge both
-	// copy metadata
-	HEAP[dest.address] = HEAP[src.address]
-	for i := 1; i < 5; i++ {
-		HEAP[dest.address+i] = HEAP[src.address+i]
-	}
+	// copy metadata -- should we?
+	// HEAP[dest.address] = HEAP[src.address]
+	// for i := 1; i < PTR_DATA_OFFSET; i++ {
+	// 	HEAP[dest.address+i] = HEAP[src.address+i]
+	// }
 	// copy data
 	for i := 0; i < src.getDataLength(); i++ {
 		HEAP[dest.address+PTR_DATA_OFFSET+i] = HEAP[src.address+PTR_DATA_OFFSET+i]
@@ -61,9 +61,19 @@ func bytesToInt(bytes []byte) int {
 	return int(binary.LittleEndian.Uint32(bytes))
 }
 
+func bytesToInt16(bytes []byte) int {
+	return int(binary.LittleEndian.Uint16(bytes))
+}
+
 func intToBytes(value int) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(value))
+	return bytes
+}
+
+func int16ToBytes(value int) []byte {
+	bytes := make([]byte, 2)
+	binary.LittleEndian.PutUint16(bytes, uint16(value))
 	return bytes
 }
 
@@ -156,6 +166,7 @@ func popScopeContext() {
 		return
 	}
 	for _, v := range ctx.variables {
+		v.changeReferenceCount(false)
 		freePtr(v)
 	}
 	gc()

@@ -5,14 +5,11 @@ import (
 	"os"
 )
 
-// import "fmt"
-
 var MEMSIZE = 1024 * 1024 //1mb
 var HEAP = make([]byte, MEMSIZE)
 var reserved = make([]bool, MEMSIZE)
 
 var pointers = make(map[int]*Pointer, 0)
-var referenceCount = make(map[*Pointer]int, 0)
 
 /*
 a pointer returned by malloc will always have dataLength set to the requested length
@@ -41,13 +38,14 @@ func malloc(datalen int, temp bool) *Pointer {
 			}
 			p := Pointer{i, temp}
 			p.setDataLength(datalen)
+			p.setReferenceCount(0)
 			pointers[i] = &p
 			debug_info("allocated", size, "bytes at", i)
 			return &p
 		}
 	}
 	//todo: try to defragment memory and try again
-	printMemoryStats()
+	// printMemoryStats()
 	interrupt(-1, "out of memory: failed to allocate", size, "bytes")
 	return nil
 }
@@ -56,24 +54,19 @@ func freePtr(ptr *Pointer) {
 	if ptr == NULL_POINTER {
 		return
 	}
-	referenceCount[ptr]--
-	if referenceCount[ptr] > 0 {
+	if ptr.getReferenceCount() > 0 {
 		return
 	}
 	validatePointer(ptr)
 	delete(pointers, ptr.address)
-	delete(referenceCount, ptr)
-	
 	debug_info("freeing", ptr.address)
-	if isCompositeType(ptr.getDataType()){
+	if isCompositeType(ptr.getDataType()) {
 		freeArray(ptr)
 	}
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
-	cnt := 0
 	for i := ptr.address; i < end; i++ {
 		reserved[i] = false
 		HEAP[i] = 0
-		cnt++
 	}
 }
 
@@ -85,7 +78,6 @@ func freeArray(ptr *Pointer) {
 		addr += type_sizes[POINTER]
 		pointer := pointers[address]
 		if pointer == nil {
-			// fmt.Println(address,"pe nil h")
 			continue
 		}
 		freePtr(pointer)
@@ -99,11 +91,10 @@ func heapSlice(start int, size int) []byte {
 	return HEAP[start : start+size]
 }
 
-
 // frees all temp pointers
 func gc() {
 	for _, ptr := range pointers {
-		if ptr.temp{
+		if ptr.temp {
 			debug_info("gc: freeing temp pointer", ptr.address)
 			freePtr(ptr)
 		}
@@ -132,5 +123,5 @@ func printMemoryStats() {
 		}
 	}
 
-	debug_info("Occupied", rvd, "/", MEMSIZE, "bytes")
+	fmt.Println("Occupied", rvd, "/", MEMSIZE, "bytes")
 }

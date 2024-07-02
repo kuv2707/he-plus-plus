@@ -1,9 +1,10 @@
+let roll=134;
 a={
 	name:"Kislay",
-	roll:134,
+	roll:roll,
 	graduated: true,
 	arr:[1,2*6,3,4,{
-		name:"Ayush"
+		name:"Ayush"+"\n Verma"
 	}]
 };
 

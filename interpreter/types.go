@@ -15,7 +15,7 @@ const (
 	OBJECT
 )
 
-var typeNameMap = []string{"NUMBER", "CHAR", "BOOLEAN", "POINTER", "STRING", "ARRAY", "STRUCT"}
+var typeNameMap = []string{"NULL","NUMBER", "CHAR", "BOOLEAN", "POINTER", "STRING", "ARRAY", "STRUCT"}
 
 func (dt DataType) String() string {
 	return typeNameMap[dt]
