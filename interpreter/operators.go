@@ -71,8 +71,11 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 	if node.Children[0].Description == "index" {
 		addr := evaluateArrayIndex(*node.Children[0], ctx)
 		variableValue.temp = false
-		freePtr(pointers[bytesToInt(heapSlice(addr, 4))])
+		old := mockPointer(bytesToInt(heapSlice(addr, 4)), true)
+		old.changeReferenceCount(false)
+		freePtr(old)
 		unsafeWriteBytes(addr, intToBytes(variableValue.address))
+		variableValue.setReferenceCount(1)
 		return variableValue
 	}
 	variableName := node.Children[0].Description
@@ -340,6 +343,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	if len(actualArgs.Children) != len(funcNode.Properties["args"].Children) {
 		interrupt(node.LineNo, "invalid number of arguments in function call "+funcNode.Description, "expected", len(funcNode.Properties["args"].Children), "got", len(actualArgs.Children))
 	}
+	debug_info("alloc for ", funcNode.Description)
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
 		argNode := actualArgs.Children[i]
