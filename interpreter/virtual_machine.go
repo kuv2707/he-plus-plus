@@ -60,8 +60,10 @@ func freePtr(ptr *Pointer) {
 	validatePointer(ptr)
 	delete(pointers, ptr.address)
 	debug_info("freeing", ptr.address)
-	if isCompositeType(ptr.getDataType()) {
+	if ptr.getDataType() == ARRAY {
 		freeArray(ptr)
+	} else if ptr.getDataType() == OBJECT {
+		freeObject(ptr)
 	}
 	end := ptr.address + ptr.getDataLength() + PTR_DATA_OFFSET
 	for i := ptr.address; i < end; i++ {
@@ -76,11 +78,27 @@ func freeArray(ptr *Pointer) {
 	for i := 0; i < len; i++ {
 		address := bytesToInt(heapSlice(addr, type_sizes[POINTER]))
 		addr += type_sizes[POINTER]
-		pointer := pointers[address]
-		if pointer == nil {
+		if address == 0 {
 			continue
 		}
+		pointer := mockPointer(address, true)
+		pointer.changeReferenceCount(false)
 		freePtr(pointer)
+	}
+}
+
+func freeObject(ptr *Pointer) {
+	addr := ptr.address + PTR_DATA_OFFSET + type_sizes[POINTER]
+	numkeys := ptr.getDataLength() / (type_sizes[POINTER] * 2)
+	for i := 0; i < numkeys; i++ {
+		valaddr := bytesToInt(heapSlice(addr, type_sizes[POINTER]))
+		addr += type_sizes[POINTER] * 2
+		if valaddr == 0 {
+			continue
+		}
+		val := mockPointer(valaddr, true)
+		val.changeReferenceCount(false)
+		freePtr(val)
 	}
 }
 

@@ -1,7 +1,7 @@
-b = [1, 2, 3];
-println(b[2]);
+b = [1, 2, 3,4,5,6];
+// println(b[2]);
 b[2] = 88;
-println(b[2]);
+// println(b[2]);
 println(b);
 
 // let size=readNumber("Enter size of array:");

@@ -225,8 +225,6 @@ func evaluateComparison(ctx *ScopeContext, node parser.TreeNode, operator string
 		writeDataContent(ptr, []byte{val})
 		return ptr
 	} else {
-		left.print()
-		right.print()
 		interrupt(node.LineNo, "invalid operands to relational operator", operator, ":", left.getDataType().String(), right.getDataType().String())
 	}
 	return NULL_POINTER
@@ -394,6 +392,7 @@ func evaluateArray(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	}
 
 	arrptr.temp = true
+
 	return arrptr
 }
 

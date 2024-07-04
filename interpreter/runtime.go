@@ -162,9 +162,6 @@ func popScopeContext() {
 	}
 
 	ctx := contextStack.Peek().(ScopeContext)
-	if ctx.scopeId == "root" {
-		return
-	}
 	for _, v := range ctx.variables {
 		v.changeReferenceCount(false)
 		freePtr(v)
