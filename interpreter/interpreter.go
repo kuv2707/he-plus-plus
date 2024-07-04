@@ -7,12 +7,15 @@ import (
 	"he++/utils"
 )
 
-func Init() *ScopeContext {
+func Init(a map[string]string) *ScopeContext {
+	args = a
 	pointers[0] = NULL_POINTER
 	ctx := pushScopeContext("scope", "root")
 	addNativeFuncDeclarations(ctx)
 	return ctx
 }
+
+var args map[string]string
 
 func Interpret(root *parser.TreeNode, ctx *ScopeContext) *ScopeContext {
 	executeScope(root, ctx)

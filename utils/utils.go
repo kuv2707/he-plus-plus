@@ -2,6 +2,7 @@ package utils
 
 import (
 	"he++/globals"
+	"os"
 	"strconv"
 )
 
@@ -147,4 +148,13 @@ func IsOpenBracket(bracket string) bool {
 }
 func IsCloseBracket(bracket string) bool {
 	return IsOneOf(bracket, []string{")", "]", "}"})
+}
+
+
+func ReadFileContent(path string) []byte {
+	filecontent, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return filecontent
 }

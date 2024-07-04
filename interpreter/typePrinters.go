@@ -2,28 +2,28 @@ package interpreter
 
 import (
 	"fmt"
+	u "he++/utils"
 )
 
 func nPrintString(value *Pointer) {
-	log(cyan(stringValue(value)))
+	u.Log(u.Cyan(stringValue(value)))
 }
 
 func nPrintBoolean(value *Pointer) {
 	if booleanValue(value) {
 		//todo: replace with variables for true and false string representations
-		log(green("true"))
+		u.Log(u.Green("true"))
 	} else {
-		log(red("false"))
+		u.Log(u.Red("false"))
 	}
 }
 
 func nPrintNumber(value *Pointer) {
-	log(magenta(fmt.Sprint(numberValue(value))))
+	u.Log(u.Magenta(fmt.Sprint(numberValue(value))))
 }
 
 func nPrintChar(value *Pointer) {
-	log(white(string(charValue(value))))
-
+	u.Log(u.White(string(charValue(value))))
 }
 
 func mockPointer(address int, temp bool) *Pointer {
@@ -35,7 +35,7 @@ func nativePrintArray(value *Pointer) {
 	len := value.getDataLength() / type_sizes[POINTER]
 	addr := value.address + PTR_DATA_OFFSET
 	// fmt.Println(len, addr)
-	log(bold("[ "))
+	u.Log(u.Bold("[ "))
 	for i := 0; i < len; i++ {
 		address := bytesToInt(heapSlice(addr, type_sizes[POINTER]))
 		addr += type_sizes[POINTER]
@@ -43,18 +43,18 @@ func nativePrintArray(value *Pointer) {
 		// fmt.Println(pointer)
 		printVar(pointer)
 		if i < len-1 {
-			log(green(" , "))
+			u.Log(u.Green(" , "))
 		}
 	}
-	log(bold(" ]"))
+	u.Log(u.Bold(" ]"))
 }
 
 func printVar(value *Pointer) {
 	switch value.getDataType() {
 	case NULL:
-		log(red("<null>"))
+		u.Log(u.Red("<null>"))
 	case POINTER:
-		log(white(fmt.Sprintf("<pointer#%d>", value.address)))
+		u.Log(u.White(fmt.Sprintf("<pointer#%d>", value.address)))
 	case ARRAY:
 		nativePrintArray(value)
 	case OBJECT:
@@ -62,12 +62,10 @@ func printVar(value *Pointer) {
 	default:
 		f, exists := printersMap[value.getDataType()]
 		if !exists {
-
-			log(white(fmt.Sprintf("<var@%d>", value.address)))
+			u.Log(u.White(fmt.Sprintf("<var@%d>", value.address)))
 			return
 		}
 		f(value)
-
 	}
 }
 
@@ -75,21 +73,19 @@ func printObject(value *Pointer) {
 	len := value.getDataLength() / type_sizes[POINTER]
 	len = len / 2
 	keyAddr := value.address + PTR_DATA_OFFSET
-	log(bold("{\n"))
-	pushIndent()
+	u.Log(u.Bold("{\n"))
+	u.PushIndent()
 	for i := 0; i < len; i++ {
 		keyHash := bytesToInt(heapSlice(keyAddr, type_sizes[POINTER]))
 		keyAddr += type_sizes[POINTER]
-		indentLog(bold(fmt.Sprintf("%d", keyHash)))
-		log(green(" : "))
+		u.IndentLog(u.Bold(fmt.Sprintf("%d", keyHash)))
+		u.Log(u.Green(" : "))
 		valueAddr := bytesToInt(heapSlice(keyAddr, type_sizes[POINTER]))
 		keyAddr += type_sizes[POINTER]
 		valuePointer := mockPointer(valueAddr, true)
 		printVar(valuePointer)
-		log("\n")
-
+		u.Log("\n")
 	}
-	log(bold("}"))
-	popIndent()
-
+	u.Log(u.Bold("}"))
+	u.PopIndent()
 }

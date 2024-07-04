@@ -162,7 +162,7 @@ func popScopeContext() {
 	}
 
 	ctx := contextStack.Peek().(ScopeContext)
-	if ctx.scopeId == "root" && os.Getenv("REPL") == "1" {
+	if ctx.scopeId == "root" {
 		return
 	}
 	for _, v := range ctx.variables {
