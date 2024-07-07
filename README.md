@@ -13,8 +13,7 @@ The purpose of this project is to learn how to build a programming language from
 * A command line interface will be implemented soon
 
 ## REPL
-The interpreter supports REPL mode too.
-To test it, set REPL=1 in the .env file.
+To be implemented soon
 
 # Features
 
@@ -54,7 +53,8 @@ loop(boolean_expression){
 ## Functions
 Support for functions with return values and arguments
 Arguments are passed by value
-All functions in a scope are hoisted to the top of the scope
+All functions in a scope are hoisted to the top of the scope.
+Recursion is supported.
 
 ```
 function add(a,b){
@@ -76,21 +76,18 @@ An array can have any number of elements of any type, including other arrays. Th
 let arr=[1,2,3,4,[5,6,7],"hello world!",];
 ```
 ## Objects
-We can define structs and instantiate them. We can also access their fields using the dot operator.
+Objects behave exactly like those in javascript, with the dot operator to access properties.
 ```js
-struct Point{
-    x,y
-}
-```
-Since he++ is not a strongly typed language, we can define a struct without specifying the types of its fields. We cannot add fields to a struct after it has been defined.
-The struct name should begin with a capital letter.
-A struct can be instantiated like this:
-```js
-let p=Point(5,6);
-```
-To access a field of a struct, we use the dot operator, but the syntax is a bit different from other languages:
-```js
-let x=x.p;// fieldname.structname
+let obj={
+    name:"John",
+    age:25,
+    address:{
+        city:"New York",
+        country:"USA"
+    }
+};  
+let name=obj.name;
+let city=obj.address.city;
 ```
 
 # Peculiarities
@@ -111,7 +108,7 @@ operators of same precedence are evaluated right to left instead of left to righ
 
 * unassigned array is not cleaned up when scope is exited
 * line numbers in error messages are not correct 
-* lexer is crap
+* lexer can be hugely improved. 
 
 
 
@@ -127,7 +124,6 @@ operators of same precedence are evaluated right to left instead of left to righ
 * improve memory management
 * implement default args to function
 * implement variadic args to function
-* pass line no when printing error messages
 
 ## Contemplating
 * Pratt parsing
