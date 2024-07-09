@@ -189,7 +189,10 @@ func interrupt(lineNo int, k ...interface{}) {
 	}
 	fmt.Print(utils.Colors["RED"])
 	fmt.Print("error at line ", fmt.Sprint(lineNo), ": ")
-	fmt.Println(k...)
+	for i := range k {
+		fmt.Print(utils.Red(fmt.Sprint(k[i]))," ")
+	}
+	fmt.Println()
 	printStackTrace()
 	fmt.Print(utils.Colors["RESET"])
 	fmt.Print(utils.Colors["BOLDRED"])

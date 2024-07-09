@@ -9,28 +9,28 @@ import (
 )
 
 func evaluateOperator(node parser.TreeNode, ctx *ScopeContext) *Pointer {
-    if node.Label == "literal" {
-        return evaluatePrimary(node, ctx)
-    }
-    switch node.Description {
-    case "+", "-", "*", "/":
-        if len(node.Children) == 1 {
-            return evaluateUnary(node, ctx, node.Description)
-        } else {
-            return evaluateDMAS(ctx, node, node.Description)
-        }
-    case "<", ">", "<=", ">=", "==", "!=":
-        return evaluateComparison(ctx, node, node.Description)
-    case "=":
-        return evaluateAssignment(ctx, node)
-    case "&&", "||":
-        return evaluateLogical(ctx, node, node.Description)
-    case "++", "--", "!":
-        return evaluateUnary(node, ctx, node.Description)
-    default:
-        interrupt(node.LineNo, "invalid operator "+node.Description)
-        return NULL_POINTER
-    }
+	if node.Label == "literal" {
+		return evaluatePrimary(node, ctx)
+	}
+	switch node.Description {
+	case "+", "-", "*", "/":
+		if len(node.Children) == 1 {
+			return evaluateUnary(node, ctx, node.Description)
+		} else {
+			return evaluateDMAS(ctx, node, node.Description)
+		}
+	case "<", ">", "<=", ">=", "==", "!=":
+		return evaluateComparison(ctx, node, node.Description)
+	case "=":
+		return evaluateAssignment(ctx, node)
+	case "&&", "||":
+		return evaluateLogical(ctx, node, node.Description)
+	case "++", "--", "!":
+		return evaluateUnary(node, ctx, node.Description)
+	default:
+		interrupt(node.LineNo, "invalid operator "+node.Description)
+		return NULL_POINTER
+	}
 }
 
 func evaluateExpression(node *parser.TreeNode, ctx *ScopeContext) *Pointer {
@@ -244,10 +244,10 @@ func evaluateUnary(node parser.TreeNode, ctx *ScopeContext, operator string) *Po
 		varname := node.Children[0].Description
 		varval, _ := findVariable(varname)
 		if varval.isNull() {
-			interrupt(node.LineNo, "cannot increment variable "+varname+" as it does not exist in current scope")
+			interrupt(node.LineNo, "cannot increment variable", utils.Cyan(varname), "as it does not exist in current scope")
 		}
 		if varval.getDataType() != NUMBER {
-			interrupt(node.LineNo, "cannot increment variable "+varname+" as it is not a number")
+			interrupt(node.LineNo, "cannot increment variable "+utils.Cyan(varname)+" as it is not a number")
 		}
 		val := numberValue(varval)
 		val += pm
@@ -328,7 +328,7 @@ func evaluateVariable(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 		cln := v.clone()
 		return cln
 	} else {
-		interrupt(node.LineNo, "variable "+val+" does not exist in current scope")
+		interrupt(node.LineNo, "variable", utils.Cyan(val), "does not exist in current scope")
 	}
 	return NULL_POINTER
 }
@@ -338,7 +338,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	function := findFunction(node.Description)
 	funcNode := function
 	if function == nil {
-		interrupt(node.LineNo, "function "+node.Description+" does not exist in current scope")
+		interrupt(node.LineNo, "function", utils.Magenta(node.Description), "does not exist in current scope")
 	}
 	newCtx := pushScopeContext(TYPE_FUNCTION, node.Description)
 	actualArgs := node.Properties["args"]
