@@ -96,7 +96,9 @@ func evaluateAssignment(ctx *ScopeContext, node parser.TreeNode) *Pointer {
 
 func evaluateLogical(ctx *ScopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
+	left.temp = false
 	right := evaluateExpression(node.Children[1], ctx)
+	left.temp = true
 	if left.getDataType() == BOOLEAN && right.getDataType() == BOOLEAN {
 		value := false
 		switch operator {
@@ -121,9 +123,10 @@ func evaluateLogical(ctx *ScopeContext, node parser.TreeNode, operator string) *
 
 func evaluateDMAS(ctx *ScopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
+	left.temp = false
 	right := evaluateExpression(node.Children[1], ctx)
-	left.print()
-	right.print()
+	left.temp = true
+	right.temp = true
 	if left.getDataType() == NUMBER && right.getDataType() == NUMBER {
 		leftVal := numberValue(left)
 		rightVal := numberValue(right)
@@ -197,10 +200,8 @@ func evaluateComparison(ctx *ScopeContext, node parser.TreeNode, operator string
 	left := evaluateExpression(node.Children[0], ctx)
 	left.temp = false
 	right := evaluateExpression(node.Children[1], ctx)
-	defer func() {
-		left.temp = true
-		right.temp = true
-	}()
+	left.temp = true
+	right.temp = true
 	if left.getDataType() == NUMBER && right.getDataType() == NUMBER {
 		leftVal := numberValue(left)
 		rightVal := numberValue(right)
@@ -344,7 +345,7 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	if len(actualArgs.Children) != len(funcNode.Properties["args"].Children) {
 		interrupt(node.LineNo, "invalid number of arguments in function call "+funcNode.Description, "expected", len(funcNode.Properties["args"].Children), "got", len(actualArgs.Children))
 	}
-	debug_info("alloc for ", funcNode.Description)
+	debug_info("alloc for", funcNode.Description)
 	for i := 0; i < len(funcNode.Properties["args"].Children); i++ {
 		argName := funcNode.Properties["args"].Children[i].Description
 		argNode := actualArgs.Children[i]
@@ -365,10 +366,10 @@ func evaluateFuncCall(node parser.TreeNode, ctx *ScopeContext) *Pointer {
 	} else if nfexists {
 		nfunc.exec(newCtx)
 		popScopeContext()
+		debug_info("exited", funcNode.Description)
 	} else {
 		panic("SEVERE: internal logical error. func definition should have been present in either of the maps")
 	}
-	debug_info("exited", funcNode.Description)
 	return newCtx.returnValue
 }
 

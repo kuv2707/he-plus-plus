@@ -1,5 +1,5 @@
-println("Hello"+five(0));
+println("Hello"+five());
 
-function five(a){
+function five(){
     return 5;
 }

@@ -83,6 +83,8 @@ func collectTillBalancedReverse(open string, tokens []lexer.TokenType) ([]lexer.
     return []lexer.TokenType{}, 0
 }
 
+// splits the tokens array into subarrays based on the separator token
+// eg, separating expressions separated by commas in a func call
 func splitTokensBalanced(tokens []lexer.TokenType, separator string) [][]lexer.TokenType {
 	tokensArr := make([][]lexer.TokenType, 0)
 	start := 0

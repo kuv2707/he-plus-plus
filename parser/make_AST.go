@@ -143,12 +143,17 @@ func parseFormalArgs(tokens []lexer.TokenType) *TreeNode {
 func parseActualArgs(tokens []lexer.TokenType) *TreeNode {
 	argsNode := makeTreeNode("args", nil, "args", -1)
 	argToks := splitTokensBalanced(tokens, "COMMA")
-	fmt.Println(">>>", argToks)
+	fmt.Println(">", argToks)
+	// return argsNode
 	for i := 0; i < len(argToks); i++ {
 		if len(argToks[i]) == 0 {
 			continue
 		}
+		fmt.Println(">>>", argToks[i])
 		argsNode.Children = append(argsNode.Children, parseExpression(argToks[i], 0))
+	}
+	if len(argToks) == 0 {
+		fmt.Println("loser", argToks, i)
 	}
 	return argsNode
 }
@@ -180,8 +185,6 @@ func parseBinary(tokens []lexer.TokenType, operators []string, rank int) *TreeNo
 	for i := len(tokens) - 1; i >= 0; i-- {
 		if tokens[i].Ref == ")" || tokens[i].Ref == "]" || tokens[i].Ref == "}" {
 			_, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
-			fmt.Println("end", end, i)
-			fmt.Println(tokens)
 			i -= end - 1
 			continue
 		}
@@ -215,7 +218,7 @@ func numberByteArray(value float64) []byte {
 }
 
 func parsePrimary(tokens []lexer.TokenType) *TreeNode {
-	fmt.Println("here", tokens)
+	// fmt.Println("here", tokens)
 	if !isBalancedExpression(tokens) {
 		abort(tokens[0].LineNo, "unbalanced expression")
 	}
@@ -252,12 +255,18 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 				i -= end - 1
 			} else if tokens[i].Ref == ")" {
 				toks, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
+				fmt.Println("call", toks, end)
 				args := parseActualArgs(toks)
 				call := makeTreeNode("call", nil, name, tokens[i].LineNo)
 				call.Properties["args"] = args
 				call.Children = append(call.Children, node)
 				node = call
-				i -= end - 1
+				if end > 1{
+					i -= end - 1
+				} else {
+					// for empty arg list, end = 1
+					i--
+				}
 			} else {
 				i--
 			}
