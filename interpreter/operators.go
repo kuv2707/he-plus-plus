@@ -9,27 +9,28 @@ import (
 )
 
 func evaluateOperator(node parser.TreeNode, ctx *ScopeContext) *Pointer {
-	if node.Label == "literal" {
-		return evaluatePrimary(node, ctx)
-	}
-	if utils.IsOneOf(node.Description, []string{"+", "-", "*", "/"}) {
-		if len(node.Children) == 1 {
-			return evaluateUnary(node, ctx, node.Description)
-		} else {
-
-			return evaluateDMAS(ctx, node, node.Description)
-		}
-	} else if utils.IsOneOf(node.Description, []string{"<", ">", "<=", ">=", "==", "!="}) {
-		return evaluateComparison(ctx, node, node.Description)
-	} else if node.Description == "=" {
-		return evaluateAssignment(ctx, node)
-	} else if utils.IsOneOf(node.Description, []string{"&&", "||"}) {
-		return evaluateLogical(ctx, node, node.Description)
-	} else if utils.IsOneOf(node.Description, []string{"++", "--", "!"}) {
-		return evaluateUnary(node, ctx, node.Description)
-	}
-	interrupt(node.LineNo, "invalid operator "+node.Description)
-	return NULL_POINTER
+    if node.Label == "literal" {
+        return evaluatePrimary(node, ctx)
+    }
+    switch node.Description {
+    case "+", "-", "*", "/":
+        if len(node.Children) == 1 {
+            return evaluateUnary(node, ctx, node.Description)
+        } else {
+            return evaluateDMAS(ctx, node, node.Description)
+        }
+    case "<", ">", "<=", ">=", "==", "!=":
+        return evaluateComparison(ctx, node, node.Description)
+    case "=":
+        return evaluateAssignment(ctx, node)
+    case "&&", "||":
+        return evaluateLogical(ctx, node, node.Description)
+    case "++", "--", "!":
+        return evaluateUnary(node, ctx, node.Description)
+    default:
+        interrupt(node.LineNo, "invalid operator "+node.Description)
+        return NULL_POINTER
+    }
 }
 
 func evaluateExpression(node *parser.TreeNode, ctx *ScopeContext) *Pointer {
@@ -121,6 +122,8 @@ func evaluateLogical(ctx *ScopeContext, node parser.TreeNode, operator string) *
 func evaluateDMAS(ctx *ScopeContext, node parser.TreeNode, operator string) *Pointer {
 	left := evaluateExpression(node.Children[0], ctx)
 	right := evaluateExpression(node.Children[1], ctx)
+	left.print()
+	right.print()
 	if left.getDataType() == NUMBER && right.getDataType() == NUMBER {
 		leftVal := numberValue(left)
 		rightVal := numberValue(right)
