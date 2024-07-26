@@ -9,3 +9,4 @@ a={
 };
 
 println(a);
+println(a.arr[4].name);
