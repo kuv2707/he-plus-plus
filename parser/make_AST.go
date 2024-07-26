@@ -143,13 +143,11 @@ func parseFormalArgs(tokens []lexer.TokenType) *TreeNode {
 func parseActualArgs(tokens []lexer.TokenType) *TreeNode {
 	argsNode := makeTreeNode("args", nil, "args", -1)
 	argToks := splitTokensBalanced(tokens, "COMMA")
-	fmt.Println(">", argToks)
 	// return argsNode
 	for i := 0; i < len(argToks); i++ {
 		if len(argToks[i]) == 0 {
 			continue
 		}
-		fmt.Println(">>>", argToks[i])
 		argsNode.Children = append(argsNode.Children, parseExpression(argToks[i], 0))
 	}
 	if len(argToks) == 0 {
@@ -255,7 +253,6 @@ func parsePrimary(tokens []lexer.TokenType) *TreeNode {
 				i -= end - 1
 			} else if tokens[i].Ref == ")" {
 				toks, end := collectTillBalancedReverse(utils.OpeningBracket(tokens[i].Ref), tokens[0:i+1])
-				fmt.Println("call", toks, end)
 				args := parseActualArgs(toks)
 				call := makeTreeNode("call", nil, name, tokens[i].LineNo)
 				call.Properties["args"] = args
@@ -322,7 +319,6 @@ func parseDataValue(token lexer.TokenType) (*TreeNode, bool) {
 }
 
 func parseKeyValuePair(tokens []lexer.TokenType) *TreeNode {
-	fmt.Println("kvp", tokens)
 	kvp := makeTreeNode("key_value", nil, "key_val", tokens[0].LineNo)
 	globals.NumMap[tokens[0].Ref] = numberByteArray(float64(globals.HashString(tokens[0].Ref)))
 	kvp.Properties["key"] = makeTreeNode("key", nil, tokens[0].Ref, tokens[0].LineNo)

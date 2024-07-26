@@ -5,7 +5,10 @@ a={
 	graduated: true,
 	arr:[1,2*6,3,4,{
 		name:"Ayush"+"\n Verma"
-	}]
+	}],
+	obj: {
+		apple:"APPEL",
+	}
 };
 
-println(a);
+println(a.obj.apple);

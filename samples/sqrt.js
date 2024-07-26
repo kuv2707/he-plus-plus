@@ -16,7 +16,7 @@ function findroot (n,k){
             low=mid;
         }
     }
-    println("The square root is:"+high);
+    println("The square root of "+n+" is:"+high);
     
     function abs(arg){
         if arg>=0 {
