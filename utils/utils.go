@@ -105,10 +105,6 @@ func IsLiteral(s string) bool {
 	return IsOneOf(s, []string{"NUMBER", "BOOLEAN", "STRING"})
 }
 
-func IsOperator(temp string) bool {
-	return IsOneOf(temp, globals.Operators)
-}
-
 func IsBoolean(temp string) bool {
 	return IsOneOf(temp, globals.Booleans)
 }

@@ -1,6 +1,6 @@
 //find k-root of number n by bisection method
 // findroot(readNumber("Enter a number:"),2);
-findroot(1600,2);
+findroot(1600,findroot(4, 2));
 function findroot (n,k){
     // println(n);
     // println(k);
