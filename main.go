@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	cmdlineutils "he++/cmdline_utils"
+	"he++/parser"
+
 	// "he++/interpreter"
 	"he++/lexer"
 	// "he++/parser"
@@ -19,6 +21,10 @@ func main() {
 	lexer := lexer.LexerOf(string(utils.ReadFileContent(args["src"])))
 	lexer.Lexify()
 	lexer.PrintLexemes()
+	astParser := parser.NewParser(lexer.GetTokens())
+	
+	node := astParser.ParseAST()
+	fmt.Println(node.String(""))
 
 	if os.Getenv("DEBUG_LEXER") == "1" {
 		lexer.PrintLexemes()

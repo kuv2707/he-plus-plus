@@ -6,7 +6,6 @@ var KEYWORD = LexerTokenType("keyword")
 var BRACKET = LexerTokenType("bracket")
 var OPERATOR = LexerTokenType("operator")
 var IDENTIFIER = LexerTokenType("identifier")
-var VALUE = LexerTokenType("value")
 var INTEGER = LexerTokenType("int")
 var FLOATINGPT = LexerTokenType("floatingpt")
 var STRING_LITERAL = LexerTokenType("string_literal")
@@ -56,8 +55,8 @@ var MODULO = "%"
 var NOT = "!"
 var PIPE = "|"
 var AMP = "&"
-var LSHIFT = "<<"
-var RSHIFT = ">>"
+var LSHIFT = "<<" // todo: not recognized by lexer
+var RSHIFT = ">>" // not recognized by lexer
 
 // logical operators
 var LESS = "<"
@@ -75,9 +74,11 @@ var DEC = "--"
 var ASSN = "="
 var HASHTAG = "#" // not used anywhere yet
 
+var TERN_IF = "?"
+
 var Keywords = []string{IF, ELSE_IF, ELSE, LET, INT, FLOAT, BOOLEAN, TRUE, FALSE, STRING, LOOP, BREAK, CONTINUE, RETURN, FUNCTION, STRUCT}
 
-var Operators = []string{ADD, SUB, MUL, DIV, MODULO, LESS, GREATER, NOT, PIPE, AMP, EQ, NEQ, LEQ, GEQ, INC, DEC, ANDAND, OROR, ASSN, HASHTAG, AMP, DOT}
+var Operators = []string{ADD, SUB, MUL, DIV, MODULO, LESS, GREATER, NOT, PIPE, AMP, EQ, NEQ, LEQ, GEQ, INC, DEC, ANDAND, OROR, ASSN, HASHTAG, AMP, DOT, TERN_IF}
 
 var names = map[string]string{
 	IF:           "if",

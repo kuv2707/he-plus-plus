@@ -91,21 +91,10 @@ let city=obj.address.city;
 ```
 
 # Peculiarities
-
-### Right to Left precedence
-Operators have right to left precedence, so the expression to the right of an operator will be evaluated first.
-One implication of this peculiarity is that when concatenating strings, if the rightmost operand is an expression, it will be evaluated arithmetically and then concatenated, while everything else will be concatenated.
-```js
-let a=2+3+"wow"; //23wow
-let b="wow"+2+3; //wow5
-```
-
+None!
 
 # Bugs
  
-* 8/9\*18 not evaluated correctly (9*18 evaluated first): 
-operators of same precedence are evaluated right to left instead of left to right
-
 * unassigned array is not cleaned up when scope is exited
 * line numbers in error messages are not correct 
 * lexer can be hugely improved. 
@@ -126,4 +115,3 @@ operators of same precedence are evaluated right to left instead of left to righ
 * implement variadic args to function
 
 ## Contemplating
-* Pratt parsing
