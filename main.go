@@ -2,16 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	cmdlineutils "he++/cmdline_utils"
 	"he++/parser"
-
-	// "he++/interpreter"
 	"he++/lexer"
-	// "he++/parser"
 	"he++/utils"
-	// "time"
-
-	"os"
 )
 
 // "runtime/pprof"
@@ -20,19 +15,15 @@ func main() {
 	args := cmdlineutils.ReadArgs()
 	lexer := lexer.LexerOf(string(utils.ReadFileContent(args["src"])))
 	lexer.Lexify()
-	lexer.PrintLexemes()
-	astParser := parser.NewParser(lexer.GetTokens())
 	
+	astParser := parser.NewParser(lexer.GetTokens())
 	node := astParser.ParseAST()
-	fmt.Println(node.String(""))
-
+	
 	if os.Getenv("DEBUG_LEXER") == "1" {
 		lexer.PrintLexemes()
 	}
-	// treeNode := parser.ParseTree(tokens)
-
 	if os.Getenv("DEBUG_AST") == "1" {
-		// treeNode.PrintTree("")
+		fmt.Println(node.String(""))
 	}
 	if os.Getenv("INTERPRET") == "1" {
 		fmt.Println(utils.Colors["YELLOW"] + "--> " + os.Getenv("SOURCE_FILE"))
