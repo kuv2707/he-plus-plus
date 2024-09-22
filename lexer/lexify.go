@@ -1,39 +1,5 @@
 package lexer
 
-import (
-	"fmt"
-	"he++/utils"
-)
-
-
-func (l *Lexer) escapeSequence(c byte) string {
-	ret := ""
-	switch c {
-	case 'n':
-		ret += "\n"
-	case 't':
-		ret += "\t"
-	case 'r':
-		ret += "\r"
-	case 'b':
-		ret += "\b"
-	case 'f':
-		ret += "\f"
-	case '\\':
-		ret += "\\"
-	case '\'':
-		ret += "`"
-	case '"':
-		ret += "\""
-	default:
-		l.addWarning(fmt.Sprintf("Ignored escape sequence %s at line %d", utils.Blue(fmt.Sprintf("\"\\%c\"", c)), l.lineCnt))
-	}
-	return ret
-}
-
-func (l *Lexer) isThisLexicalQuote() bool {
-	return isQuote(string(l.sourceCode[l.i])) && (l.i == 0 || l.sourceCode[l.i-1] != '\\')
-}
 
 func (l *Lexer) Lexify() []LexerToken {
 
@@ -73,6 +39,7 @@ func (l *Lexer) Lexify() []LexerToken {
 			l.addTokenIfCan(l.word)
 			if l.i+1 < len(l.sourceCode) && l.sourceCode[l.i+1] == '/' {
 				seekTillLineEnd()
+				l.lineCnt++
 			} else {
 				l.addOperator()
 			}

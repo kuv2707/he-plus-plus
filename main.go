@@ -16,20 +16,21 @@ func main() {
 	lexer := lexer.LexerOf(string(utils.ReadFileContent(args["src"])))
 	lexer.Lexify()
 	
-	astParser := parser.NewParser(lexer.GetTokens())
-	node := astParser.ParseAST()
-	
 	if os.Getenv("DEBUG_LEXER") == "1" {
 		lexer.PrintLexemes()
 	}
+	
+	astParser := parser.NewParser(lexer.GetTokens())
+	node := astParser.ParseAST()
+	
 	if os.Getenv("DEBUG_AST") == "1" {
 		fmt.Println(node.String(""))
 	}
-	if os.Getenv("INTERPRET") == "1" {
-		fmt.Println(utils.Colors["YELLOW"] + "--> " + os.Getenv("SOURCE_FILE"))
-		// StartInterpreting(treeNode, args)
-	}
-	fmt.Println(utils.Colors["RESET"])
+	// if os.Getenv("INTERPRET") == "1" {
+	// 	fmt.Println(utils.Colors["YELLOW"] + "--> " + os.Getenv("SOURCE_FILE"))
+	// 	// StartInterpreting(treeNode, args)
+	// }
+	// fmt.Println(utils.Colors["RESET"])
 }
 
 // func StartInterpreting(treeNode *parser.TreeNode, args map[string]string) {

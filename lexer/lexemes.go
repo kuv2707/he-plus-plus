@@ -12,22 +12,25 @@ var STRING_LITERAL = LexerTokenType("string_literal")
 var BOOLEAN_LITERAL = LexerTokenType("boolean_literal")
 
 // keywords
-var IF = "if"
-var ELSE_IF = "elseif"
-var ELSE = "else"
-var LET = "let"
+var IF = "si"
+var THEN = "entonces"
+var ELSE_IF = "elseif" // note: may not be used
+var ELSE = "o"
+var LET = "definir"
 var INT = "int"
 var FLOAT = "float"
 var BOOLEAN = "bool"
 var STRING = "string"
-var LOOP = "loop"
-var BREAK = "break"
-var CONTINUE = "continue"
-var RETURN = "return"
-var FUNCTION = "function"
-var STRUCT = "struct"
-var TRUE = "true"
-var FALSE = "false"
+var FOR = "para"
+var WHILE = "mientras"
+var THAT = "que"
+var BREAK = "interrumpir"
+var CONTINUE = "seguir"
+var RETURN = "devolver"
+var FUNCTION = "funcion"
+var STRUCT = "estructura"
+var TRUE = "verdad"
+var FALSE = "falso"
 
 // symbols
 var LPAREN = "{"
@@ -76,9 +79,9 @@ var HASHTAG = "#" // not used anywhere yet
 
 var TERN_IF = "?"
 
-var Keywords = []string{IF, ELSE_IF, ELSE, LET, INT, FLOAT, BOOLEAN, TRUE, FALSE, STRING, LOOP, BREAK, CONTINUE, RETURN, FUNCTION, STRUCT}
+var Keywords = []string{IF, ELSE_IF, ELSE, LET, INT, FLOAT, BOOLEAN, TRUE, FALSE, STRING, FOR, WHILE, THAT, BREAK, CONTINUE, RETURN, FUNCTION, STRUCT}
 
-var Operators = []string{ADD, SUB, MUL, DIV, MODULO, LESS, GREATER, NOT, PIPE, AMP, EQ, NEQ, LEQ, GEQ, INC, DEC, ANDAND, OROR, ASSN, HASHTAG, AMP, DOT, TERN_IF}
+var Operators = []string{ADD, SUB, MUL, DIV, MODULO, LESS, GREATER, NOT, PIPE, AMP, EQ, NEQ, LEQ, GEQ, INC, DEC, ANDAND, OROR, ASSN, HASHTAG, DOT, TERN_IF}
 
 var names = map[string]string{
 	IF:           "if",
@@ -89,7 +92,8 @@ var names = map[string]string{
 	FLOAT:        "float",
 	BOOLEAN:      "boolean",
 	STRING:       "string",
-	LOOP:         "loop",
+	FOR:         "for",
+	WHILE:        "while",
 	BREAK:        "break",
 	CONTINUE:     "continue",
 	RETURN:       "return",

@@ -36,7 +36,7 @@ func TestLexify(t *testing.T) {
 		})
 	})
 
-	t.Run("Expressions: unary operators", func(t *testing.T) {
+	t.Run("Expressions: Unary operators", func(t *testing.T) {
 		testLexerExpectTokens(t, "a+++b--*c/d%e", []LexerToken{
 			{"identifier", "a", 1},
 			{"operator", "++", 1},
@@ -52,6 +52,23 @@ func TestLexify(t *testing.T) {
 		})
 	})
 
+	t.Run("Expressions: Binary operators", func(t *testing.T) {
+		testLexerExpectTokens(t, "a+3*b(4,5--) == 0", []LexerToken{
+			{"identifier", "a", 1},
+			{"operator", "+", 1},
+			{"int", "3", 1},
+			{"operator", "*", 1},
+			{"identifier", "b", 1},
+			{"bracket", "(", 1},
+			{"int", "4", 1},
+			{"punctuation", ",", 1},
+			{"int", "5", 1},
+			{"operator", "--", 1},
+			{"bracket", ")", 1},
+			{"operator", "==", 1},
+			{"int", "0", 1},
+		})
+	})
 	t.Run("String with escape sequences", func(t *testing.T) {
 		testLexerExpectTokens(t, "\"Hello,\\f \\nWor\\tld!\\z\"", []LexerToken{
 			{"string_literal", "Hello,\f \nWor\tld!", 1},

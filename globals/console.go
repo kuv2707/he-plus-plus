@@ -1,4 +1,4 @@
-package utils
+package globals
 
 import (
 	"fmt"
@@ -69,6 +69,10 @@ func Underline(s string) string {
 
 func Reverse(s string) string {
 	return "\033[7m" + s + "\033[0m"
+}
+
+func RandomColor(s string) string {
+	return GetRandomColor() + s + Colors["RESET"]
 }
 
 func Clear() {

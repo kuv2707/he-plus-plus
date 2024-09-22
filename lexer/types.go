@@ -2,7 +2,7 @@ package lexer
 
 import (
 	"fmt"
-	"he++/utils"
+	"he++/globals"
 )
 
 type LexerTokenType string
@@ -22,7 +22,7 @@ func NewLexerToken(tokenType LexerTokenType, ref string, lineNo int) LexerToken 
 }
 
 func (m LexerToken) String() string {
-	return utils.Blue(string(m.tokenType)) + " " + utils.Yellow(m.ref) + " " + utils.Red(fmt.Sprint(m.lineNo))
+	return fmt.Sprintf("%s %s %s", globals.Blue(string(m.tokenType)), globals.Yellow(m.ref), globals.Red(fmt.Sprint(m.lineNo)))
 }
 
 func (l LexerToken) Text() string {
@@ -38,12 +38,12 @@ func (l LexerToken) LineNo() int {
 }
 
 type Lexer struct {
-	sourceCode   string
-	i            int
-	lineCnt      int
-	tokens       []LexerToken
-	word         string
-	warnings     []string
+	sourceCode string
+	i          int
+	lineCnt    int
+	tokens     []LexerToken
+	word       string
+	warnings   []string
 }
 
 func LexerOf(src string) *Lexer {
@@ -118,3 +118,31 @@ func (l *Lexer) addOperator() {
 	}
 }
 
+func (l *Lexer) escapeSequence(c byte) string {
+	ret := ""
+	switch c {
+	case 'n':
+		ret += "\n"
+	case 't':
+		ret += "\t"
+	case 'r':
+		ret += "\r"
+	case 'b':
+		ret += "\b"
+	case 'f':
+		ret += "\f"
+	case '\\':
+		ret += "\\"
+	case '\'':
+		ret += "`"
+	case '"':
+		ret += "\""
+	default:
+		l.addWarning(fmt.Sprintf("Ignored escape sequence %s at line %d", globals.Blue(fmt.Sprintf("\"\\%c\"", c)), l.lineCnt))
+	}
+	return ret
+}
+
+func (l *Lexer) isThisLexicalQuote() bool {
+	return isQuote(string(l.sourceCode[l.i])) && (l.i == 0 || l.sourceCode[l.i-1] != '\\')
+}
