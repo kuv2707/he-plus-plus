@@ -279,14 +279,16 @@ type FuncNode struct {
 	name    string
 	argList []FuncArg
 	scope   *ScopeNode
+	returnType string
 }
 
 func (f *FuncNode) String(ind string) string {
-	ret := ind + "function\n" + ind + "\n" + ind + "  args:\n"
+	ret := fmt.Sprintf("%sfunc %s \n %s args:\n", ind, f.name, ind)
 	for i := range f.argList {
 		ret += ind + TAB + f.argList[i].key + " " + f.argList[i].value + "\n"
 	}
 	ret += f.scope.String(ind + TAB)
+	ret += ind + "  return type: " + f.returnType
 	return ret
 }
 
@@ -295,7 +297,7 @@ func (f *FuncNode) Type() TreeNodeType {
 }
 
 func MakeFunctionNode(name string) *FuncNode {
-	return &FuncNode{name, make([]FuncArg, 0), nil}
+	return &FuncNode{name, make([]FuncArg, 0), nil,""}
 }
 
 func (f *FuncNode) AddArg(key string, value string) {

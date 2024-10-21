@@ -92,7 +92,7 @@ var names = map[string]string{
 	FLOAT:        "float",
 	BOOLEAN:      "boolean",
 	STRING:       "string",
-	FOR:         "for",
+	FOR:          "for",
 	WHILE:        "while",
 	BREAK:        "break",
 	CONTINUE:     "continue",
