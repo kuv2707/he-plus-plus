@@ -1,0 +1,7 @@
+definir c = 8
+funcion principal() void {
+    definir a = 0
+    definir b = 0
+    a.b.c[2].d()
+    devolver a + b
+}

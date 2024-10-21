@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"he++/globals"
 	"he++/lexer"
+	"sort"
 )
 
 func (p *Parser) ParseAST() *SourceFileNode {
@@ -13,6 +14,11 @@ func (p *Parser) ParseAST() *SourceFileNode {
 	}
 	root := MakeSourceFileNode()
 	parseStatements(p, root)
+
+	// todo: add some postprocessing
+	sort.SliceStable(root.children, func(i, j int) bool {
+		return root.children[i].Type() == VAR_DECL
+	})
 	return root
 }
 
@@ -33,6 +39,7 @@ OUT:
 			break OUT
 		}
 		parselet, exists := p.scopeParselets[curr.Text()]
+		fmt.Println(curr, exists)
 		if !exists {
 			expr := parseExpression(p, 0)
 			if expr != nil {
@@ -40,7 +47,9 @@ OUT:
 			} else {
 				parsingError(fmt.Sprintf("Cannot parse %s", globals.Red(curr.Text())), curr.LineNo())
 			}
-			break OUT
+			if !p.tokenStream.HasTokens() {
+				break OUT
+			}
 		} else {
 			scope.AddChild(parselet(p))
 		}
@@ -61,6 +70,7 @@ func parseFunction(p *Parser) TreeNode {
 		t.ConsumeIf(lexer.COMMA)
 	}
 	t.ConsumeOnlyIf(lexer.CLOSE_PAREN)
+	funcNode.returnType = t.Consume().Text()
 	funcNode.scope = parseScope(p)
 	return funcNode
 }
