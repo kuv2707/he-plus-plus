@@ -139,14 +139,26 @@ func parseStruct(p *Parser) nodes.TreeNode {
 		// anonymous struct
 		name = "" // todo: give some label
 	} else {
-		p.tokenStream.ConsumeIfType(lexer.IDENTIFIER)
 		name = p.tokenStream.Current().Text()
+		p.tokenStream.ConsumeIfType(lexer.IDENTIFIER)
 	}
-	fmt.Print(name)
+	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
 	strct := nodes.StructNode{Name: name, Fields: make(map[string]nodes.StructField)}
-	// for p.tokenStream.Current().Text() != lexer.RPAREN {
-	// 	sname := p.tokenStream.Current().Text()
-	// 	stype := getStructType(p)
-	// }
+	for p.tokenStream.Current().Text() != lexer.RPAREN {
+		sname := p.tokenStream.Consume().Text()
+		fmt.Print("-->", sname)
+		stype := getStructType(p)
+		strct.Fields[sname] = nodes.StructField{Name: sname, FieldType: stype}
+	}
+	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
 	return strct
+}
+
+func getStructType(p *Parser) nodes.TreeNode {
+	if p.tokenStream.Current().Text() == lexer.STRUCT {
+		// embedded struct
+		return parseStruct(p)
+	} else {
+		return parseIdentifier(p)
+	}
 }

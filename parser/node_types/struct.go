@@ -1,10 +1,8 @@
 package node_types
 
 type StructField struct {
-	offset int
-	name   struct {
-		a string
-	}
+	Name      string
+	FieldType TreeNode
 }
 type StructNode struct {
 	Name   string
@@ -12,7 +10,11 @@ type StructNode struct {
 }
 
 func (s StructNode) String(ind string) string {
-	return ""
+	result := ind + "StructNode: " + s.Name + "\n"
+	for _, field := range s.Fields {
+		result += ind + "Field: " + field.Name + ", Type: " + field.FieldType.String(ind+" ") + "\n"
+	}
+	return result
 }
 
 func (s StructNode) Type() TreeNodeType {
