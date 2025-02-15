@@ -2,22 +2,23 @@ package parser
 
 import (
 	"he++/lexer"
+	nodes "he++/parser/node_types"
 )
 
 type Parser struct {
 	tokenStream      *TokenStream
-	prefixParselets  map[string]func(*Parser) TreeNode
-	postfixParselets map[string]func(*Parser, TreeNode) TreeNode
+	prefixParselets  map[string]func(*Parser) nodes.TreeNode
+	postfixParselets map[string]func(*Parser, nodes.TreeNode) nodes.TreeNode
 
-	scopeParselets map[string]func(*Parser) TreeNode
+	scopeParselets map[string]func(*Parser) nodes.TreeNode
 }
 
 func NewParser(tokens []lexer.LexerToken) *Parser {
 	ts := NewTokenStream(tokens)
 	p := &Parser{ts,
-		make(map[string]func(*Parser) TreeNode),
-		make(map[string]func(*Parser, TreeNode) TreeNode),
-		make(map[string]func(*Parser) TreeNode),
+		make(map[string]func(*Parser) nodes.TreeNode),
+		make(map[string]func(*Parser, nodes.TreeNode) nodes.TreeNode),
+		make(map[string]func(*Parser) nodes.TreeNode),
 	}
 	p.initParselets()
 	return p
@@ -44,10 +45,11 @@ func (p *Parser) initParselets() {
 	p.scopeParselets[lexer.FOR] = parseLoopStatement
 	p.scopeParselets[lexer.WHILE] = parseLoopStatement
 	p.scopeParselets[lexer.RETURN] = parseReturnStatement
+	p.scopeParselets[lexer.STRUCT] = parseStruct
 
 }
 
-func (p *Parser) getPrefixParselet(tok lexer.LexerToken) (func(*Parser) TreeNode, bool) {
+func (p *Parser) getPrefixParselet(tok lexer.LexerToken) (func(*Parser) nodes.TreeNode, bool) {
 	prefix, exists := p.prefixParselets[tok.Text()]
 	if !exists {
 		prefix, exists = p.prefixParselets[tok.Type().String()]

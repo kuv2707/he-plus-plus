@@ -2,6 +2,7 @@ package parser
 
 import (
 	"he++/lexer"
+	nodes "he++/parser/node_types"
 )
 
 // pratt parsing for expressions
@@ -37,7 +38,7 @@ func getPrecedence(op string) float32 {
 	return 0
 }
 
-func parseExpression(p *Parser, prec float32) TreeNode {
+func parseExpression(p *Parser, prec float32) nodes.TreeNode {
 	t := p.tokenStream
 	if !t.HasTokens() {
 		parsingError("Unexpected end of expression after "+t.LookAhead(-1).Text(), 0)
@@ -63,8 +64,8 @@ func parseExpression(p *Parser, prec float32) TreeNode {
 	}
 	return leftNode
 }
-
-func parseBracketExpression(p *Parser) TreeNode {
+ 
+func parseBracketExpression(p *Parser) nodes.TreeNode {
 	p.tokenStream.Consume()
 	expr := parseExpression(p, 0)
 	if p.tokenStream.Current().Text() != lexer.CLOSE_PAREN {
@@ -74,62 +75,62 @@ func parseBracketExpression(p *Parser) TreeNode {
 	return expr
 }
 
-func parseInteger(p *Parser) TreeNode {
-	return NewNumberNode([]byte(p.tokenStream.Consume().Text()), "int")
+func parseInteger(p *Parser) nodes.TreeNode {
+	return nodes.NewNumberNode([]byte(p.tokenStream.Consume().Text()), "int")
 }
 
-func parseFloat(p *Parser) TreeNode {
-	return NewNumberNode([]byte(p.tokenStream.Consume().Text()), "float")
+func parseFloat(p *Parser) nodes.TreeNode {
+	return nodes.NewNumberNode([]byte(p.tokenStream.Consume().Text()), "float")
 }
 
-func parseString(p *Parser) TreeNode {
-	return NewStringNode([]byte(p.tokenStream.Consume().Text()))
+func parseString(p *Parser) nodes.TreeNode {
+	return nodes.NewStringNode([]byte(p.tokenStream.Consume().Text()))
 }
 
-func parseBoolean(p *Parser) TreeNode {
+func parseBoolean(p *Parser) nodes.TreeNode {
 	tok := p.tokenStream.Consume()
 	truth := tok.Text() == lexer.TRUE
 	if truth {
-		return NewBooleanNode([]byte(lexer.TRUE))
+		return nodes.NewBooleanNode([]byte(lexer.TRUE))
 	}
 	if tok.Text() != lexer.FALSE {
 		parsingError("Expected boolean value", tok.LineNo())
 	}
-	return NewBooleanNode([]byte(lexer.FALSE))
+	return nodes.NewBooleanNode([]byte(lexer.FALSE))
 }
 
-func parseIdentifier(p *Parser) TreeNode {
+func parseIdentifier(p *Parser) nodes.TreeNode {
 	name := p.tokenStream.Consume().Text()
-	return NewIdentifierNode(name)
+	return nodes.NewIdentifierNode(name)
 }
 
-func parsePrefixOperator(p *Parser) TreeNode {
+func parsePrefixOperator(p *Parser) nodes.TreeNode {
 	operator := p.tokenStream.Consume()
 	operand := parseExpression(p, 0)
-	return NewPrePostOperatorNode(PREFIX, operator.Text(), operand)
+	return nodes.NewPrePostOperatorNode(nodes.PREFIX, operator.Text(), operand)
 }
 
-func parseInfixOperator(p *Parser, leftNode TreeNode) TreeNode {
+func parseInfixOperator(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 	operator := p.tokenStream.Consume()
 	rightNode := parseExpression(p, getPrecedence(operator.Text()))
 	if operator.Text() == lexer.TERN_IF {
 		p.tokenStream.ConsumeOnlyIf(lexer.COLON)
 		ternElse := parseExpression(p, getPrecedence(operator.Text()))
-		return NewTernaryNode(leftNode, rightNode, ternElse)
+		return nodes.NewTernaryNode(leftNode, rightNode, ternElse)
 	}
-	return NewInfixOperatorNode(leftNode, operator.Text(), rightNode)
+	return nodes.NewInfixOperatorNode(leftNode, operator.Text(), rightNode)
 }
 
-func parsePostfixOperator(p *Parser, leftNode TreeNode) TreeNode {
+func parsePostfixOperator(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 	operator := p.tokenStream.Consume()
-	return NewPrePostOperatorNode(POSTFIX, operator.Text(), leftNode)
+	return nodes.NewPrePostOperatorNode(nodes.POSTFIX, operator.Text(), leftNode)
 }
 
-func parseFuncCallArgs(p *Parser, leftNode TreeNode) TreeNode {
+func parseFuncCallArgs(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_PAREN)
-	fcNode := NewFuncCallNode(leftNode)
+	fcNode := nodes.NewFuncCallNode(leftNode)
 	for p.tokenStream.HasTokens() && p.tokenStream.Current().Text() != lexer.CLOSE_PAREN {
-		fcNode.arg(parseExpression(p, 0))
+		fcNode.Arg(parseExpression(p, 0))
 		if p.tokenStream.Current().Text() == lexer.COMMA {
 			p.tokenStream.Consume()
 		}
@@ -138,13 +139,13 @@ func parseFuncCallArgs(p *Parser, leftNode TreeNode) TreeNode {
 	return fcNode
 }
 
-func parseArrayIndex(p *Parser, leftNode TreeNode) TreeNode {
+func parseArrayIndex(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE)
 	indexer := parseExpression(p, 0)
 	p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
-	arrIndNode := NewArrIndNode(leftNode, indexer)
+	arrIndNode := nodes.NewArrIndNode(leftNode, indexer)
 	if p.tokenStream.HasTokens() && p.tokenStream.LookAhead(1).Text() == lexer.OPEN_SQUARE {
-		arrIndNode = parseArrayIndex(p, arrIndNode).(*ArrIndNode)
+		arrIndNode = parseArrayIndex(p, arrIndNode).(*nodes.ArrIndNode)
 	}
 	return arrIndNode
 }

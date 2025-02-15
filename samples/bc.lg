@@ -1,7 +1,24 @@
 definir c = 8
+
+estructura Punto {
+    a boolean
+    x int
+    y *int
+    z estructura {
+        a int
+        b int
+    }
+}
+
 funcion principal() void {
     definir a = 0
     definir b = 0
     a.b.c[2].d()
+    mientras que a < 5 {
+        a=a+1
+    }
+    para definir i = 0; i < 5; i++ {
+        b++
+    }
     devolver a + b
 }
