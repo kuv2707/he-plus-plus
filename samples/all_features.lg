@@ -1,4 +1,4 @@
-definir c = 8
+definir c = 8, d = 5
 
 estructura Punto {
     a boolean

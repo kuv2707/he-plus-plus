@@ -56,7 +56,7 @@ func NewBooleanNode(dataBytes []byte) *BooleanNode {
 type IdentifierNode struct {
 	name string
 }
-
+ 
 func (i *IdentifierNode) Name() string {
 	return i.name
 }

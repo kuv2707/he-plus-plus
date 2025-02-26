@@ -1,6 +1,9 @@
 package staticanalyzer
 
-import "he++/utils"
+import (
+	nodes "he++/parser/node_types"
+	"he++/utils"
+)
 
 /**
 Things to check for:
@@ -16,10 +19,6 @@ type Analyzer struct {
 	scopeStack utils.Stack
 }
 
-func (a *Analyzer) PushScope() {
-	a.scopeStack.Push(0)
-}
+func (a *Analyzer) analyzeAST(n *nodes.TreeNode) {
 
-func MakeAnalyzer() Analyzer {
-	return Analyzer{utils.MakeStack()}
 }

@@ -84,6 +84,7 @@ func parseReturnStatement(p *Parser) nodes.TreeNode {
 func parseVariableDeclaration(p *Parser) nodes.TreeNode {
 	p.tokenStream.ConsumeOnlyIf(lexer.LET)
 	varDec := nodes.MakeVariableDeclarationNode()
+	// todo: add type
 	varDec.AddDeclaration(parseExpression(p, 0))
 	for p.tokenStream.Current().Text() == lexer.COMMA {
 		p.tokenStream.Consume()

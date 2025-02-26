@@ -32,6 +32,8 @@ func (p *Parser) initParselets() {
 	p.prefixParselets[lexer.IDENTIFIER.String()] = parseIdentifier
 	p.prefixParselets[lexer.DEC] = parsePrefixOperator
 	p.prefixParselets[lexer.INC] = parsePrefixOperator
+	p.prefixParselets[lexer.AMP] = parsePrefixOperator
+	p.prefixParselets[lexer.MUL] = parsePrefixOperator
 	p.prefixParselets[lexer.OPEN_PAREN] = parseBracketExpression
 
 	p.postfixParselets[lexer.OPEN_PAREN] = parseFuncCallArgs
