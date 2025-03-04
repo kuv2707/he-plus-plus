@@ -2,10 +2,9 @@ package node_types
 
 import "fmt"
 
-
 type FuncArg struct {
-	key   string
-	value string
+	name      string
+	data_type DataType
 }
 type FuncNode struct {
 	name       string
@@ -17,7 +16,7 @@ type FuncNode struct {
 func (f *FuncNode) String(ind string) string {
 	ret := fmt.Sprintf("%sfunc %s \n %s args:\n", ind, f.name, ind)
 	for i := range f.argList {
-		ret += ind + TAB + f.argList[i].key + " " + f.argList[i].value + "\n"
+		ret += ind + TAB + f.argList[i].name + " " + f.argList[i].data_type.Text + "\n"
 	}
 	ret += f.Scope.String(ind + TAB)
 	ret += ind + "  return type: " + f.ReturnType
@@ -32,10 +31,9 @@ func MakeFunctionNode(name string) *FuncNode {
 	return &FuncNode{name, make([]FuncArg, 0), nil, ""}
 }
 
-func (f *FuncNode) AddArg(key string, value string) {
-	f.argList = append(f.argList, FuncArg{key, value})
+func (f *FuncNode) AddArg(name string, datatype DataType) {
+	f.argList = append(f.argList, FuncArg{name, datatype})
 }
-
 
 type ReturnNode struct {
 	value TreeNode

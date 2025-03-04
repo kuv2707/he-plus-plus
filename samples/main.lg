@@ -1,5 +1,7 @@
 funcion principal() void {
-    definir int c = 5*6/(3-4)
-    definir int* k = &c
+    definir int a = 1
+    definir int c = 5*6/(3-4-a)
+    definir &int k = &c
+    definir []int a = []{1+2, 2, 3-2}
     println(*k)
 }

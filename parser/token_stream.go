@@ -46,7 +46,6 @@ func (ts *TokenStream) ConsumeIf(t string) *lexer.LexerToken {
 	return nil
 }
 
-
 func (ts *TokenStream) ConsumeIfType(t lexer.LexerTokenType) *lexer.LexerToken {
 	if ts.HasTokens() && ts.Current().Type() == t {
 		return ts.Consume()
@@ -60,4 +59,14 @@ func (ts *TokenStream) LookAhead(n int) *lexer.LexerToken {
 		return &lexer.LexerToken{}
 	}
 	return &ts.tokens[ts.i+n]
+}
+
+func (ts *TokenStream) Unread(n int) {
+	if n < 0 {
+		n = -n
+	}
+	ts.i -= n
+	if ts.i < 0 {
+		parsingError(fmt.Sprintf("Exhausted tokens while going back by %d", n), ts.Current().LineNo())
+	}
 }

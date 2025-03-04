@@ -6,6 +6,7 @@ import (
 	"he++/lexer"
 	nodes "he++/parser/node_types"
 	"sort"
+	"strings"
 )
 
 func (p *Parser) ParseAST() *nodes.SourceFileNode {
@@ -67,7 +68,7 @@ func parseFunction(p *Parser) nodes.TreeNode {
 	for t.Current().Text() != lexer.CLOSE_PAREN {
 		varName := t.Consume()
 		dataType := t.Consume()
-		funcNode.AddArg(varName.Text(), dataType.Text())
+		funcNode.AddArg(varName.Text(), nodes.DataType{Text:dataType.Text()})
 		t.ConsumeIf(lexer.COMMA)
 	}
 	t.ConsumeOnlyIf(lexer.CLOSE_PAREN)
@@ -81,10 +82,22 @@ func parseReturnStatement(p *Parser) nodes.TreeNode {
 	return nodes.MakeReturnNode(parseExpression(p, 0))
 }
 
+func parseDataType(p *Parser) nodes.DataType {
+	compos := make([]string,0)
+	for p.tokenStream.Current().Text() != "=" {
+		compos = append(compos, p.tokenStream.Consume().Text())
+	}
+	p.tokenStream.Unread(1)
+	return nodes.DataType{
+		Text:strings.Join(compos[0 : len(compos)-1], ""),
+	} 
+}
+
 func parseVariableDeclaration(p *Parser) nodes.TreeNode {
 	p.tokenStream.ConsumeOnlyIf(lexer.LET)
 	varDec := nodes.MakeVariableDeclarationNode()
 	// todo: add type
+	varDec.SetDataType(parseDataType(p))
 	varDec.AddDeclaration(parseExpression(p, 0))
 	for p.tokenStream.Current().Text() == lexer.COMMA {
 		p.tokenStream.Consume()

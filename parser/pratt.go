@@ -64,7 +64,7 @@ func parseExpression(p *Parser, prec float32) nodes.TreeNode {
 	}
 	return leftNode
 }
- 
+
 func parseBracketExpression(p *Parser) nodes.TreeNode {
 	p.tokenStream.Consume()
 	expr := parseExpression(p, 0)
@@ -148,4 +148,20 @@ func parseArrayIndex(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 		arrIndNode = parseArrayIndex(p, arrIndNode).(*nodes.ArrIndNode)
 	}
 	return arrIndNode
+}
+
+func parseArrayDeclaration(p *Parser) nodes.TreeNode {
+	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE)
+	p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
+	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
+	elems := make([]nodes.TreeNode, 0)
+	for p.tokenStream.Current().Text() != lexer.RPAREN {
+		k := parseExpression(p, 0.0)
+		elems = append(elems, k)
+		p.tokenStream.ConsumeIf(lexer.COMMA)
+	}
+	
+	return nodes.ArrayDeclaration{
+		Elems: elems,
+	}
 }

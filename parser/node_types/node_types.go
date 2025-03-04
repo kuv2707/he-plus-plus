@@ -17,6 +17,7 @@ const (
 	ARR_IND     TreeNodeType = "Array_Index"
 	VAR_DECL    TreeNodeType = "Variable_Declaration"
 	RETURN      TreeNodeType = "Return"
+	ARRAY_DECL TreeNodeType = "Array_Declaration"
 )
 
 const TAB = "  "
