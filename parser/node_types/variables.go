@@ -1,8 +1,8 @@
 package node_types
 
 type VariableDeclarationNode struct {
-	declarations []TreeNode
-	data_type    DataType
+	Declarations []TreeNode
+	DataT    DataType
 }
 
 func MakeVariableDeclarationNode() *VariableDeclarationNode {
@@ -11,10 +11,10 @@ func MakeVariableDeclarationNode() *VariableDeclarationNode {
 
 func (v *VariableDeclarationNode) String(ind string) string {
 	ret := ind + "var decl\n"
-	for _, decl := range v.declarations {
+	for _, decl := range v.Declarations {
 		ret += decl.String(ind+TAB) + "\n"
 	}
-	ret += ind + "DataType: " + v.data_type.Text
+	ret += ind + "DataType: " + v.DataT.Text
 	return ret
 }
 
@@ -23,11 +23,11 @@ func (v *VariableDeclarationNode) Type() TreeNodeType {
 }
 
 func (v *VariableDeclarationNode) AddDeclaration(decl TreeNode) {
-	v.declarations = append(v.declarations, decl)
+	v.Declarations = append(v.Declarations, decl)
 }
 
 func (v *VariableDeclarationNode) SetDataType(dt DataType) {
-	v.data_type = dt
+	v.DataT = dt
 }
 
 type PointerToType struct {

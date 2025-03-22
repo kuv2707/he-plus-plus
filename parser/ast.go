@@ -41,7 +41,6 @@ OUT:
 			break OUT
 		}
 		parselet, exists := p.scopeParselets[curr.Text()]
-		fmt.Println(curr, exists)
 		if !exists {
 			expr := parseExpression(p, 0)
 			if expr != nil {
@@ -68,12 +67,14 @@ func parseFunction(p *Parser) nodes.TreeNode {
 	for t.Current().Text() != lexer.CLOSE_PAREN {
 		varName := t.Consume()
 		dataType := t.Consume()
-		funcNode.AddArg(varName.Text(), nodes.DataType{Text:dataType.Text()})
+		funcNode.AddArg(varName.Text(), nodes.DataType{Text: dataType.Text()})
 		t.ConsumeIf(lexer.COMMA)
 	}
 	t.ConsumeOnlyIf(lexer.CLOSE_PAREN)
-	funcNode.ReturnType = t.Consume().Text()
+	// parse properly using parseDataType
+	funcNode.ReturnType = nodes.DataType{Text: t.Consume().Text()}
 	funcNode.Scope = parseScope(p)
+	fmt.Println(funcNode.Scope.String(""))
 	return funcNode
 }
 
@@ -83,14 +84,15 @@ func parseReturnStatement(p *Parser) nodes.TreeNode {
 }
 
 func parseDataType(p *Parser) nodes.DataType {
-	compos := make([]string,0)
+	// TODO: parse properly
+	compos := make([]string, 0)
 	for p.tokenStream.Current().Text() != "=" {
 		compos = append(compos, p.tokenStream.Consume().Text())
 	}
 	p.tokenStream.Unread(1)
 	return nodes.DataType{
-		Text:strings.Join(compos[0 : len(compos)-1], ""),
-	} 
+		Text: strings.Join(compos[0:len(compos)-1], ""),
+	}
 }
 
 func parseVariableDeclaration(p *Parser) nodes.TreeNode {

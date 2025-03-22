@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func DoNothing(args ...interface{}) {}
+func DoNothing(args ...any) {}
 
 // valid numbers: 12, 12.23, 0x12, 0b101, 0o12, 0x12.23, 0b101.23, 0o12.23
 func IsNumber(temp string) bool {

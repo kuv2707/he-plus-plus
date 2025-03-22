@@ -2,11 +2,11 @@ package node_types
 
 
 type StringNode struct {
-	dataBytes []byte
+	DataBytes []byte
 }
 
 func (s *StringNode) String(ind string) string {
-	return ind + string(s.dataBytes)
+	return ind + string(s.DataBytes)
 }
 
 func (s *StringNode) Type() TreeNodeType {

@@ -160,7 +160,7 @@ func parseArrayDeclaration(p *Parser) nodes.TreeNode {
 		elems = append(elems, k)
 		p.tokenStream.ConsumeIf(lexer.COMMA)
 	}
-	
+	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
 	return nodes.ArrayDeclaration{
 		Elems: elems,
 	}

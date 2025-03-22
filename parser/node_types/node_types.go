@@ -7,17 +7,18 @@ import (
 type TreeNodeType string
 
 const (
-	SCOPE       TreeNodeType = "Scope"
-	CONDITIONAL TreeNodeType = "Conditional"
-	LOOP        TreeNodeType = "Loop"
-	FUNCTION    TreeNodeType = "Function"
-	STRUCT      TreeNodeType = "Struct"
-	OPERATOR    TreeNodeType = "Expression"
-	VALUE       TreeNodeType = "Value"
-	ARR_IND     TreeNodeType = "Array_Index"
-	VAR_DECL    TreeNodeType = "Variable_Declaration"
-	RETURN      TreeNodeType = "Return"
-	ARRAY_DECL TreeNodeType = "Array_Declaration"
+	SCOPE         TreeNodeType = "Scope"
+	CONDITIONAL   TreeNodeType = "Conditional"
+	LOOP          TreeNodeType = "Loop"
+	FUNCTION      TreeNodeType = "Function"
+	FUNCTION_CALL TreeNodeType = "Function_Call"
+	STRUCT        TreeNodeType = "Struct"
+	OPERATOR      TreeNodeType = "Expression"
+	VALUE         TreeNodeType = "Value"
+	ARR_IND       TreeNodeType = "Array_Index"
+	VAR_DECL      TreeNodeType = "Variable_Declaration"
+	RETURN        TreeNodeType = "Return"
+	ARRAY_DECL    TreeNodeType = "Array_Declaration"
 )
 
 const TAB = "  "
@@ -57,7 +58,7 @@ func NewBooleanNode(dataBytes []byte) *BooleanNode {
 type IdentifierNode struct {
 	name string
 }
- 
+
 func (i *IdentifierNode) Name() string {
 	return i.name
 }
@@ -103,7 +104,7 @@ type StatementsContainer interface {
 }
 
 type ScopeNode struct {
-	children []TreeNode
+	Children []TreeNode
 }
 
 func MakeScopeNode() *ScopeNode {
@@ -112,7 +113,7 @@ func MakeScopeNode() *ScopeNode {
 
 func (s *ScopeNode) String(ind string) string {
 	ret := ind + "scope\n"
-	for _, child := range s.children {
+	for _, child := range s.Children {
 		ret += child.String(ind+TAB) + "\n"
 	}
 	return globals.RandomColor(ret)
@@ -123,7 +124,7 @@ func (s *ScopeNode) Type() TreeNodeType {
 }
 
 func (s *ScopeNode) AddChild(child TreeNode) {
-	s.children = append(s.children, child)
+	s.Children = append(s.Children, child)
 }
 
 type SourceFileNode struct {
@@ -152,4 +153,3 @@ func (s *SourceFileNode) Type() TreeNodeType {
 func (s *SourceFileNode) AddChild(child TreeNode) {
 	s.Children = append(s.Children, child)
 }
-

@@ -3,12 +3,12 @@ package node_types
 
 // expression related nodes
 type NumberNode struct {
-	dataBytes []byte
-	numType   string
+	DataBytes []byte
+	NumType   string //todo: constrain to "int" and "float"
 }
 
 func (n *NumberNode) String(ind string) string {
-	return ind + string(n.dataBytes)
+	return ind + string(n.DataBytes)
 }
 
 func (n *NumberNode) Type() TreeNodeType {

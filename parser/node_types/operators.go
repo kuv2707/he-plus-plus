@@ -12,11 +12,11 @@ const (
 type PrePostOperatorNode struct {
 	opType  string
 	op      string
-	operand TreeNode
+	Operand TreeNode
 }
 
 func (o *PrePostOperatorNode) String(ind string) string {
-	return fmt.Sprintf("%s%s %s\n%s", ind, o.opType, o.op, o.operand.String(ind+TAB))
+	return fmt.Sprintf("%s%s %s\n%s", ind, o.opType, o.op, o.Operand.String(ind+TAB))
 }
 
 func (o *PrePostOperatorNode) Type() TreeNodeType {
@@ -28,13 +28,13 @@ func NewPrePostOperatorNode(opType string, op string, operand TreeNode) *PrePost
 }
 
 type InfixOperatorNode struct {
-	left  TreeNode
-	op    string
-	right TreeNode
+	Left  TreeNode
+	Op    string
+	Right TreeNode
 }
 
 func (o *InfixOperatorNode) String(ind string) string {
-	return ind + o.op + "\n" + o.left.String(ind+TAB) + "\n" + o.right.String(ind+TAB)
+	return ind + o.Op + "\n" + o.Left.String(ind+TAB) + "\n" + o.Right.String(ind+TAB)
 }
 
 func (o *InfixOperatorNode) Type() TreeNodeType {

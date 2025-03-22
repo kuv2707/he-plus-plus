@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
 	cmdlineutils "he++/cmdline_utils"
-	"he++/parser"
 	"he++/lexer"
+	"he++/parser"
+	staticanalyzer "he++/static_analyzer"
 	"he++/utils"
+	"os"
 )
 
 // "runtime/pprof"
@@ -26,46 +27,8 @@ func main() {
 	if os.Getenv("DEBUG_AST") == "1" {
 		fmt.Println(node.String(""))
 	}
-	// if os.Getenv("INTERPRET") == "1" {
-	// 	fmt.Println(utils.Colors["YELLOW"] + "--> " + os.Getenv("SOURCE_FILE"))
-	// 	// StartInterpreting(treeNode, args)
-	// }
-	// fmt.Println(utils.Colors["RESET"])
+	analyzer := staticanalyzer.MakeAnalyzer()
+	for _,k := range analyzer.AnalyzeAST(node) {
+		fmt.Println(k)
+	}
 }
-
-// func StartInterpreting(treeNode *parser.TreeNode, args map[string]string) {
-// 	// f, err := os.Create("cpu.pprof")
-// 	// if err != nil {
-// 	// 	fmt.Println("could not create CPU profile: ", err)
-// 	// 	return
-// 	// }
-// 	// pprof.StartCPUProfile(f)
-// 	// defer pprof.StopCPUProfile()
-// 	fmt.Println(utils.Colors["BOLDYELLOW"] + "starting execution" + utils.Colors["RESET"])
-// 	startTime := time.Now().UnixMilli()
-// 	ctx := interpreter.Init(args)
-// 	interpreter.Interpret(treeNode, ctx)
-// 	endTime := time.Now().UnixMilli()
-// 	fmt.Println("\n" + utils.Colors["BOLDYELLOW"] + "execution completed in " + fmt.Sprint(endTime-startTime) + "ms" + utils.Colors["RESET"])
-// }
-
-// read, evaluate, print, loop
-// func startREPL() {
-// 	ctx := interpreter.Init()
-// 	for {
-// 		fmt.Print(utils.Colors["BOLDYELLOW"] + "he++> " + utils.Colors["RESET"])
-// 		reader := bufio.NewReader(os.Stdin)
-// 		input, _ := reader.ReadString('\n')
-// 		if strings.TrimSpace(input) == "exit" {
-// 			break
-// 		}
-// 		var tokens *lexer.Node = lexer.Lexify([]byte(input))
-// 		tokens = tokens.Next
-// 		treeNode := parser.ParseTree(tokens)
-// 		if os.Getenv("INTERPRET") == "1" {
-// 			interpreter.Interpret(treeNode, ctx)
-// 		}
-// 	}
-// 	fmt.Println(utils.Colors["BOLDYELLOW"] + "exiting" + utils.Colors["RESET"])
-// 	fmt.Println(utils.Colors["RESET"])
-// }
