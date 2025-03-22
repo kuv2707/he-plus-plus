@@ -6,7 +6,6 @@ import (
 	"he++/lexer"
 	nodes "he++/parser/node_types"
 	"sort"
-	"strings"
 )
 
 func (p *Parser) ParseAST() *nodes.SourceFileNode {
@@ -66,15 +65,16 @@ func parseFunction(p *Parser) nodes.TreeNode {
 	t.ConsumeOnlyIf(lexer.OPEN_PAREN)
 	for t.Current().Text() != lexer.CLOSE_PAREN {
 		varName := t.Consume()
-		dataType := t.Consume()
-		funcNode.AddArg(varName.Text(), nodes.DataType{Text: dataType.Text()})
+		dataType := parseDataType(p)
+		funcNode.AddArg(varName.Text(), dataType)
 		t.ConsumeIf(lexer.COMMA)
 	}
 	t.ConsumeOnlyIf(lexer.CLOSE_PAREN)
 	// parse properly using parseDataType
-	funcNode.ReturnType = nodes.DataType{Text: t.Consume().Text()}
+	funcNode.ReturnType = parseDataType(p)
+	// fmt.Println("dtype for " + funcNode.Name + " " + funcNode.ReturnType.Text())
 	funcNode.Scope = parseScope(p)
-	fmt.Println(funcNode.Scope.String(""))
+	// fmt.Println(funcNode.Scope.String(""))
 	return funcNode
 }
 
@@ -84,15 +84,26 @@ func parseReturnStatement(p *Parser) nodes.TreeNode {
 }
 
 func parseDataType(p *Parser) nodes.DataType {
-	// TODO: parse properly
-	compos := make([]string, 0)
-	for p.tokenStream.Current().Text() != "=" {
-		compos = append(compos, p.tokenStream.Consume().Text())
+	t := p.tokenStream
+	currTok := t.Current()
+	if currTok.Type() == lexer.IDENTIFIER || currTok.Type() == lexer.KEYWORD {
+		t.Consume()
+		return &nodes.NamedType{Name: currTok.Text()}
+	} else if currTok.Text() == lexer.OPEN_SQUARE {
+		t.Consume()
+		t.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
+		return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: parseDataType(p)}
+	} else if currTok.Text() == lexer.AMP {
+		t.Consume()
+		return &nodes.PrefixOfType{Prefix: nodes.PointerOf, OfType: parseDataType(p)}
+
+	} else if currTok.Text() == lexer.LPAREN {
+		// anonymous object type
+		// todo
 	}
-	p.tokenStream.Unread(1)
-	return nodes.DataType{
-		Text: strings.Join(compos[0:len(compos)-1], ""),
-	}
+	parsingError("Couldn't parse type: "+currTok.String(), currTok.LineNo())
+	return &nodes.VoidType{}
+
 }
 
 func parseVariableDeclaration(p *Parser) nodes.TreeNode {

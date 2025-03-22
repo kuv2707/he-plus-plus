@@ -15,22 +15,25 @@ func (a *Analyzer) checkFunctionDef(fnd *nodes.FuncNode) []string {
 	errs := a.checkScope(fnd.Scope)
 	stmts := fnd.Scope.Children
 	returnChecked := false
-	if _, exists := a.definedTypes[fnd.ReturnType.Text]; !exists {
-		errs = append(errs, fmt.Sprint("Type not defined: ", fnd.ReturnType))
-	}
+	// if _, ok := fnd.ReturnType.(*nodes.NamedType)
+
+	// if _, exists := a.definedTypes[fnd.ReturnType.Text()]; !exists {
+	// 	errs = append(errs, fmt.Sprint("Type not defined: ", fnd.ReturnType))
+	// }
+	
 	for _, stmt := range stmts {
 		if stmt.Type() == nodes.RETURN {
 			ret := stmt.(*nodes.ReturnNode)
 			typ := computeType(ret.Value, a)
 			// todo: add func in nodes.DataType to compare two types
-			if typ.Text != fnd.ReturnType.Text {
-				errs = append(errs, fmt.Sprintf("Expected to return %s, found %s", fnd.ReturnType, typ.Text))
+			if typ.Text() != fnd.ReturnType.Text() {
+				errs = append(errs, fmt.Sprintf("Expected to return %s, found %s", fnd.ReturnType.Text(), typ.Text()))
 			}
 			returnChecked = true
 		}
 	}
 	if !returnChecked {
-		if fnd.ReturnType.Text != "void" {
+		if _, ok := fnd.ReturnType.(*nodes.VoidType); ok {
 			errs = append(errs, fmt.Sprintf("Expected return value of type %s", fnd.ReturnType))
 		}
 	}

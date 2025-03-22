@@ -152,6 +152,7 @@ func parseArrayIndex(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 
 func parseArrayDeclaration(p *Parser) nodes.TreeNode {
 	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE)
+	dt := parseDataType(p)
 	p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
 	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
 	elems := make([]nodes.TreeNode, 0)
@@ -161,7 +162,8 @@ func parseArrayDeclaration(p *Parser) nodes.TreeNode {
 		p.tokenStream.ConsumeIf(lexer.COMMA)
 	}
 	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
-	return nodes.ArrayDeclaration{
+	return &nodes.ArrayDeclaration{
 		Elems: elems,
+		DataT: dt,
 	}
 }

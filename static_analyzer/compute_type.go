@@ -13,18 +13,18 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 	case *nodes.BooleanNode:
 		{
 			// todo: don't depend on lexer?
-			return nodes.DataType{Text: lexer.BOOLEAN}
+			return &nodes.NamedType{Name: lexer.BOOLEAN}
 		}
 	case *nodes.NumberNode:
 		{
-			return nodes.DataType{Text: v.NumType}
+			return &nodes.NamedType{Name: v.NumType}
 		}
 	case *nodes.IdentifierNode:
 		{
 			varname := v.Name()
 			norm_tname, exists := a.definedSyms[varname]
 			if !exists {
-				return nodes.DataType{Text: "$$ERROR$$"}
+				return &nodes.ErrorType{Message: "UNDEFINED_TYPE"}
 			}
 			return norm_tname
 		}
@@ -33,16 +33,24 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 			left := computeType(v.Left, a)
 			right := computeType(v.Right, a)
 			if left != right {
-				return nodes.DataType{Text: "$$ERROR$$"}
+				return &nodes.ErrorType{Message: fmt.Sprintf("$$Can't perform %s on %s and %s$$", v.Op, left.Text(), right.Text())}
 			}
 			return left
 		}
 	case *nodes.PrePostOperatorNode:
 		{
 			// for now, `&` changes type
-			return nodes.DataType{Text: "ptr_" + computeType(v.Operand, a).Text}
+			return &nodes.PrefixOfType{Prefix: nodes.PointerOf, OfType: computeType(v.Operand, a)}
+		}
+	case nil:
+		{
+			return &nodes.VoidType{}
+		}
+	case *nodes.ArrayDeclaration:
+		{
+			return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: v.DataT}
 		}
 	default:
-		return nodes.DataType{Text: "$$ERROR$$"}
+		return &nodes.ErrorType{Message: fmt.Sprintf("Can't compute type for %T", v)}
 	}
 }

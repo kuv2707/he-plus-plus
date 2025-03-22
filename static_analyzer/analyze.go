@@ -29,7 +29,7 @@ func MakeAnalyzer() Analyzer {
 	return Analyzer{
 		functionDecls: make(map[string]*nodes.FuncNode),
 		definedTypes:  getPrimitiveTypeDefns(),
-		definedSyms: make(map[string]nodes.DataType),
+		definedSyms:   make(map[string]nodes.DataType),
 	}
 }
 
@@ -46,7 +46,7 @@ func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) []string {
 		if ch.Type() == nodes.FUNCTION {
 			funcNode := ch.(*nodes.FuncNode)
 			errs = append(errs, a.checkFunctionDef(funcNode)...)
-			fmt.Println(funcNode.Name, funcNode.ReturnType)
+			fmt.Println("func->", funcNode.Name, funcNode.ReturnType.Text())
 		}
 	}
 

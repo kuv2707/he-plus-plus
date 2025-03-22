@@ -6,7 +6,7 @@ type VariableDeclarationNode struct {
 }
 
 func MakeVariableDeclarationNode() *VariableDeclarationNode {
-	return &VariableDeclarationNode{make([]TreeNode, 0), DataType{}}
+	return &VariableDeclarationNode{make([]TreeNode, 0), &ErrorType{Message: "Undefined"}}
 }
 
 func (v *VariableDeclarationNode) String(ind string) string {
@@ -14,7 +14,7 @@ func (v *VariableDeclarationNode) String(ind string) string {
 	for _, decl := range v.Declarations {
 		ret += decl.String(ind+TAB) + "\n"
 	}
-	ret += ind + "DataType: " + v.DataT.Text
+	ret += ind + "DataType: " + v.DataT.Text()
 	return ret
 }
 
