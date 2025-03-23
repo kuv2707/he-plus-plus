@@ -17,14 +17,19 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) []string {
 					if op := tn.(*nodes.InfixOperatorNode); op.Op == lexer.ASSN {
 						varname := op.Left.(*nodes.IdentifierNode)
 						a.definedSyms[varname.Name()] = v.DataT
+						// rval should have same type
+						rvalType := computeType(op.Right, a)
+						if !rvalType.Equals(v.DataT) {
+							errs = append(errs, fmt.Sprintf("Cannot assign %s to variable of type %s", rvalType.Text(), v.DataT.Text()))
+						}
 					} else {
 						errs = append(errs, fmt.Sprintf("Syntax error in variable declaration at line <TODO>: %s not allowed", op.Op))
-
 					}
 				}
-				// a.definedSyms[v.]
 			}
+		default:
+			errs = append(errs, fmt.Sprintf("Can't check for %T", v))
 		}
 	}
-	return []string{}
+	return errs
 }

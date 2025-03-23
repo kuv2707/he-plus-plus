@@ -32,7 +32,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		{
 			left := computeType(v.Left, a)
 			right := computeType(v.Right, a)
-			if left != right {
+			if !left.Equals(right) {
 				return &nodes.ErrorType{Message: fmt.Sprintf("$$Can't perform %s on %s and %s$$", v.Op, left.Text(), right.Text())}
 			}
 			return left
@@ -48,6 +48,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		}
 	case *nodes.ArrayDeclaration:
 		{
+			// todo: verify that all elems are actually of that type
 			return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: v.DataT}
 		}
 	default:
