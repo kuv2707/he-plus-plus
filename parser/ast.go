@@ -86,7 +86,7 @@ func parseReturnStatement(p *Parser) nodes.TreeNode {
 func parseDataType(p *Parser) nodes.DataType {
 	t := p.tokenStream
 	currTok := t.Current()
-	if currTok.Type() == lexer.IDENTIFIER || currTok.Type() == lexer.KEYWORD {
+	if currTok.Type() == lexer.IDENTIFIER {
 		t.Consume()
 		return &nodes.NamedType{Name: currTok.Text()}
 	} else if currTok.Text() == lexer.OPEN_SQUARE {
@@ -100,9 +100,23 @@ func parseDataType(p *Parser) nodes.DataType {
 	} else if currTok.Text() == lexer.LPAREN {
 		// anonymous object type
 		// todo
+	} else if currTok.Text() == lexer.FUNCTION {
+		t.Consume()
+		t.ConsumeOnlyIf(lexer.OPEN_PAREN)
+		argsTypes := make([]nodes.DataType, 0)
+		for t.Current().Text() != lexer.CLOSE_PAREN {
+			argsTypes = append(argsTypes, parseDataType(p))
+			t.ConsumeIf(lexer.COMMA)
+		}
+		t.ConsumeOnlyIf(lexer.CLOSE_PAREN)
+		retType := parseDataType(p)
+		return &nodes.FuncType{ArgTypes: argsTypes, ReturnType: retType}
+	} else if currTok.Text() == lexer.VOID {
+		t.Consume()
+		return &nodes.VoidType{}
 	}
 	parsingError("Couldn't parse type: "+currTok.String(), currTok.LineNo())
-	return &nodes.VoidType{}
+	return &nodes.ErrorType{Message: "Couldn't parse type: " + currTok.String()}
 
 }
 

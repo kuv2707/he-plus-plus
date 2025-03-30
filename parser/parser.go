@@ -30,6 +30,8 @@ func (p *Parser) initParselets() {
 	p.prefixParselets[lexer.INTEGER.String()] = parseInteger
 	p.prefixParselets[lexer.BOOLEAN_LITERAL.String()] = parseBoolean
 	p.prefixParselets[lexer.IDENTIFIER.String()] = parseIdentifier
+	p.prefixParselets[lexer.TRUE] = parseBoolean
+	p.prefixParselets[lexer.FALSE] = parseBoolean
 	p.prefixParselets[lexer.DEC] = parsePrefixOperator
 	p.prefixParselets[lexer.INC] = parsePrefixOperator
 	p.prefixParselets[lexer.AMP] = parsePrefixOperator

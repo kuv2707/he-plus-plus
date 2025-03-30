@@ -1,9 +1,12 @@
 package node_types
 
+import "he++/lexer"
+
 // nodes for pointer, arr, obj, primitive, error
 
 type DataType interface {
 	Text() string
+	// NumBytes() int
 	Equals(DataType) bool
 }
 
@@ -27,6 +30,8 @@ type TypePrefix int
 const (
 	ArrayOf = iota
 	PointerOf
+	Dereference
+	Unknown
 )
 
 func (k TypePrefix) String() string {
@@ -34,7 +39,10 @@ func (k TypePrefix) String() string {
 	case ArrayOf:
 		return "[]"
 	case PointerOf:
-		return "&"
+		return lexer.AMP
+	case Dereference:
+		// should distinguish between mul and deref ops at lexer level
+		return lexer.MUL
 	default:
 		return "Unknown"
 	}
@@ -54,6 +62,37 @@ func (dt *PrefixOfType) Equals(other DataType) bool {
 		return dt.Prefix.String() == ont.Prefix.String() && dt.OfType.Equals(ont.OfType)
 	}
 	return false
+}
+
+type FuncType struct {
+	ReturnType DataType
+	ArgTypes   []DataType
+}
+
+func (ft *FuncType) Equals(dt DataType) bool {
+	oft, ok := dt.(*FuncType)
+	if !ok {
+		return false
+	}
+	if len(oft.ArgTypes) != len(ft.ArgTypes) {
+		return false
+	}
+	for i := range ft.ArgTypes {
+		if !ft.ArgTypes[i].Equals(oft.ArgTypes[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (ft *FuncType) Text() string {
+	ans := "func("
+	for _, t := range ft.ArgTypes {
+		ans += t.Text() + ","
+	}
+	ans += ") "
+	ans += ft.ReturnType.Text()
+	return ans
 }
 
 type StructType struct {

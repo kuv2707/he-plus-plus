@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"he++/lexer"
 	nodes "he++/parser/node_types"
+	// "runtime/debug"
 )
 
 var _ = fmt.Println
@@ -32,6 +33,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		{
 			left := computeType(v.Left, a)
 			right := computeType(v.Right, a)
+			// op := v.Op
 			if !left.Equals(right) {
 				return &nodes.ErrorType{Message: fmt.Sprintf("$$Can't perform %s on %s and %s$$", v.Op, left.Text(), right.Text())}
 			}
@@ -40,7 +42,17 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 	case *nodes.PrePostOperatorNode:
 		{
 			// for now, `&` changes type
-			return &nodes.PrefixOfType{Prefix: nodes.PointerOf, OfType: computeType(v.Operand, a)}
+			var pref nodes.TypePrefix
+			switch v.Op {
+			case lexer.AMP:
+				pref = nodes.PointerOf
+			case lexer.MUL:
+				pref = nodes.Dereference
+				// todo: Operand should be an `&` else it is an error
+			default:
+				// pref := nodes.Unknown
+			}
+			return &nodes.PrefixOfType{Prefix: pref, OfType: computeType(v.Operand, a)}
 		}
 	case nil:
 		{
@@ -48,10 +60,28 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		}
 	case *nodes.ArrayDeclaration:
 		{
-			// todo: verify that all elems are actually of that type
+			expectedType := v.DataT
+			for i, elem := range v.Elems {
+				typ := computeType(elem, a)
+				if !typ.Equals(expectedType) {
+					// todo: check possibility of type casting
+					return &nodes.ErrorType{Message: fmt.Sprintf("%d th element should be of type %s, not %s", i, expectedType.Text(), typ.Text())}
+				}
+			}
 			return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: v.DataT}
 		}
+	case *nodes.FuncNode:
+		argtypes := make([]nodes.DataType, 0)
+		for _, arg := range v.ArgList {
+			argtypes = append(argtypes, arg.DataT)
+		}
+		return &nodes.FuncType{
+			ReturnType: v.ReturnType,
+			ArgTypes:   argtypes,
+		}
 	default:
+		// fmt.Println("Stack trace:")
+		// debug.PrintStack()
 		return &nodes.ErrorType{Message: fmt.Sprintf("Can't compute type for %T", v)}
 	}
 }

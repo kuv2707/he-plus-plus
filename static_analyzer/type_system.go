@@ -17,7 +17,6 @@ type Aliastype struct {
 	AliasTo DataTypeInfo
 }
 
-
 func checkInt(n nodes.TreeNode) bool {
 	nn, ok := n.(*nodes.NumberNode)
 	if !ok {
@@ -50,17 +49,11 @@ func checkBool(n nodes.TreeNode) bool {
 // 	}
 // }
 
-func getPrimitiveTypeDefns() map[string]DataTypeInfo {
-	definedTypes := make(map[string]DataTypeInfo, 0)
-	definedTypes[lexer.INT] = &PrimitiveType{
-		numBytes: 4,
-	}
-	definedTypes[lexer.FLOAT] = &PrimitiveType{
-		numBytes: 4,
-	}
-	definedTypes[lexer.BOOLEAN] = &PrimitiveType{
-		numBytes: 1,
-	}
+func getPrimitiveTypeDefns() map[string]nodes.DataType {
+	definedTypes := make(map[string]nodes.DataType, 0)
+	definedTypes[lexer.INT] = &nodes.NamedType{Name: lexer.INT}
+	definedTypes[lexer.FLOAT] = &nodes.NamedType{Name: lexer.FLOAT}
+	definedTypes[lexer.BOOLEAN] = &nodes.NamedType{Name: lexer.BOOLEAN}
 	// definedTypes[lexer.CHAR] = &PrimitiveType{
 	// 	numBytes: 1,
 	// 	validator: checkChar,

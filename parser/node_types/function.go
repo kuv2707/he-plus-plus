@@ -3,20 +3,20 @@ package node_types
 import "fmt"
 
 type FuncArg struct {
-	name      string
-	data_type DataType
+	Name      string
+	DataT DataType
 }
 type FuncNode struct {
 	Name       string
-	argList    []FuncArg
+	ArgList    []FuncArg
 	Scope      *ScopeNode
 	ReturnType DataType
 }
 
 func (f *FuncNode) String(ind string) string {
 	ret := fmt.Sprintf("%sfunc %s \n %s args:\n", ind, f.Name, ind)
-	for i := range f.argList {
-		ret += ind + TAB + f.argList[i].name + " " + f.argList[i].data_type.Text() + "\n"
+	for i := range f.ArgList {
+		ret += ind + TAB + f.ArgList[i].Name + " " + f.ArgList[i].DataT.Text() + "\n"
 	}
 	ret += f.Scope.String(ind + TAB)
 	ret += ind + "  return type: " + f.ReturnType.Text()
@@ -32,7 +32,7 @@ func MakeFunctionNode(name string) *FuncNode {
 }
 
 func (f *FuncNode) AddArg(name string, datatype DataType) {
-	f.argList = append(f.argList, FuncArg{name, datatype})
+	f.ArgList = append(f.ArgList, FuncArg{name, datatype})
 }
 
 type ReturnNode struct {
@@ -52,16 +52,16 @@ func MakeReturnNode(value TreeNode) *ReturnNode {
 }
 
 type FuncCallNode struct {
-	callee TreeNode
-	args   []TreeNode
+	Callee TreeNode
+	Args   []TreeNode
 }
 
 func (f *FuncCallNode) String(ind string) string {
 	args := ""
-	for _, arg := range f.args {
+	for _, arg := range f.Args {
 		args += arg.String(ind+TAB+"  ") + "\n"
 	}
-	return ind + "call\n" + f.callee.String(ind+TAB) + ind + "\n" + ind + "  args:\n" + args
+	return ind + "call\n" + f.Callee.String(ind+TAB) + ind + "\n" + ind + "  args:\n" + args
 }
 
 func (f *FuncCallNode) Type() TreeNodeType {
@@ -73,5 +73,5 @@ func NewFuncCallNode(name TreeNode) *FuncCallNode {
 }
 
 func (f *FuncCallNode) Arg(arg TreeNode) {
-	f.args = append(f.args, arg)
+	f.Args = append(f.Args, arg)
 }

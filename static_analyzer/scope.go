@@ -27,6 +27,38 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) []string {
 					}
 				}
 			}
+		case *nodes.ReturnNode:
+			{
+				// no op
+			}
+		case *nodes.FuncCallNode:
+			{
+				// fmt.Printf("--- %T\n", v.Callee)
+				funcType := computeType(v.Callee, a)
+				ftyp, ok := funcType.(*nodes.FuncType)
+				if !ok {
+					errs = append(errs, fmt.Sprintf("Type is not callable: %s", funcType.Text()))
+					return errs
+				}
+				// if !ftyp.ReturnType.Equals(&nodes.VoidType{}) {
+				// 	errs = append(errs, fmt.Sprintf("Return value of type %s from function %s is not used", ftyp.ReturnType.Text(), "<TODO>"))
+				// 	return errs
+				// }
+				// all args are of expected type
+				if len(v.Args) != len(ftyp.ArgTypes) {
+					errs = append(errs, fmt.Sprintf("Function %s expects %d parameters, but supplied %d", v.Callee.String(""), len(ftyp.ArgTypes), len(v.Args)))
+					return errs
+				}
+				for i, k := range v.Args {
+					expT := ftyp.ArgTypes[i]
+					passedT := computeType(k, a)
+					// fmt.Println(expT.Text(), passedT.Text())
+					if !expT.Equals(passedT) {
+						errs = append(errs, fmt.Sprintf("%d th parameter to function %s should be %s, not %s", i, "<TODO>", expT.Text(), passedT.Text()))
+					}
+				}
+
+			}
 		default:
 			errs = append(errs, fmt.Sprintf("Can't check for %T", v))
 		}

@@ -32,6 +32,7 @@ var FUNCTION = "funcion"
 var STRUCT = "estructura"
 var TRUE = "verdad"
 var FALSE = "falso"
+var VOID = "vacio"
 
 // symbols
 var LPAREN = "{"
@@ -80,7 +81,7 @@ var HASHTAG = "#" // not used anywhere yet
 
 var TERN_IF = "?"
 
-var Keywords = []string{IF, ELSE_IF, ELSE, LET, INT, FLOAT, BOOLEAN, TRUE, FALSE, STRING, FOR, WHILE, THAT, BREAK, CONTINUE, RETURN, FUNCTION, STRUCT}
+var Keywords = []string{IF, ELSE_IF, ELSE, LET, TRUE, FALSE, STRING, FOR, WHILE, THAT, BREAK, CONTINUE, RETURN, FUNCTION, STRUCT, VOID}
 
 var Operators = []string{ADD, SUB, MUL, DIV, MODULO, LESS, GREATER, NOT, PIPE, AMP, EQ, NEQ, LEQ, GEQ, INC, DEC, ANDAND, OROR, ASSN, HASHTAG, DOT, TERN_IF}
 

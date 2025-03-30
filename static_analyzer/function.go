@@ -8,10 +8,13 @@ import (
 func (a *Analyzer) registerFunctionDecl(fnd *nodes.FuncNode) {
 	// todo: if supporting function overloading
 	// key should have args types too
-	a.functionDecls[fnd.Name] = fnd
+	a.definedSyms[fnd.Name] = computeType(fnd, a)
 }
 
 func (a *Analyzer) checkFunctionDef(fnd *nodes.FuncNode) []string {
+	for _, arg := range fnd.ArgList {
+		a.definedSyms[arg.Name] = arg.DataT
+	}
 	errs := a.checkScope(fnd.Scope)
 	stmts := fnd.Scope.Children
 	returnChecked := false
@@ -33,8 +36,8 @@ func (a *Analyzer) checkFunctionDef(fnd *nodes.FuncNode) []string {
 		}
 	}
 	if !returnChecked {
-		if _, ok := fnd.ReturnType.(*nodes.VoidType); ok {
-			errs = append(errs, fmt.Sprintf("Expected return value of type %s", fnd.ReturnType))
+		if _, ok := fnd.ReturnType.(*nodes.VoidType); !ok {
+			errs = append(errs, fmt.Sprintf("Expected return value of type %s", fnd.ReturnType.Text()))
 		}
 	}
 	return errs

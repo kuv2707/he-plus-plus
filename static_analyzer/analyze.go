@@ -6,6 +6,8 @@ import (
 	// "he++/utils"
 )
 
+var _ = fmt.Println
+
 /**
 Things to check for:
 - idents not used before decl, no duplicate decl
@@ -18,8 +20,8 @@ Things to check for:
 */
 
 type Analyzer struct {
-	functionDecls map[string]*nodes.FuncNode
-	definedTypes  map[string]DataTypeInfo
+	// functionDecls map[string]*nodes.FuncNode
+	definedTypes map[string]nodes.DataType
 	// symname: normalized_typename
 	definedSyms map[string]nodes.DataType
 }
@@ -27,9 +29,9 @@ type Analyzer struct {
 func MakeAnalyzer() Analyzer {
 
 	return Analyzer{
-		functionDecls: make(map[string]*nodes.FuncNode),
-		definedTypes:  getPrimitiveTypeDefns(),
-		definedSyms:   make(map[string]nodes.DataType),
+		// functionDecls: make(map[string]*nodes.FuncNode),
+		definedTypes: getPrimitiveTypeDefns(),
+		definedSyms:  make(map[string]nodes.DataType),
 	}
 }
 
@@ -43,10 +45,9 @@ func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) []string {
 	}
 
 	for _, ch := range n.Children {
-		if ch.Type() == nodes.FUNCTION {
-			funcNode := ch.(*nodes.FuncNode)
+		if funcNode, ok := ch.(*nodes.FuncNode); ok {
 			errs = append(errs, a.checkFunctionDef(funcNode)...)
-			fmt.Println("func->", funcNode.Name, funcNode.ReturnType.Text())
+			// fmt.Println("func->", funcNode.Name, funcNode.ReturnType.Text())
 		}
 	}
 
