@@ -81,9 +81,49 @@ var HASHTAG = "#" // not used anywhere yet
 
 var TERN_IF = "?"
 
-var Keywords = []string{IF, ELSE_IF, ELSE, LET, TRUE, FALSE, STRING, FOR, WHILE, THAT, BREAK, CONTINUE, RETURN, FUNCTION, STRUCT, VOID}
+var Keywords = map[string]bool{
+	IF:       true,
+	ELSE_IF:  true,
+	ELSE:     true,
+	LET:      true,
+	TRUE:     true,
+	FALSE:    true,
+	STRING:   true,
+	FOR:      true,
+	WHILE:    true,
+	THAT:     true,
+	BREAK:    true,
+	CONTINUE: true,
+	RETURN:   true,
+	FUNCTION: true,
+	STRUCT:   true,
+	VOID:     true,
+}
 
-var Operators = []string{ADD, SUB, MUL, DIV, MODULO, LESS, GREATER, NOT, PIPE, AMP, EQ, NEQ, LEQ, GEQ, INC, DEC, ANDAND, OROR, ASSN, HASHTAG, DOT, TERN_IF}
+var Operators = map[string]bool{
+	ADD:     true,
+	SUB:     true,
+	MUL:     true,
+	DIV:     true,
+	MODULO:  true,
+	LESS:    true,
+	GREATER: true,
+	NOT:     true,
+	PIPE:    true,
+	AMP:     true,
+	EQ:      true,
+	NEQ:     true,
+	LEQ:     true,
+	GEQ:     true,
+	INC:     true,
+	DEC:     true,
+	ANDAND:  true,
+	OROR:    true,
+	ASSN:    true,
+	HASHTAG: true,
+	DOT:     true,
+	TERN_IF: true,
+}
 
 var names = map[string]string{
 	IF:           "if",
@@ -134,17 +174,8 @@ var names = map[string]string{
 	DEC:          "dec",
 }
 
-func Contains(slice []string, item string) bool {
-	for _, element := range slice {
-		if element == item {
-			return true
-		}
-	}
-	return false
-}
-
 func isOperator(c string) bool {
-	return Contains(Operators, c)
+	return Operators[c]
 }
 
 func isDelimiter(c string) bool {
@@ -164,7 +195,7 @@ func isPunctuation(c string) bool {
 }
 
 func isKeyword(c string) bool {
-	return Contains(Keywords, c)
+	return Keywords[c]
 }
 
 func isDigit(c string) bool {
