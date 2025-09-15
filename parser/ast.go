@@ -99,7 +99,7 @@ func parseDataType(p *Parser) nodes.DataType {
 
 	} else if currTok.Text() == lexer.LPAREN {
 		// anonymous object type
-		// todo
+		panic("TODO: anonymous object type")
 	} else if currTok.Text() == lexer.FUNCTION {
 		t.Consume()
 		t.ConsumeOnlyIf(lexer.OPEN_PAREN)
