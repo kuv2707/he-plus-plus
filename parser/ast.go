@@ -87,6 +87,10 @@ func parseDataType(p *Parser) nodes.DataType {
 	t := p.tokenStream
 	currTok := t.Current()
 	if currTok.Type() == lexer.IDENTIFIER {
+		// possibly the type was absent and this ident is the varname
+		if t.LookAhead(1).Text() == lexer.ASSN {
+			return &nodes.UnspecifiedType{}
+		}
 		t.Consume()
 		return &nodes.NamedType{Name: currTok.Text()}
 	} else if currTok.Text() == lexer.OPEN_SQUARE {
@@ -99,7 +103,7 @@ func parseDataType(p *Parser) nodes.DataType {
 
 	} else if currTok.Text() == lexer.LPAREN {
 		// anonymous object type
-		panic("TODO: anonymous object type")
+		return parseStructType(p)
 	} else if currTok.Text() == lexer.FUNCTION {
 		t.Consume()
 		t.ConsumeOnlyIf(lexer.OPEN_PAREN)
@@ -173,33 +177,22 @@ func parseForLoop(p *Parser) nodes.TreeNode {
 	return nodes.MakeLoopNode(varDecl, condNode, updNode, parseScope(p))
 }
 
-func parseStruct(p *Parser) nodes.TreeNode {
-	p.tokenStream.ConsumeOnlyIf(lexer.STRUCT)
-	var name string
-	if p.tokenStream.Current().Text() == lexer.LPAREN {
-		// anonymous struct
-		name = "" // todo: give some label
-	} else {
-		name = p.tokenStream.Current().Text()
-		p.tokenStream.ConsumeIfType(lexer.IDENTIFIER)
-	}
+func parseStructType(p *Parser) *nodes.StructType {
 	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
-	strct := nodes.StructNode{Name: name, Fields: make(map[string]nodes.StructField)}
+	strct := nodes.StructType{}
 	for p.tokenStream.Current().Text() != lexer.RPAREN {
-		sname := p.tokenStream.Consume().Text()
-		fmt.Print("-->", sname)
-		stype := getStructType(p)
-		strct.Fields[sname] = nodes.StructField{Name: sname, FieldType: stype}
+		Name := p.tokenStream.Consume().Text()
+		Type := parseDataType(p)
+		strct.Fields = append(strct.Fields, nodes.StructFieldType{Name: Name, Type: Type})
+		p.tokenStream.ConsumeIf(lexer.COMMA)
 	}
 	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
-	return strct
+	return &strct
 }
 
-func getStructType(p *Parser) nodes.TreeNode {
-	if p.tokenStream.Current().Text() == lexer.STRUCT {
-		// embedded struct
-		return parseStruct(p)
-	} else {
-		return parseIdentifier(p)
-	}
+func parseStructDefn(p *Parser) nodes.TreeNode {
+	p.tokenStream.ConsumeOnlyIf(lexer.STRUCT)
+	name := p.tokenStream.ConsumeOnlyIfType(lexer.IDENTIFIER).Text()
+	return &nodes.StructDefnNode{Name: name, StructDef: parseStructType(p)}
 }
+

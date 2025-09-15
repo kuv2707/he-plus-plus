@@ -1,22 +1,31 @@
 package node_types
 
-type StructField struct {
+type StructDefnNode struct {
 	Name      string
-	FieldType TreeNode
-}
-type StructNode struct {
-	Name   string
-	Fields map[string]StructField
+	StructDef *StructType
 }
 
-func (s StructNode) String(ind string) string {
-	result := ind + "StructNode: " + s.Name + "\n"
-	for _, field := range s.Fields {
-		result += ind + "Field: " + field.Name + ", Type: " + field.FieldType.String(ind+" ") + "\n"
-	}
+func (s *StructDefnNode) String(ind string) string {
+	result := ind + "StructDef: " + s.Name + " " + s.StructDef.Text()
 	return result
 }
 
-func (s StructNode) Type() TreeNodeType {
+func (s *StructDefnNode) Type() TreeNodeType {
 	return STRUCT
+}
+
+type StructValueNode struct {
+	FieldValues map[string]TreeNode
+}
+
+func (s *StructValueNode) String(ind string) string {
+	ret := ind + "{\n"
+	for k, v := range s.FieldValues {
+		ret += ind + k + ":\n" + v.String(ind+TAB) +"\n"
+	}
+	return ret
+}
+
+func (s *StructValueNode) Type() TreeNodeType {
+	return STRUCT_VAL
 }

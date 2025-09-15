@@ -6,10 +6,9 @@ funcion principal() &[][]int {
     // definir int expr = 5*6/(3-4-a)
     definir &int ptr = &a
     definir []int arr = [int]{1+2, 2, 3-2}
-    // // definir {name: String, a: int} obj = {name:"Helo", a:5};
     // definir bool bvar = 1 == 2
     println(*ptr)
-    perform(3, 4, add)
+    perform(3, 4, subtract)
     // devolver ptr
     devolver &[[]int]{arr,[int]{7,6}}
 }
@@ -18,10 +17,14 @@ funcion add(a int, b int) int {
     devolver a+b
 }
 
+funcion subtract(a int, b int) int {
+    devolver a+b
+}
+
 funcion perform(aa int, bb int, op funcion(int,int)int) int {
     op(aa,bb,4)
 }
 
 funcion println(a int) vacio {
-
+    printf("Hello %d", a)
 }

@@ -46,7 +46,7 @@ func (ts *TokenStream) ConsumeIf(t string) *lexer.LexerToken {
 	return nil
 }
 
-func (ts *TokenStream) ConsumeIfType(t lexer.LexerTokenType) *lexer.LexerToken {
+func (ts *TokenStream) ConsumeOnlyIfType(t lexer.LexerTokenType) *lexer.LexerToken {
 	if ts.HasTokens() && ts.Current().Type() == t {
 		return ts.Consume()
 	}

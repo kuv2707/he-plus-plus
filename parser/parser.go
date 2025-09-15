@@ -38,6 +38,7 @@ func (p *Parser) initParselets() {
 	p.prefixParselets[lexer.MUL] = parsePrefixOperator
 	p.prefixParselets[lexer.OPEN_PAREN] = parseBracketExpression
 	p.prefixParselets[lexer.OPEN_SQUARE] = parseArrayDeclaration
+	p.prefixParselets[lexer.LPAREN] = parseStructValue
 
 	p.postfixParselets[lexer.OPEN_PAREN] = parseFuncCallArgs
 	p.postfixParselets[lexer.OPEN_SQUARE] = parseArrayIndex
@@ -50,7 +51,7 @@ func (p *Parser) initParselets() {
 	p.scopeParselets[lexer.FOR] = parseLoopStatement
 	p.scopeParselets[lexer.WHILE] = parseLoopStatement
 	p.scopeParselets[lexer.RETURN] = parseReturnStatement
-	p.scopeParselets[lexer.STRUCT] = parseStruct
+	p.scopeParselets[lexer.STRUCT] = parseStructDefn
 
 }
 

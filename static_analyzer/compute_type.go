@@ -48,7 +48,12 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 				pref = nodes.PointerOf
 			case lexer.MUL:
 				pref = nodes.Dereference
-				// todo: Operand should be an `&` else it is an error
+				fmt.Println("->"+v.Operand.String(""))
+				if ch, ok := v.Operand.(*nodes.PrePostOperatorNode); ok && ch.Op == lexer.AMP {
+					return computeType(ch.Operand, a)
+				} else {
+					return &nodes.ErrorType{Message: fmt.Sprintf("Cannot dereference type %s", v.String(""))}
+				}
 			default:
 				// pref := nodes.Unknown
 			}

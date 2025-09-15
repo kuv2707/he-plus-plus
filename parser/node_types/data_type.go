@@ -25,6 +25,17 @@ func (dt *NamedType) Equals(other DataType) bool {
 	return false
 }
 
+type UnspecifiedType struct {
+}
+
+func (dt *UnspecifiedType) Text() string {
+	return "<UnspecifiedType>"
+}
+
+func (dt *UnspecifiedType) Equals(other DataType) bool {
+	return false
+}
+
 type TypePrefix int
 
 const (
@@ -77,6 +88,9 @@ func (ft *FuncType) Equals(dt DataType) bool {
 	if len(oft.ArgTypes) != len(ft.ArgTypes) {
 		return false
 	}
+	if !oft.ReturnType.Equals(ft.ReturnType) {
+		return false
+	}
 	for i := range ft.ArgTypes {
 		if !ft.ArgTypes[i].Equals(oft.ArgTypes[i]) {
 			return false
@@ -95,8 +109,43 @@ func (ft *FuncType) Text() string {
 	return ans
 }
 
+type StructFieldType struct {
+	Name string
+	Type DataType
+}
 type StructType struct {
-	// todo
+	Fields []StructFieldType
+}
+
+func (st *StructType) Equals(dt DataType) bool {
+	ost, ok := dt.(*StructType)
+	if !ok {
+		return false
+	}
+	if len(st.Fields) != len(ost.Fields) {
+		return false
+	}
+	for i := range st.Fields {
+		if st.Fields[i].Name != ost.Fields[i].Name {
+			return false
+		}
+		if !st.Fields[i].Type.Equals(ost.Fields[i].Type) {
+			return false
+		}
+	}
+	return true
+}
+
+func (st *StructType) Text() string {
+	ret := "{"
+	for i := range st.Fields {
+		ret += st.Fields[i].Name + ":" + st.Fields[i].Type.Text()
+		if i < len(st.Fields)-1 {
+			ret += ", "
+		}
+	}
+	ret += "}"
+	return ret
 }
 
 type ErrorType struct {

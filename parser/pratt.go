@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"he++/lexer"
 	nodes "he++/parser/node_types"
 )
@@ -47,12 +48,12 @@ func parseExpression(p *Parser, prec float32) nodes.TreeNode {
 	tok := t.Current()
 	prefix, exists := p.getPrefixParselet(tok)
 	if !exists {
-		panic("Might not be an expression: " + tok.Type().String() + " " + tok.Text())
+		panic(fmt.Sprintf("Might not be an expression: %s %s %d", tok.Type().String(), tok.Text(), tok.LineNo()))
 	}
 	leftNode := prefix(p)
 	for t.HasTokens() {
 		opSymbol := t.Current().Text()
-		if !(getPrecedence(opSymbol) > prec) {
+		if getPrecedence(opSymbol) <= prec {
 			break
 		}
 		if isPostfixOperator(opSymbol) {
@@ -166,4 +167,18 @@ func parseArrayDeclaration(p *Parser) nodes.TreeNode {
 		Elems: elems,
 		DataT: dt,
 	}
+}
+
+func parseStructValue(p *Parser) nodes.TreeNode {
+	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
+	var mp map[string]nodes.TreeNode = make(map[string]nodes.TreeNode)
+	for p.tokenStream.Current().Text() != lexer.RPAREN {
+		name := p.tokenStream.ConsumeOnlyIfType(lexer.IDENTIFIER).Text()
+		p.tokenStream.ConsumeOnlyIf(lexer.COLON)
+		val := parseExpression(p, 0)
+		mp[name] = val
+		p.tokenStream.ConsumeIf(lexer.COMMA)
+	}
+	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
+	return &nodes.StructValueNode{FieldValues: mp}
 }
