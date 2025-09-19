@@ -1,5 +1,7 @@
 package lexer
 
+import "he++/utils"
+
 // lexeme types
 var PUNCTUATION = LexerTokenType("punctuation")
 var KEYWORD = LexerTokenType("keyword")
@@ -80,6 +82,9 @@ var ASSN = "="
 var HASHTAG = "#" // not used anywhere yet
 
 var TERN_IF = "?"
+
+var MATH_COMMA = ','
+var MATH_DOT = '.'
 
 var Keywords = map[string]bool{
 	IF:       true,
@@ -174,12 +179,11 @@ var names = map[string]string{
 	DEC:          "dec",
 }
 
-func isOperator(c string) bool {
-	return Operators[c]
-}
+var OpTrie = constructTrie(Operators)
+var KwTrie = constructTrie(Keywords)
 
-func isDelimiter(c string) bool {
-	return c == " " || c == "\n" || c == "\t" || c == "\r"
+func isDelimiter(c byte) bool {
+	return c == ' ' || c == '\n' || c == '\t' || c == '\r'
 }
 
 func isQuote(c string) bool {
@@ -195,13 +199,21 @@ func isPunctuation(c string) bool {
 }
 
 func isKeyword(c string) bool {
-	return Keywords[c]
+	return KwTrie.Search(c)
 }
 
-func isDigit(c string) bool {
-	return c >= "0" && c <= "9"
+func isDigit(c byte) bool {
+	return c >= '0' && c <= '9'
 }
 
-func getTokenName(c string) string {
-	return names[c]
+func isNumberPart(c byte) bool {
+	return isDigit(c) || c == byte(MATH_DOT) || c == byte(MATH_COMMA)
+}
+
+func constructTrie(elems map[string]bool) utils.Trie {
+	trie := utils.MakeTrie()
+	for i := range elems {
+		trie.Insert(i)
+	}
+	return trie
 }

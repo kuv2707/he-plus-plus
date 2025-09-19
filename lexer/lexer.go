@@ -3,6 +3,7 @@ package lexer
 import (
 	"fmt"
 	"he++/globals"
+	"strings"
 )
 
 type LexerTokenType string
@@ -37,29 +38,26 @@ func (l LexerToken) LineNo() int {
 	return l.lineNo
 }
 
+type Warning struct {
+	Msg  string
+	Line int
+}
+
 type Lexer struct {
 	sourceCode string
 	i          int
 	lineCnt    int
 	tokens     []LexerToken
-	word       string
-	warnings   []string
+	word       strings.Builder
+	warnings   []Warning
 }
 
 func LexerOf(src string) *Lexer {
-	return &Lexer{sourceCode: src, i: 0, lineCnt: 1, tokens: make([]LexerToken, 0), word: "", warnings: make([]string, 0)}
+	return &Lexer{sourceCode: src, i: 0, lineCnt: 1, word: strings.Builder{}}
 }
 
-func (l *Lexer) addWarning(err string) {
-	l.warnings = append(l.warnings, err)
-}
-
-func (l *Lexer) clearWord() {
-	l.word = ""
-}
-
-func (l *Lexer) popAndInsert(i int, token LexerToken) {
-	l.tokens = append(l.tokens[:len(l.tokens)-i], token)
+func (l *Lexer) addWarning(err string, line int) {
+	l.warnings = append(l.warnings, Warning{Line: line, Msg: err})
 }
 
 func (l *Lexer) PrintLexemes() {
@@ -96,12 +94,12 @@ func (l *Lexer) lookBack(i int) LexerToken {
 
 func (l *Lexer) addTokenAndClearWord(token LexerToken) {
 	l.tokens = append(l.tokens, token)
-	l.word = ""
+	l.word.Reset()
 }
 
-func (l *Lexer) addTokenIfCan(word string) {
-	if word != "" {
-		l.addTokenAndClearWord(l.makeToken(word))
+func (l *Lexer) addTokenIfCan() {
+	if l.word.Len() != 0 {
+		l.addTokenAndClearWord(l.makeToken(l.word.String()))
 	}
 }
 
@@ -109,13 +107,21 @@ func (l *Lexer) addOperatorToken(op string) {
 	l.addTokenAndClearWord(NewLexerToken(OPERATOR, op, l.lineCnt))
 }
 
-func (l *Lexer) addOperator() {
-	if l.i+1 < len(l.sourceCode) && isOperator(l.sourceCode[l.i:l.i+2]) {
-		l.addOperatorToken(l.sourceCode[l.i : l.i+2])
-		l.i++
-	} else {
-		l.addOperatorToken(l.sourceCode[l.i : l.i+1])
+func (l *Lexer) tryOperator() bool {
+	if l.i+1 >= len(l.sourceCode) {
+		return false
 	}
+	// todo: use trie or something to properly discern operators
+	// this hack only works for 1-2 character operators
+	offset := OpTrie.MatchLongest(l.sourceCode, l.i)
+	if offset != -1 {
+		l.addTokenIfCan()
+		l.addOperatorToken(l.sourceCode[l.i : l.i+1+offset])
+		l.i += offset
+	} else {
+		return false
+	}
+	return true
 }
 
 func (l *Lexer) escapeSequence(c byte) string {
@@ -138,7 +144,7 @@ func (l *Lexer) escapeSequence(c byte) string {
 	case '"':
 		ret += "\""
 	default:
-		l.addWarning(fmt.Sprintf("Ignored escape sequence %s at line %d", globals.Blue(fmt.Sprintf("\"\\%c\"", c)), l.lineCnt))
+		l.addWarning(fmt.Sprintf("Ignored escape sequence %s at line %d", globals.Blue(fmt.Sprintf("\"\\%c\"", c)), l.lineCnt), l.lineCnt)
 	}
 	return ret
 }
