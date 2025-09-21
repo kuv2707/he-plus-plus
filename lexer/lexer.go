@@ -47,9 +47,18 @@ type Lexer struct {
 	sourceCode string
 	i          int
 	lineCnt    int
-	tokens     []LexerToken
-	word       strings.Builder
-	warnings   []Warning
+	// todo: use chan
+	tokens   []LexerToken
+	word     strings.Builder
+	warnings []Warning
+}
+
+func (l *Lexer) CharAtOffset(offset int) byte {
+	i := l.i + offset
+	if i >= len(l.sourceCode) || i < 0 {
+		return 0
+	}
+	return l.sourceCode[i]
 }
 
 func LexerOf(src string) *Lexer {
@@ -85,13 +94,6 @@ func (l *Lexer) GetTokens() []LexerToken {
 	return l.tokens
 }
 
-func (l *Lexer) lookBack(i int) LexerToken {
-	if len(l.tokens) > i {
-		return l.tokens[len(l.tokens)-i]
-	}
-	return LexerToken{}
-}
-
 func (l *Lexer) addTokenAndClearWord(token LexerToken) {
 	l.tokens = append(l.tokens, token)
 	l.word.Reset()
@@ -111,8 +113,6 @@ func (l *Lexer) tryOperator() bool {
 	if l.i+1 >= len(l.sourceCode) {
 		return false
 	}
-	// todo: use trie or something to properly discern operators
-	// this hack only works for 1-2 character operators
 	offset := OpTrie.MatchLongest(l.sourceCode, l.i)
 	if offset != -1 {
 		l.addTokenIfCan()
@@ -150,5 +150,5 @@ func (l *Lexer) escapeSequence(c byte) string {
 }
 
 func (l *Lexer) isThisLexicalQuote() bool {
-	return isQuote(string(l.sourceCode[l.i])) && (l.i == 0 || l.sourceCode[l.i-1] != '\\')
+	return isQuote(l.CharAtOffset(0)) && (l.CharAtOffset(-1) != '\\')
 }

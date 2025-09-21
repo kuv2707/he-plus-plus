@@ -6,8 +6,8 @@ import (
 
 func TestLexify(t *testing.T) {
 	t.Run("Basic assignment", func(t *testing.T) {
-		testLexerExpectTokens(t, "let x = 10", []LexerToken{
-			{"keyword", "let", 1},
+		testLexerExpectTokens(t, "definir x = 10", []LexerToken{
+			{"keyword", "definir", 1},
 			{"identifier", "x", 1},
 			{"operator", "=", 1},
 			{"int", "10", 1},
@@ -15,8 +15,8 @@ func TestLexify(t *testing.T) {
 	})
 
 	t.Run("Array in object declaration", func(t *testing.T) {
-		testLexerExpectTokens(t, "let a = { name: \" Kislay \" ,\n roll: [ 12, 13 ] };", []LexerToken{
-			{"keyword", "let", 1},
+		testLexerExpectTokens(t, "definir a = { name: \" Kislay \" ,\n roll: [ 12, 13 ] };", []LexerToken{
+			{"keyword", "definir", 1},
 			{"identifier", "a", 1},
 			{"operator", "=", 1},
 			{"bracket", "{", 1},
@@ -76,20 +76,46 @@ func TestLexify(t *testing.T) {
 	})
 
 	t.Run("Floating point numbers", func(t *testing.T) {
-		testLexerExpectTokens(t, "let x = 10.5", []LexerToken{
-			{"keyword", "let", 1},
+		testLexerExpectTokens(t, "definir x = 10.5", []LexerToken{
+			{"keyword", "definir", 1},
 			{"identifier", "x", 1},
 			{"operator", "=", 1},
 			{"floatingpt", "10.5", 1},
 		})
 
-		testLexerExpectTokens(t, "let x = 5.56.78", []LexerToken{
-			{"keyword", "let", 1},
+		testLexerExpectTokens(t, "definir x = 5.56.78", []LexerToken{
+			{"keyword", "definir", 1},
 			{"identifier", "x", 1},
 			{"operator", "=", 1},
 			{"floatingpt", "5.56", 1},
 			{"operator", ".", 1},
 			{"int", "78", 1},
+		})
+
+	})
+
+	t.Run("Numbers in different bases", func(t *testing.T) {
+		testLexerExpectTokens(t, "0xDEADBEEF 0123 012389 0xA.5.076  0xYEAH 099 009DEH", []LexerToken{
+			{"int", "DEADBEEF", 1},
+			{"int", "0123", 1},
+			{"int", "0123", 1},
+			{"int", "89", 1},
+			{"floatingpt", "A.5", 1},
+			{"operator", ".", 1},
+			{"int", "076", 1},
+			{"identifier", "YEAH", 1},
+			{"int", "0", 1},
+			{"int", "99", 1},
+			{"int", "00", 1},
+			{"int", "9", 1},
+			{"identifier", "DEH", 1},
+		})
+
+		testLexerExpectTokens(t, " 0xYEAH 099 0b301", []LexerToken{
+			{"identifier", "YEAH", 1},
+			{"int", "0", 1},
+			{"int", "99", 1},
+			{"int", "301", 1},
 		})
 
 	})

@@ -83,7 +83,7 @@ var HASHTAG = "#" // not used anywhere yet
 
 var TERN_IF = "?"
 
-var MATH_COMMA = ','
+var MATH_COMMA = '_'
 var MATH_DOT = '.'
 
 var Keywords = map[string]bool{
@@ -128,6 +128,7 @@ var Operators = map[string]bool{
 	HASHTAG: true,
 	DOT:     true,
 	TERN_IF: true,
+	COMMA:   true,
 }
 
 var names = map[string]string{
@@ -182,12 +183,33 @@ var names = map[string]string{
 var OpTrie = constructTrie(Operators)
 var KwTrie = constructTrie(Keywords)
 
+var decimalDigits = map[byte]bool{
+	'0': true, '1': true, '2': true, '3': true, '4': true,
+	'5': true, '6': true, '7': true, '8': true, '9': true,
+}
+
+var binaryDigits = map[byte]bool{
+	'0': true, '1': true,
+}
+
+var octalDigits = map[byte]bool{
+	'0': true, '1': true, '2': true, '3': true, '4': true,
+	'5': true, '6': true, '7': true,
+}
+
+var hexDigits = map[byte]bool{
+	'0': true, '1': true, '2': true, '3': true, '4': true,
+	'5': true, '6': true, '7': true, '8': true, '9': true,
+	'a': true, 'b': true, 'c': true, 'd': true, 'e': true, 'f': true,
+	'A': true, 'B': true, 'C': true, 'D': true, 'E': true, 'F': true,
+}
+
 func isDelimiter(c byte) bool {
 	return c == ' ' || c == '\n' || c == '\t' || c == '\r'
 }
 
-func isQuote(c string) bool {
-	return c == "\"" || c == "`"
+func isQuote(c byte) bool {
+	return c == '"' || c == '`'
 }
 
 func isBracket(c string) bool {
