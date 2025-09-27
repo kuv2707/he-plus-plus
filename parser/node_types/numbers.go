@@ -5,6 +5,7 @@ package node_types
 type NumberNode struct {
 	DataBytes []byte
 	NumType   string //todo: constrain to "int" and "float"
+	NodeMetadata
 }
 
 func (n *NumberNode) String(ind string) string {
@@ -15,6 +16,6 @@ func (n *NumberNode) Type() TreeNodeType {
 	return VALUE
 }
 
-func NewNumberNode(dataBytes []byte, numType string) *NumberNode {
-	return &NumberNode{dataBytes, numType}
+func NewNumberNode(dataBytes []byte, numType string, meta *NodeMetadata) *NumberNode {
+	return &NumberNode{dataBytes, numType, *meta}
 }

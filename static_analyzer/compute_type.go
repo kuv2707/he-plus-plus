@@ -48,7 +48,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 				pref = nodes.PointerOf
 			case lexer.MUL:
 				pref = nodes.Dereference
-				fmt.Println("->"+v.Operand.String(""))
+				fmt.Println("->" + v.Operand.String(""))
 				if ch, ok := v.Operand.(*nodes.PrePostOperatorNode); ok && ch.Op == lexer.AMP {
 					return computeType(ch.Operand, a)
 				} else {
@@ -63,7 +63,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		{
 			return &nodes.VoidType{}
 		}
-	case *nodes.ArrayDeclaration:
+	case *nodes.ArrayDeclarationNode:
 		{
 			expectedType := v.DataT
 			for i, elem := range v.Elems {

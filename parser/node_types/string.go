@@ -6,6 +6,7 @@ import (
 
 type StringNode struct {
 	DataBytes []byte
+	NodeMetadata
 }
 
 func (s *StringNode) String(ind string) string {
@@ -16,6 +17,6 @@ func (s *StringNode) Type() TreeNodeType {
 	return VALUE
 }
 
-func NewStringNode(dataBytes []byte) *StringNode {
-	return &StringNode{dataBytes}
+func NewStringNode(dataBytes []byte, meta *NodeMetadata) *StringNode {
+	return &StringNode{dataBytes, *meta}
 }

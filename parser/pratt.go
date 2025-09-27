@@ -77,38 +77,41 @@ func parseBracketExpression(p *Parser) nodes.TreeNode {
 }
 
 func parseInteger(p *Parser) nodes.TreeNode {
-	return nodes.NewNumberNode([]byte(p.tokenStream.Consume().Text()), "int")
+	t := p.tokenStream.Consume()
+	return nodes.NewNumberNode([]byte(t.Text()), "int", nodes.MakeMetadata(t.LineNo(), t.LineNo()))
 }
 
 func parseFloat(p *Parser) nodes.TreeNode {
-	return nodes.NewNumberNode([]byte(p.tokenStream.Consume().Text()), "float")
+	t := p.tokenStream.Consume()
+	return nodes.NewNumberNode([]byte(t.Text()), "float", nodes.MakeMetadata(t.LineNo(), t.LineNo()))
 }
 
 func parseString(p *Parser) nodes.TreeNode {
-	return nodes.NewStringNode([]byte(p.tokenStream.Consume().Text()))
+	t := p.tokenStream.Consume()
+	return nodes.NewStringNode([]byte(t.Text()), nodes.MakeMetadata(t.LineNo(), t.LineNo()))
 }
 
 func parseBoolean(p *Parser) nodes.TreeNode {
 	tok := p.tokenStream.Consume()
 	truth := tok.Text() == lexer.TRUE
 	if truth {
-		return nodes.NewBooleanNode([]byte(lexer.TRUE))
+		return nodes.NewBooleanNode([]byte(lexer.TRUE), nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
 	}
 	if tok.Text() != lexer.FALSE {
 		parsingError("Expected boolean value", tok.LineNo())
 	}
-	return nodes.NewBooleanNode([]byte(lexer.FALSE))
+	return nodes.NewBooleanNode([]byte(lexer.FALSE), nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
 }
 
 func parseIdentifier(p *Parser) nodes.TreeNode {
-	name := p.tokenStream.Consume().Text()
-	return nodes.NewIdentifierNode(name)
+	t := p.tokenStream.Consume()
+	return nodes.NewIdentifierNode(t.Text(), nodes.MakeMetadata(t.LineNo(), t.LineNo()))
 }
 
 func parsePrefixOperator(p *Parser) nodes.TreeNode {
 	operator := p.tokenStream.Consume()
 	operand := parseExpression(p, 0)
-	return nodes.NewPrePostOperatorNode(nodes.PREFIX, operator.Text(), operand)
+	return nodes.NewPrePostOperatorNode(nodes.PREFIX, operator.Text(), operand, nodes.MakeMetadata(operator.LineNo(), operator.LineNo()))
 }
 
 func parseInfixOperator(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
@@ -119,32 +122,34 @@ func parseInfixOperator(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 		ternElse := parseExpression(p, getPrecedence(operator.Text()))
 		return nodes.NewTernaryNode(leftNode, rightNode, ternElse)
 	}
-	return nodes.NewInfixOperatorNode(leftNode, operator.Text(), rightNode)
+	return nodes.NewInfixOperatorNode(leftNode, operator.Text(), rightNode, nodes.MakeMetadata(operator.LineNo(), operator.LineNo()))
 }
 
 func parsePostfixOperator(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 	operator := p.tokenStream.Consume()
-	return nodes.NewPrePostOperatorNode(nodes.POSTFIX, operator.Text(), leftNode)
+	return nodes.NewPrePostOperatorNode(nodes.POSTFIX, operator.Text(), leftNode, nodes.MakeMetadata(operator.LineNo(), operator.LineNo()))
 }
 
 func parseFuncCallArgs(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
-	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_PAREN)
-	fcNode := nodes.NewFuncCallNode(leftNode)
+	ls := p.tokenStream.ConsumeOnlyIf(lexer.OPEN_PAREN).LineNo()
+	var args []nodes.TreeNode
 	for p.tokenStream.HasTokens() && p.tokenStream.Current().Text() != lexer.CLOSE_PAREN {
-		fcNode.Arg(parseExpression(p, 0))
+		args = append(args, parseExpression(p, 0))
 		if p.tokenStream.Current().Text() == lexer.COMMA {
 			p.tokenStream.Consume()
 		}
 	}
-	p.tokenStream.Consume()
+	le := p.tokenStream.Consume().LineNo()
+	fcNode := nodes.NewFuncCallNode(leftNode, nodes.MakeMetadata(ls, le))
+	fcNode.Args = args
 	return fcNode
 }
 
 func parseArrayIndex(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
-	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE)
+	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE).LineNo()
 	indexer := parseExpression(p, 0)
-	p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
-	arrIndNode := nodes.NewArrIndNode(leftNode, indexer)
+	le := p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE).LineNo()
+	arrIndNode := nodes.NewArrIndNode(leftNode, indexer, nodes.MakeMetadata(leftNode.Range().Start, le))
 	if p.tokenStream.HasTokens() && p.tokenStream.LookAhead(1).Text() == lexer.OPEN_SQUARE {
 		arrIndNode = parseArrayIndex(p, arrIndNode).(*nodes.ArrIndNode)
 	}
@@ -152,7 +157,7 @@ func parseArrayIndex(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 }
 
 func parseArrayDeclaration(p *Parser) nodes.TreeNode {
-	p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE)
+	ls := p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE).LineNo()
 	dt := parseDataType(p)
 	p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
 	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
@@ -162,15 +167,12 @@ func parseArrayDeclaration(p *Parser) nodes.TreeNode {
 		elems = append(elems, k)
 		p.tokenStream.ConsumeIf(lexer.COMMA)
 	}
-	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
-	return &nodes.ArrayDeclaration{
-		Elems: elems,
-		DataT: dt,
-	}
+	le := p.tokenStream.ConsumeOnlyIf(lexer.RPAREN).LineNo()
+	return nodes.MakeArrayDeclarationNode(elems, dt, nodes.MakeMetadata(ls, le))
 }
 
 func parseStructValue(p *Parser) nodes.TreeNode {
-	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
+	ls := p.tokenStream.ConsumeOnlyIf(lexer.LPAREN).LineNo()
 	var mp map[string]nodes.TreeNode = make(map[string]nodes.TreeNode)
 	for p.tokenStream.Current().Text() != lexer.RPAREN {
 		name := p.tokenStream.ConsumeOnlyIfType(lexer.IDENTIFIER).Text()
@@ -179,6 +181,6 @@ func parseStructValue(p *Parser) nodes.TreeNode {
 		mp[name] = val
 		p.tokenStream.ConsumeIf(lexer.COMMA)
 	}
-	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
-	return &nodes.StructValueNode{FieldValues: mp}
+	le := p.tokenStream.ConsumeOnlyIf(lexer.RPAREN).LineNo()
+	return nodes.MakeStructValueNode(mp, nodes.MakeMetadata(ls, le))
 }

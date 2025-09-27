@@ -24,12 +24,31 @@ const (
 
 const TAB = "  "
 
+type LineRange struct {
+	Start int
+	End   int
+}
+
 type TreeNode interface {
 	String(ind string) string
 	Type() TreeNodeType
+	Range() LineRange
+}
+
+type NodeMetadata struct {
+	lr LineRange
+}
+
+func (m *NodeMetadata) Range() LineRange {
+	return m.lr
+}
+
+func MakeMetadata(l int, r int) *NodeMetadata {
+	return &NodeMetadata{lr: LineRange{Start: l, End: r}}
 }
 
 type EmptyPlaceholderNode struct {
+	NodeMetadata
 }
 
 func (e *EmptyPlaceholderNode) String(ind string) string {
@@ -42,6 +61,7 @@ func (e *EmptyPlaceholderNode) Type() TreeNodeType {
 
 type BooleanNode struct {
 	dataBytes []byte
+	NodeMetadata
 }
 
 func (b *BooleanNode) String(ind string) string {
@@ -52,12 +72,13 @@ func (b *BooleanNode) Type() TreeNodeType {
 	return VALUE
 }
 
-func NewBooleanNode(dataBytes []byte) *BooleanNode {
-	return &BooleanNode{dataBytes}
+func NewBooleanNode(dataBytes []byte, meta *NodeMetadata) *BooleanNode {
+	return &BooleanNode{dataBytes, *meta}
 }
 
 type IdentifierNode struct {
 	name string
+	NodeMetadata
 }
 
 func (i *IdentifierNode) Name() string {
@@ -72,13 +93,14 @@ func (i *IdentifierNode) Type() TreeNodeType {
 	return VALUE
 }
 
-func NewIdentifierNode(name string) *IdentifierNode {
-	return &IdentifierNode{name}
+func NewIdentifierNode(name string, meta *NodeMetadata) *IdentifierNode {
+	return &IdentifierNode{name, *meta}
 }
 
 type ArrIndNode struct {
 	indexer     TreeNode
 	arrProvider TreeNode
+	NodeMetadata
 }
 
 func (a *ArrIndNode) String(ind string) string {
@@ -93,8 +115,8 @@ func (f *ArrIndNode) Type() TreeNodeType {
 	return ARR_IND
 }
 
-func NewArrIndNode(indexer TreeNode, arrProvider TreeNode) *ArrIndNode {
-	return &ArrIndNode{indexer, arrProvider}
+func NewArrIndNode(indexer TreeNode, arrProvider TreeNode, meta *NodeMetadata) *ArrIndNode {
+	return &ArrIndNode{indexer, arrProvider, *meta}
 }
 
 // block related nodes
@@ -106,10 +128,11 @@ type StatementsContainer interface {
 
 type ScopeNode struct {
 	Children []TreeNode
+	NodeMetadata
 }
 
 func MakeScopeNode() *ScopeNode {
-	return &ScopeNode{make([]TreeNode, 0)}
+	return &ScopeNode{make([]TreeNode, 0), *MakeMetadata(0, 0)}
 }
 
 func (s *ScopeNode) String(ind string) string {
@@ -132,11 +155,12 @@ type SourceFileNode struct {
 	fileName string
 	filePath string
 	Children []TreeNode
+	NodeMetadata
 	//todo: store exports of this file
 }
 
 func MakeSourceFileNode() *SourceFileNode {
-	return &SourceFileNode{Children: make([]TreeNode, 0)}
+	return &SourceFileNode{Children: make([]TreeNode, 0), NodeMetadata: NodeMetadata{}}
 }
 
 func (s *SourceFileNode) String(ind string) string {

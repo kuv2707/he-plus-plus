@@ -1,19 +1,31 @@
 package node_types
 
+import "fmt"
+
+type ConditionalBranch struct {
+	Condition TreeNode
+	Scope      *ScopeNode
+}
+
 type IfNode struct {
-	condition TreeNode
-	ifScope   TreeNode
-	elseScope TreeNode
+	Branches []ConditionalBranch
+	NodeMetadata
 }
 
 func (i *IfNode) String(ind string) string {
-	return ind + "if\n" + i.condition.String(ind+TAB) + "\n" + ind + "then\n" + i.ifScope.String(ind+TAB) + ind + "else\n" + i.elseScope.String(ind+TAB)
+	result := ind + fmt.Sprintf("conditional branches (%d):", len(i.Branches))
+	for idx, branch := range i.Branches {
+		result += ind + "branch <" + fmt.Sprint(idx) + ">\n"
+		result += branch.Condition.String(ind+TAB) + "\n"
+		result += branch.Scope.String(ind + TAB)
+	}
+	return result
 }
 
 func (i *IfNode) Type() TreeNodeType {
 	return CONDITIONAL
 }
 
-func MakeIfNode(condition TreeNode, ifScope TreeNode, elseScope TreeNode) *IfNode {
-	return &IfNode{condition, ifScope, elseScope}
+func MakeIfNode(branches []ConditionalBranch, meta *NodeMetadata) *IfNode {
+	return &IfNode{branches, *meta}
 }

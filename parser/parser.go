@@ -28,7 +28,6 @@ func (p *Parser) initParselets() {
 	p.prefixParselets[lexer.FLOATINGPT.String()] = parseFloat
 	p.prefixParselets[lexer.STRING_LITERAL.String()] = parseString
 	p.prefixParselets[lexer.INTEGER.String()] = parseInteger
-	p.prefixParselets[lexer.BOOLEAN_LITERAL.String()] = parseBoolean
 	p.prefixParselets[lexer.IDENTIFIER.String()] = parseIdentifier
 	p.prefixParselets[lexer.TRUE] = parseBoolean
 	p.prefixParselets[lexer.FALSE] = parseBoolean

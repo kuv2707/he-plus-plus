@@ -3,7 +3,7 @@ package node_types
 import "fmt"
 
 type FuncArg struct {
-	Name      string
+	Name  string
 	DataT DataType
 }
 type FuncNode struct {
@@ -11,6 +11,7 @@ type FuncNode struct {
 	ArgList    []FuncArg
 	Scope      *ScopeNode
 	ReturnType DataType
+	NodeMetadata
 }
 
 func (f *FuncNode) String(ind string) string {
@@ -27,16 +28,13 @@ func (f *FuncNode) Type() TreeNodeType {
 	return FUNCTION
 }
 
-func MakeFunctionNode(name string) *FuncNode {
-	return &FuncNode{name, make([]FuncArg, 0), nil, &VoidType{}}
-}
-
-func (f *FuncNode) AddArg(name string, datatype DataType) {
-	f.ArgList = append(f.ArgList, FuncArg{name, datatype})
+func MakeFunctionNode(name string, args []FuncArg, dt DataType, scp *ScopeNode, meta *NodeMetadata) *FuncNode {
+	return &FuncNode{Name: name, ArgList: args, Scope: scp, ReturnType: dt, NodeMetadata: *meta}
 }
 
 type ReturnNode struct {
 	Value TreeNode
+	NodeMetadata
 }
 
 func (r *ReturnNode) String(ind string) string {
@@ -47,13 +45,14 @@ func (r *ReturnNode) Type() TreeNodeType {
 	return RETURN
 }
 
-func MakeReturnNode(value TreeNode) *ReturnNode {
-	return &ReturnNode{value}
+func MakeReturnNode(value TreeNode, meta *NodeMetadata) *ReturnNode {
+	return &ReturnNode{value, *meta}
 }
 
 type FuncCallNode struct {
 	Callee TreeNode
 	Args   []TreeNode
+	NodeMetadata
 }
 
 func (f *FuncCallNode) String(ind string) string {
@@ -68,10 +67,6 @@ func (f *FuncCallNode) Type() TreeNodeType {
 	return FUNCTION_CALL
 }
 
-func NewFuncCallNode(name TreeNode) *FuncCallNode {
-	return &FuncCallNode{name, make([]TreeNode, 0)}
-}
-
-func (f *FuncCallNode) Arg(arg TreeNode) {
-	f.Args = append(f.Args, arg)
+func NewFuncCallNode(name TreeNode, meta *NodeMetadata) *FuncCallNode {
+	return &FuncCallNode{name, make([]TreeNode, 0), *meta}
 }

@@ -5,6 +5,7 @@ type LoopNode struct {
 	condition   TreeNode
 	updater     TreeNode
 	scope       *ScopeNode
+	NodeMetadata
 }
 
 func (l *LoopNode) String(ind string) string {
@@ -20,6 +21,6 @@ func (l *LoopNode) Type() TreeNodeType {
 	return LOOP
 }
 
-func MakeLoopNode(initializer TreeNode, condition TreeNode, updater TreeNode, scope *ScopeNode) *LoopNode {
-	return &LoopNode{initializer, condition, updater, scope}
+func MakeLoopNode(initializer TreeNode, condition TreeNode, updater TreeNode, scope *ScopeNode, meta *NodeMetadata) *LoopNode {
+	return &LoopNode{initializer, condition, updater, scope, *meta}
 }

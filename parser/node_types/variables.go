@@ -3,10 +3,11 @@ package node_types
 type VariableDeclarationNode struct {
 	Declarations []TreeNode
 	DataT    DataType
+	NodeMetadata
 }
 
-func MakeVariableDeclarationNode() *VariableDeclarationNode {
-	return &VariableDeclarationNode{make([]TreeNode, 0), &ErrorType{Message: "Undefined"}}
+func MakeVariableDeclarationNode(decls []TreeNode, dt DataType, meta *NodeMetadata) *VariableDeclarationNode {
+	return &VariableDeclarationNode{decls, dt, *meta}
 }
 
 func (v *VariableDeclarationNode) String(ind string) string {

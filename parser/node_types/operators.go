@@ -13,6 +13,7 @@ type PrePostOperatorNode struct {
 	opType  string
 	Op      string
 	Operand TreeNode
+	NodeMetadata
 }
 
 func (o *PrePostOperatorNode) String(ind string) string {
@@ -23,14 +24,15 @@ func (o *PrePostOperatorNode) Type() TreeNodeType {
 	return OPERATOR
 }
 
-func NewPrePostOperatorNode(opType string, op string, operand TreeNode) *PrePostOperatorNode {
-	return &PrePostOperatorNode{opType, op, operand}
+func NewPrePostOperatorNode(opType string, op string, operand TreeNode, meta *NodeMetadata) *PrePostOperatorNode {
+	return &PrePostOperatorNode{opType, op, operand, *meta}
 }
 
 type InfixOperatorNode struct {
 	Left  TreeNode
 	Op    string
 	Right TreeNode
+	NodeMetadata
 }
 
 func (o *InfixOperatorNode) String(ind string) string {
@@ -41,14 +43,15 @@ func (o *InfixOperatorNode) Type() TreeNodeType {
 	return OPERATOR
 }
 
-func NewInfixOperatorNode(left TreeNode, op string, right TreeNode) *InfixOperatorNode {
-	return &InfixOperatorNode{left, op, right}
+func NewInfixOperatorNode(left TreeNode, op string, right TreeNode, meta *NodeMetadata) *InfixOperatorNode {
+	return &InfixOperatorNode{left, op, right, *meta}
 }
 
 type TernaryOperatorNode struct {
 	condition TreeNode
 	ifTrue    TreeNode
 	ifFalse   TreeNode
+	NodeMetadata
 }
 
 func (t *TernaryOperatorNode) String(ind string) string {
@@ -60,5 +63,5 @@ func (t *TernaryOperatorNode) Type() TreeNodeType {
 }
 
 func NewTernaryNode(condition TreeNode, ifTrue TreeNode, ifFalse TreeNode) *TernaryOperatorNode {
-	return &TernaryOperatorNode{condition, ifTrue, ifFalse}
+	return &TernaryOperatorNode{condition, ifTrue, ifFalse, NodeMetadata{}}
 }
