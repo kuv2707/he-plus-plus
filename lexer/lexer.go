@@ -2,7 +2,7 @@ package lexer
 
 import (
 	"fmt"
-	"he++/globals"
+	"he++/utils"
 	"strings"
 )
 
@@ -23,7 +23,7 @@ func NewLexerToken(tokenType LexerTokenType, ref string, lineNo int) LexerToken 
 }
 
 func (m LexerToken) String() string {
-	return fmt.Sprintf("%s %s %s", globals.Blue(string(m.tokenType)), globals.Yellow(m.ref), globals.Red(fmt.Sprint(m.lineNo)))
+	return fmt.Sprintf("%s %s %s", utils.Blue(string(m.tokenType)), utils.Yellow(m.ref), utils.Red(fmt.Sprint(m.lineNo)))
 }
 
 func (l LexerToken) Text() string {
@@ -147,7 +147,7 @@ func (l *Lexer) escapeSequence(c byte) string {
 	case '"':
 		ret += "\""
 	default:
-		l.addWarning(fmt.Sprintf("Ignored escape sequence %s at line %d", globals.Blue(fmt.Sprintf("\"\\%c\"", c)), l.lineCnt), l.lineCnt)
+		l.addWarning(fmt.Sprintf("Ignored escape sequence %s at line %d", utils.Blue(fmt.Sprintf("\"\\%c\"", c)), l.lineCnt), l.lineCnt)
 	}
 	return ret
 }

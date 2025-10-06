@@ -24,6 +24,7 @@ type Analyzer struct {
 	definedTypes map[string]nodes.DataType
 	// symname: normalized_typename
 	definedSyms map[string]nodes.DataType
+	errs []StaticAnalyserError
 }
 
 func MakeAnalyzer() Analyzer {

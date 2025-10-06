@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"he++/globals"
+	"he++/utils"
 	"he++/lexer"
 	nodes "he++/parser/node_types"
 	"sort"
@@ -45,7 +45,7 @@ OUT:
 			if expr != nil {
 				scope.AddChild(expr)
 			} else {
-				parsingError(fmt.Sprintf("Cannot parse %s", globals.Red(curr.Text())), curr.LineNo())
+				parsingError(fmt.Sprintf("Cannot parse %s", utils.Red(curr.Text())), curr.LineNo())
 			}
 			if !p.tokenStream.HasTokens() {
 				break OUT

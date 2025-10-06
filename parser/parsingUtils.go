@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"he++/globals"
+	"he++/utils"
 	"he++/lexer"
 	"os"
 )
@@ -16,7 +16,7 @@ func isPostfixOperator(op string) bool {
 }
 
 func parsingError(msg string, lineNo int) {
-	fmt.Println(globals.Red(fmt.Sprintf("Parsing error at line %d: %s\n", lineNo, msg)))
+	fmt.Println(utils.Red(fmt.Sprintf("Parsing error at line %d: %s\n", lineNo, msg)))
 	os.Exit(1)
 }
 
