@@ -1,16 +1,16 @@
-funcion principal() &[][]int {
+funcion principal() &[[int]] {
     // hello()()
     definir int kkkk = 5+verdad
-    definir int a = 11, k = 8
-    // definir float fpt = 5.76
-    // definir int expr = 5*6/(3-4-a)
+    definir int a = 11
+    definir float fpt = 5.76
+    definir int expr = 5*6/(3-4-a)
     definir &int ptr = &a
-    definir []int arr = [int]{1+2, 2, 3-2}
+    definir [inta] arr = [int]{1+2, 2, 3-2}
     // definir bool bvar = 1 == 2
     println(*ptr)
     perform(3, 4, subtract)
     // devolver ptr
-    devolver &[[]int]{arr,[int]{7,6}}
+    devolver &[[int]]{arr,[int]{7,6}}
 }
 
 funcion add(a int, b int) int {

@@ -6,29 +6,37 @@ import (
 )
 
 type TokenStream struct {
-	tokens []lexer.LexerToken
-	i      int
+	tokenChan  <-chan lexer.LexerToken
+	currentTok *lexer.LexerToken
+	nextTok    *lexer.LexerToken
+	endOfToks  bool
 }
 
-func NewTokenStream(tokens []lexer.LexerToken) *TokenStream {
-	return &TokenStream{tokens, 0}
+func NewTokenStream(tokens <-chan lexer.LexerToken) *TokenStream {
+	ts := &TokenStream{tokenChan: tokens, currentTok: nil, nextTok: nil, endOfToks: false}
+	ts.Consume()
+	ts.Consume()
+	return ts
 }
 
-func (ts *TokenStream) CurrentIndex() int {
-	return ts.i
-}
-
-func (ts *TokenStream) Current() lexer.LexerToken {
-	return ts.tokens[ts.i]
+func (ts *TokenStream) Current() *lexer.LexerToken {
+	return ts.currentTok
 }
 
 func (ts *TokenStream) HasTokens() bool {
-	return ts.i < len(ts.tokens)
+	return ts.currentTok.Type() != ""
 }
 
 func (ts *TokenStream) Consume() *lexer.LexerToken {
-	ts.i++
-	return &ts.tokens[ts.i-1]
+	curr := ts.currentTok
+	ts.currentTok = ts.nextTok
+	tok, ok := <-ts.tokenChan
+	if !ok {
+		ts.endOfToks = true
+	}
+	ts.nextTok = &tok
+	// fmt.Println("Consumed ", tok, ts.endOfToks)
+	return curr
 }
 
 func (ts *TokenStream) ConsumeOnlyIf(t string) *lexer.LexerToken {
@@ -54,19 +62,6 @@ func (ts *TokenStream) ConsumeOnlyIfType(t lexer.LexerTokenType) *lexer.LexerTok
 	return nil
 }
 
-func (ts *TokenStream) LookAhead(n int) *lexer.LexerToken {
-	if ts.i+n >= len(ts.tokens) {
-		return &lexer.LexerToken{}
-	}
-	return &ts.tokens[ts.i+n]
-}
-
-func (ts *TokenStream) Unread(n int) {
-	if n < 0 {
-		n = -n
-	}
-	ts.i -= n
-	if ts.i < 0 {
-		parsingError(fmt.Sprintf("Exhausted tokens while going back by %d", n), ts.Current().LineNo())
-	}
+func (ts *TokenStream) LookOneAhead() *lexer.LexerToken {
+	return ts.nextTok
 }

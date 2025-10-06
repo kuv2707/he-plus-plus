@@ -15,20 +15,20 @@ import (
 func main() {
 	args := cmdlineutils.ReadArgs()
 	lexer := lexer.LexerOf(string(utils.ReadFileContent(args["src"])))
-	lexer.Lexify()
-	
+	go lexer.Lexify()
+
+	astParser := parser.NewParser(lexer.TokChan)
+	node := astParser.ParseAST()
+
 	if os.Getenv("DEBUG_LEXER") == "1" {
+		fmt.Println("Lexemes:")
 		lexer.PrintLexemes()
 	}
-	
-	astParser := parser.NewParser(lexer.GetTokens())
-	node := astParser.ParseAST()
-	
 	if os.Getenv("DEBUG_AST") == "1" {
 		fmt.Println(node.String(""))
 	}
 	analyzer := staticanalyzer.MakeAnalyzer()
-	for _,k := range analyzer.AnalyzeAST(node) {
+	for _, k := range analyzer.AnalyzeAST(node) {
 		fmt.Println(k)
 	}
 }

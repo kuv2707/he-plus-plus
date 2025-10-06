@@ -47,10 +47,10 @@ type Lexer struct {
 	sourceCode string
 	i          int
 	lineCnt    int
-	// todo: use chan
-	tokens   []LexerToken
-	word     strings.Builder
-	warnings []Warning
+	TokChan    chan LexerToken
+	tokens     []LexerToken
+	word       strings.Builder
+	warnings   []Warning
 }
 
 func (l *Lexer) CharAtOffset(offset int) byte {
@@ -62,7 +62,7 @@ func (l *Lexer) CharAtOffset(offset int) byte {
 }
 
 func LexerOf(src string) *Lexer {
-	return &Lexer{sourceCode: src, i: 0, lineCnt: 1, word: strings.Builder{}}
+	return &Lexer{sourceCode: src, i: 0, lineCnt: 1, TokChan: make(chan LexerToken, 1000), word: strings.Builder{}}
 }
 
 func (l *Lexer) addWarning(err string, line int) {
@@ -95,7 +95,10 @@ func (l *Lexer) GetTokens() []LexerToken {
 }
 
 func (l *Lexer) addTokenAndClearWord(token LexerToken) {
+	// todo: only append to l.tokens if in debug mode
 	l.tokens = append(l.tokens, token)
+	l.TokChan <- token
+	// fmt.Println("Published", token)
 	l.word.Reset()
 }
 

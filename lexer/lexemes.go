@@ -217,7 +217,7 @@ func isBracket(c string) bool {
 }
 
 func isPunctuation(c string) bool {
-	return c == COMMA || c == SEMICOLON || c == COLON
+	return c == SEMICOLON
 }
 
 func isKeyword(c string) bool {

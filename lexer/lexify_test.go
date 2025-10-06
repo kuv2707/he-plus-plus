@@ -128,7 +128,8 @@ func TestLexify(t *testing.T) {
 
 func testLexerExpectTokens(t *testing.T, sourceCode string, expectedTokens []LexerToken) {
 	lexer := LexerOf(sourceCode)
-	tokens := lexer.Lexify()
+	go lexer.Lexify()
+	tokens := lexer.tokens
 
 	if len(tokens) != len(expectedTokens) {
 		t.Log("\033[31mFailed!\033[0m Tokens:", tokens)

@@ -42,11 +42,11 @@ func getPrecedence(op string) float32 {
 func parseExpression(p *Parser, prec float32) nodes.TreeNode {
 	t := p.tokenStream
 	if !t.HasTokens() {
-		parsingError("Unexpected end of expression after "+t.LookAhead(-1).Text(), 0)
+		parsingError("Unexpected end of file while parsing expression", 0)
 		return nil
 	}
 	tok := t.Current()
-	prefix, exists := p.getPrefixParselet(tok)
+	prefix, exists := p.getPrefixParselet(*tok)
 	if !exists {
 		panic(fmt.Sprintf("Might not be an expression: %s %s %d", tok.Type().String(), tok.Text(), tok.LineNo()))
 	}
@@ -150,7 +150,7 @@ func parseArrayIndex(p *Parser, leftNode nodes.TreeNode) nodes.TreeNode {
 	indexer := parseExpression(p, 0)
 	le := p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE).LineNo()
 	arrIndNode := nodes.NewArrIndNode(leftNode, indexer, nodes.MakeMetadata(leftNode.Range().Start, le))
-	if p.tokenStream.HasTokens() && p.tokenStream.LookAhead(1).Text() == lexer.OPEN_SQUARE {
+	if p.tokenStream.HasTokens() && p.tokenStream.LookOneAhead().Text() == lexer.OPEN_SQUARE {
 		arrIndNode = parseArrayIndex(p, arrIndNode).(*nodes.ArrIndNode)
 	}
 	return arrIndNode

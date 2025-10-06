@@ -85,15 +85,16 @@ func parseDataType(p *Parser) nodes.DataType {
 	currTok := t.Current()
 	if currTok.Type() == lexer.IDENTIFIER {
 		// possibly the type was absent and this ident is the varname
-		if t.LookAhead(1).Text() == lexer.ASSN {
+		if t.LookOneAhead().Text() == lexer.ASSN {
 			return &nodes.UnspecifiedType{}
 		}
 		t.Consume()
 		return &nodes.NamedType{Name: currTok.Text()}
 	} else if currTok.Text() == lexer.OPEN_SQUARE {
 		t.Consume()
+		pt := &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: parseDataType(p)}
 		t.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
-		return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: parseDataType(p)}
+		return pt
 	} else if currTok.Text() == lexer.AMP {
 		t.Consume()
 		return &nodes.PrefixOfType{Prefix: nodes.PointerOf, OfType: parseDataType(p)}

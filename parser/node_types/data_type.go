@@ -165,7 +165,7 @@ type VoidType struct {
 }
 
 func (vt *VoidType) Text() string {
-	return "void"
+	return "<VOID>"
 }
 
 func (dt *VoidType) Equals(other DataType) bool {

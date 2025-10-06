@@ -13,7 +13,7 @@ type Parser struct {
 	scopeParselets map[string]func(*Parser) nodes.TreeNode
 }
 
-func NewParser(tokens []lexer.LexerToken) *Parser {
+func NewParser(tokens chan lexer.LexerToken) *Parser {
 	ts := NewTokenStream(tokens)
 	p := &Parser{ts,
 		make(map[string]func(*Parser) nodes.TreeNode),

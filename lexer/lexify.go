@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func (l *Lexer) Lexify() []LexerToken {
+func (l *Lexer) Lexify() {
 	for ; l.i < len(l.sourceCode); l.i++ {
 		c := l.CharAtOffset(0)
 		sc := string(c)
@@ -56,7 +56,7 @@ func (l *Lexer) Lexify() []LexerToken {
 	}
 
 	l.addTokenIfCan()
-	return l.tokens
+	close(l.TokChan)
 }
 
 func lexNumber(l *Lexer) {
