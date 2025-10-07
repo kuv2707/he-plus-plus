@@ -132,7 +132,7 @@ type ScopeNode struct {
 }
 
 func MakeScopeNode() *ScopeNode {
-	return &ScopeNode{make([]TreeNode, 0), *MakeMetadata(0, 0)}
+	return &ScopeNode{make([]TreeNode, 0), NodeMetadata{}}
 }
 
 func (s *ScopeNode) String(ind string) string {
@@ -152,19 +152,18 @@ func (s *ScopeNode) AddChild(child TreeNode) {
 }
 
 type SourceFileNode struct {
-	fileName string
-	filePath string
+	FilePath string
 	Children []TreeNode
 	NodeMetadata
 	//todo: store exports of this file
 }
 
-func MakeSourceFileNode() *SourceFileNode {
-	return &SourceFileNode{Children: make([]TreeNode, 0), NodeMetadata: NodeMetadata{}}
+func MakeSourceFileNode(path string) *SourceFileNode {
+	return &SourceFileNode{FilePath: path, Children: make([]TreeNode, 0), NodeMetadata: NodeMetadata{}}
 }
 
 func (s *SourceFileNode) String(ind string) string {
-	ret := ind + "source file\n"
+	ret := ind + "File: " + s.FilePath + "\n"
 	for _, child := range s.Children {
 		ret += child.String(ind+TAB) + "\n"
 	}

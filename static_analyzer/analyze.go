@@ -3,6 +3,7 @@ package staticanalyzer
 import (
 	"fmt"
 	nodes "he++/parser/node_types"
+	"he++/utils"
 	// "he++/utils"
 )
 
@@ -24,7 +25,7 @@ type Analyzer struct {
 	definedTypes map[string]nodes.DataType
 	// symname: normalized_typename
 	definedSyms map[string]nodes.DataType
-	errs []StaticAnalyserError
+	Errs        []utils.CompilerError
 }
 
 func MakeAnalyzer() Analyzer {
@@ -36,8 +37,8 @@ func MakeAnalyzer() Analyzer {
 	}
 }
 
-func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) []string {
-	errs := make([]string, 0)
+func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) {
+
 	for _, ch := range n.Children {
 		if ch.Type() == nodes.FUNCTION {
 			funcNode := ch.(*nodes.FuncNode)
@@ -47,10 +48,16 @@ func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) []string {
 
 	for _, ch := range n.Children {
 		if funcNode, ok := ch.(*nodes.FuncNode); ok {
-			errs = append(errs, a.checkFunctionDef(funcNode)...)
-			// fmt.Println("func->", funcNode.Name, funcNode.ReturnType.Text())
+			a.checkFunctionDef(funcNode)
 		}
 	}
+	fmt.Printf("In source file %s:\n", utils.Underline(n.FilePath))
+	for _, k := range a.Errs {
+		fmt.Println(&k)
+	}
+	return
+}
 
-	return errs
+func (a *Analyzer) AddError(Line int, Name utils.CompilerErrorKind, Msg string) {
+	a.Errs = append(a.Errs, utils.CompilerError{Line: Line, Name: Name, Msg: Msg})
 }

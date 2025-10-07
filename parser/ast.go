@@ -2,9 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"he++/utils"
 	"he++/lexer"
 	nodes "he++/parser/node_types"
+	"he++/utils"
 	"sort"
 )
 
@@ -13,7 +13,7 @@ func (p *Parser) ParseAST() *nodes.SourceFileNode {
 		parsingError("No tokens to parse!", -1)
 		return nil
 	}
-	root := nodes.MakeSourceFileNode()
+	root := nodes.MakeSourceFileNode(p.Path)
 	parseStatements(p, root)
 
 	// todo: add some postprocessing
@@ -25,10 +25,11 @@ func (p *Parser) ParseAST() *nodes.SourceFileNode {
 
 func parseScope(p *Parser) *nodes.ScopeNode {
 	t := p.tokenStream
-	t.ConsumeOnlyIf(lexer.LPAREN)
+	ls := t.ConsumeOnlyIf(lexer.LPAREN).LineNo()
 	scopeNode := nodes.MakeScopeNode()
 	parseStatements(p, scopeNode)
-	t.ConsumeOnlyIf(lexer.RPAREN)
+	le := t.ConsumeOnlyIf(lexer.RPAREN).LineNo()
+	scopeNode.NodeMetadata = *nodes.MakeMetadata(ls, le)
 	return scopeNode
 }
 
@@ -118,7 +119,7 @@ func parseDataType(p *Parser) nodes.DataType {
 		return &nodes.VoidType{}
 	}
 	parsingError("Couldn't parse type: "+currTok.String(), currTok.LineNo())
-	return &nodes.ErrorType{Message: "Couldn't parse type: " + currTok.String()}
+	return &nodes.ErrorType{}
 
 }
 

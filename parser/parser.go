@@ -6,16 +6,16 @@ import (
 )
 
 type Parser struct {
+	Path             string
 	tokenStream      *TokenStream
 	prefixParselets  map[string]func(*Parser) nodes.TreeNode
 	postfixParselets map[string]func(*Parser, nodes.TreeNode) nodes.TreeNode
-
-	scopeParselets map[string]func(*Parser) nodes.TreeNode
+	scopeParselets   map[string]func(*Parser) nodes.TreeNode
 }
 
-func NewParser(tokens chan lexer.LexerToken) *Parser {
-	ts := NewTokenStream(tokens)
-	p := &Parser{ts,
+func NewParser(l *lexer.Lexer) *Parser {
+	ts := NewTokenStream(l.TokChan)
+	p := &Parser{l.Path, ts,
 		make(map[string]func(*Parser) nodes.TreeNode),
 		make(map[string]func(*Parser, nodes.TreeNode) nodes.TreeNode),
 		make(map[string]func(*Parser) nodes.TreeNode),

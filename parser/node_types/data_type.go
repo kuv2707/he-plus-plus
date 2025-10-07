@@ -149,11 +149,10 @@ func (st *StructType) Text() string {
 }
 
 type ErrorType struct {
-	Message string
 }
 
 func (et *ErrorType) Text() string {
-	return "{ERROR: " + et.Message + "}"
+	return "<ERROR_TYPE>"
 }
 
 func (dt *ErrorType) Equals(other DataType) bool {

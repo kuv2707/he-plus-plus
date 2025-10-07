@@ -10,11 +10,11 @@ funcion principal() &[[int]] {
     println(*ptr)
     perform(3, 4, subtract)
     // devolver ptr
-    devolver &[[int]]{arr,[int]{7,6}}
+    devolver &[[int]]{arr,[int]{7,6, und}}
 }
 
 funcion add(a int, b int) int {
-    devolver a+b
+    devolver a+*b
 }
 
 funcion subtract(a int, b int) int {

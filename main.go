@@ -6,7 +6,6 @@ import (
 	"he++/lexer"
 	"he++/parser"
 	staticanalyzer "he++/static_analyzer"
-	"he++/utils"
 	"os"
 )
 
@@ -14,10 +13,10 @@ import (
 
 func main() {
 	args := cmdlineutils.ReadArgs()
-	lexer := lexer.LexerOf(string(utils.ReadFileContent(args["src"])))
+	lexer := lexer.LexerOf(args["src"])
 	go lexer.Lexify()
 
-	astParser := parser.NewParser(lexer.TokChan)
+	astParser := parser.NewParser(lexer)
 	node := astParser.ParseAST()
 
 	if os.Getenv("DEBUG_LEXER") == "1" {
@@ -28,7 +27,5 @@ func main() {
 		fmt.Println(node.String(""))
 	}
 	analyzer := staticanalyzer.MakeAnalyzer()
-	for _, k := range analyzer.AnalyzeAST(node) {
-		fmt.Println(k)
-	}
+	analyzer.AnalyzeAST(node)
 }

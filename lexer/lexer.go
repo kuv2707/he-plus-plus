@@ -44,6 +44,7 @@ type Warning struct {
 }
 
 type Lexer struct {
+	Path       string
 	sourceCode string
 	i          int
 	lineCnt    int
@@ -61,8 +62,10 @@ func (l *Lexer) CharAtOffset(offset int) byte {
 	return l.sourceCode[i]
 }
 
-func LexerOf(src string) *Lexer {
-	return &Lexer{sourceCode: src, i: 0, lineCnt: 1, TokChan: make(chan LexerToken, 1000), word: strings.Builder{}}
+func LexerOf(srcPath string) *Lexer {
+	// read the file piece by piece instead of reading all at once.
+	src := utils.ReadFileContent(srcPath)
+	return &Lexer{Path: srcPath, sourceCode: string(src), i: 0, lineCnt: 1, TokChan: make(chan LexerToken, 1000), word: strings.Builder{}}
 }
 
 func (l *Lexer) addWarning(err string, line int) {

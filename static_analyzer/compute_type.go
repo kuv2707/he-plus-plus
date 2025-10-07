@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"he++/lexer"
 	nodes "he++/parser/node_types"
+	"he++/utils"
 	// "runtime/debug"
 )
 
@@ -25,7 +26,8 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 			varname := v.Name()
 			norm_tname, exists := a.definedSyms[varname]
 			if !exists {
-				return &nodes.ErrorType{Message: "UNDEFINED_TYPE"}
+				a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Undefined identifier %s", utils.Green(varname)))
+				return &nodes.ErrorType{}
 			}
 			return norm_tname
 		}
@@ -35,7 +37,8 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 			right := computeType(v.Right, a)
 			// op := v.Op
 			if !left.Equals(right) {
-				return &nodes.ErrorType{Message: fmt.Sprintf("$$Can't perform %s on %s and %s$$", v.Op, left.Text(), right.Text())}
+				a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Can't perform %s on types %s and %s", v.Op, utils.Cyan(left.Text()), utils.Cyan(right.Text())))
+				return &nodes.ErrorType{}
 			}
 			return left
 		}
@@ -48,11 +51,12 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 				pref = nodes.PointerOf
 			case lexer.MUL:
 				pref = nodes.Dereference
-				fmt.Println("->" + v.Operand.String(""))
-				if ch, ok := v.Operand.(*nodes.PrePostOperatorNode); ok && ch.Op == lexer.AMP {
-					return computeType(ch.Operand, a)
+				operandType := computeType(v.Operand, a)
+				if ch, ok := operandType.(*nodes.PrefixOfType); ok && ch.Prefix == nodes.PointerOf {
+					return ch.OfType
 				} else {
-					return &nodes.ErrorType{Message: fmt.Sprintf("Cannot dereference type %s", v.String(""))}
+					a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Cannot dereference type %s", utils.Cyan(operandType.Text())))
+					return &nodes.ErrorType{}
 				}
 			default:
 				// pref := nodes.Unknown
@@ -70,7 +74,9 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 				typ := computeType(elem, a)
 				if !typ.Equals(expectedType) {
 					// todo: check possibility of type casting
-					return &nodes.ErrorType{Message: fmt.Sprintf("%d th element should be of type %s, not %s", i, expectedType.Text(), typ.Text())}
+					a.AddError(elem.Range().Start, utils.TypeError,
+						fmt.Sprintf("Element at index %d of type %s cannot be casted to %s", i, utils.Cyan(typ.Text()), utils.Cyan(expectedType.Text())))
+					return &nodes.ErrorType{}
 				}
 			}
 			return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: v.DataT}
@@ -85,8 +91,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 			ArgTypes:   argtypes,
 		}
 	default:
-		// fmt.Println("Stack trace:")
-		// debug.PrintStack()
-		return &nodes.ErrorType{Message: fmt.Sprintf("Can't compute type for %T", v)}
+		a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Can't compute type for %T", v))
+		return &nodes.ErrorType{}
 	}
 }
