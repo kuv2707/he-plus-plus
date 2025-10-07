@@ -1,7 +1,5 @@
 module he++
 
-go 1.21.1
-
-require github.com/gofrs/uuid v4.4.0+incompatible
+go 1.25.1
 
 require github.com/joho/godotenv v1.5.1
