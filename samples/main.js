@@ -6,11 +6,11 @@ funcion principal() &[[int]] {
     definir int expr = 5*6/(3-4-a)
     definir &int ptr = &a
     definir [inta] arr = [int]{1+2, 2, 3-2}
-    // definir bool bvar = 1 == 2
+    definir bool bvar = 1 == 2
     println(*ptr)
     perform(3, 4, subtract)
     // devolver ptr
-    devolver &[[int]]{arr,[int]{7,6, und}}
+    devolver [[int]]{arr,[int]{7,6, und}}
 }
 
 funcion add(a int, b int) int {
@@ -18,6 +18,7 @@ funcion add(a int, b int) int {
 }
 
 funcion subtract(a int, b int) int {
+    
     devolver a+b
 }
 

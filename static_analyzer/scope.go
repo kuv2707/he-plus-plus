@@ -7,7 +7,7 @@ import (
 	"he++/utils"
 )
 
-func (a *Analyzer) checkScope(scp *nodes.ScopeNode) {
+func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 	// check if datatypes exist and var decls match type
 	for _, n := range scp.Children {
 		switch v := n.(type) {
@@ -16,6 +16,7 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) {
 				for _, tn := range v.Declarations {
 					if op := tn.(*nodes.InfixOperatorNode); op.Op == lexer.ASSN {
 						varname := op.Left.(*nodes.IdentifierNode)
+						// todo: Check if v.DataT itself is valid
 						a.definedSyms[varname.Name()] = v.DataT
 						// rval should have same type
 						rvalType := computeType(op.Right, a)
@@ -37,11 +38,13 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) {
 			}
 		case *nodes.ReturnNode:
 			{
-				// no op
+				if ct := computeType(v.Value, a); !ct.Equals(returnType) {
+					a.AddError(v.Range().Start, utils.TypeError,
+						fmt.Sprintf("Expected to return value of type %s but found %s", utils.Cyan(returnType.Text()), utils.Cyan(ct.Text())))
+				}
 			}
 		case *nodes.FuncCallNode:
 			{
-				// fmt.Printf("--- %T\n", v.Callee)
 				funcType := computeType(v.Callee, a)
 				ftyp, ok := funcType.(*nodes.FuncType)
 				if !ok {

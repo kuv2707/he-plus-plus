@@ -16,26 +16,18 @@ func (a *Analyzer) checkFunctionDef(fnd *nodes.FuncNode) {
 	for _, arg := range fnd.ArgList {
 		a.definedSyms[arg.Name] = arg.DataT
 	}
-	a.checkScope(fnd.Scope)
+	// todo: instead of passing returnType, look up the scope stack
+	// to see what function we're inside. (todo: scope stack)
+	a.checkScope(fnd.Scope, fnd.ReturnType)
 	stmts := fnd.Scope.Children
-	returnChecked := false
-
+	returnFound := false
+	
 	for _, stmt := range stmts {
 		if stmt.Type() == nodes.RETURN {
-			ret := stmt.(*nodes.ReturnNode)
-			typ := computeType(ret.Value, a)
-			// todo: add func in nodes.DataType to compare two types
-			if !typ.Equals(fnd.ReturnType) {
-				a.AddError(
-					ret.Range().Start,
-					utils.TypeError,
-					fmt.Sprintf("Expected to return %s, found %s", fnd.ReturnType.Text(), typ.Text()),
-				)
-			}
-			returnChecked = true
+			returnFound = true
 		}
 	}
-	if !returnChecked {
+	if !returnFound {
 		if _, ok := fnd.ReturnType.(*nodes.VoidType); !ok {
 			a.AddError(
 				fnd.Scope.Range().End,

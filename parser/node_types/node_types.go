@@ -98,16 +98,16 @@ func NewIdentifierNode(name string, meta *NodeMetadata) *IdentifierNode {
 }
 
 type ArrIndNode struct {
-	indexer     TreeNode
-	arrProvider TreeNode
+	ArrProvider TreeNode
+	Indexer     TreeNode
 	NodeMetadata
 }
 
 func (a *ArrIndNode) String(ind string) string {
 	ret := ind + " index\n"
-	ret += a.indexer.String(ind + TAB)
+	ret += a.Indexer.String(ind + TAB)
 	ret += "\n"
-	ret += a.arrProvider.String(ind + TAB)
+	ret += a.ArrProvider.String(ind + TAB)
 	return ret
 }
 
@@ -115,8 +115,8 @@ func (f *ArrIndNode) Type() TreeNodeType {
 	return ARR_IND
 }
 
-func NewArrIndNode(indexer TreeNode, arrProvider TreeNode, meta *NodeMetadata) *ArrIndNode {
-	return &ArrIndNode{indexer, arrProvider, *meta}
+func NewArrIndNode(arrProvider TreeNode, indexer TreeNode, meta *NodeMetadata) *ArrIndNode {
+	return &ArrIndNode{ArrProvider: arrProvider, Indexer: indexer, NodeMetadata: *meta}
 }
 
 // block related nodes

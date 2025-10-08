@@ -76,7 +76,6 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 					// todo: check possibility of type casting
 					a.AddError(elem.Range().Start, utils.TypeError,
 						fmt.Sprintf("Element at index %d of type %s cannot be casted to %s", i, utils.Cyan(typ.Text()), utils.Cyan(expectedType.Text())))
-					return &nodes.ErrorType{}
 				}
 			}
 			return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: v.DataT}
@@ -90,6 +89,17 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 			ReturnType: v.ReturnType,
 			ArgTypes:   argtypes,
 		}
+	case *nodes.ArrIndNode:
+		arrType := computeType(v.ArrProvider, a)
+		indexerType := computeType(v.Indexer, a)
+		indexedValueType, ok := isIndexable(a, arrType, indexerType)
+		if !ok {
+			a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("The type %s cannot be indexed by %s", utils.Cyan(arrType.Text()), utils.Cyan(indexerType.Text())))
+			return &nodes.ErrorType{}
+		}
+		return indexedValueType
+	case *nodes.StringNode:
+		return &nodes.NamedType{Name: lexer.STRING}
 	default:
 		a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Can't compute type for %T", v))
 		return &nodes.ErrorType{}

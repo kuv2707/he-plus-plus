@@ -1,3 +1,0 @@
-funcion abcd() [[int]] {
-    abcd()
-}
