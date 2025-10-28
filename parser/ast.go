@@ -5,7 +5,6 @@ import (
 	"he++/lexer"
 	nodes "he++/parser/node_types"
 	"he++/utils"
-	"sort"
 )
 
 func (p *Parser) ParseAST() *nodes.SourceFileNode {
@@ -16,14 +15,10 @@ func (p *Parser) ParseAST() *nodes.SourceFileNode {
 	root := nodes.MakeSourceFileNode(p.Path)
 	parseStatements(p, root)
 
-	// todo: add some postprocessing
-	sort.SliceStable(root.Children, func(i, j int) bool {
-		return root.Children[i].Type() == nodes.VAR_DECL
-	})
 	return root
 }
 
-func parseScope(p *Parser) *nodes.ScopeNode {
+func parseScope(p *Parser) nodes.TreeNode {
 	t := p.tokenStream
 	ls := t.ConsumeOnlyIf(lexer.LPAREN).LineNo()
 	scopeNode := nodes.MakeScopeNode()
@@ -72,7 +67,7 @@ func parseFunction(p *Parser) nodes.TreeNode {
 	}
 	le := t.ConsumeOnlyIf(lexer.CLOSE_PAREN).LineNo()
 
-	funcNode := nodes.MakeFunctionNode(funcName.Text(), argList, parseDataType(p), parseScope(p), nodes.MakeMetadata(ls, le))
+	funcNode := nodes.MakeFunctionNode(funcName.Text(), argList, parseDataType(p), parseScope(p).(*nodes.ScopeNode), nodes.MakeMetadata(ls, le))
 	return funcNode
 }
 
@@ -141,7 +136,7 @@ func parseIfStatement(p *Parser) nodes.TreeNode {
 	var branches []nodes.ConditionalBranch
 	ifCond := parseExpression(p, 0)
 	p.tokenStream.ConsumeOnlyIf(lexer.THEN)
-	ifScope := parseScope(p)
+	ifScope := parseScope(p).(*nodes.ScopeNode)
 	branches = append(branches, nodes.ConditionalBranch{Condition: ifCond, Scope: ifScope})
 	le := ls
 	if p.tokenStream.Current().Text() == lexer.ELSE {
@@ -153,7 +148,7 @@ func parseIfStatement(p *Parser) nodes.TreeNode {
 		} else {
 			cond = nodes.NewBooleanNode([]byte(lexer.TRUE), nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
 		}
-		scp := parseScope(p)
+		scp := parseScope(p).(*nodes.ScopeNode)
 		branches = append(branches, nodes.ConditionalBranch{Condition: cond, Scope: scp})
 
 	}
@@ -173,7 +168,7 @@ func parseWhileLoop(p *Parser) nodes.TreeNode {
 	ls := p.tokenStream.ConsumeOnlyIf(lexer.WHILE).LineNo()
 	le := p.tokenStream.ConsumeOnlyIf(lexer.THAT).LineNo()
 	condNode := parseExpression(p, 0)
-	return nodes.MakeLoopNode(&nodes.EmptyPlaceholderNode{}, condNode, &nodes.EmptyPlaceholderNode{}, parseScope(p), nodes.MakeMetadata(ls, le))
+	return nodes.MakeLoopNode(&nodes.EmptyPlaceholderNode{}, condNode, &nodes.EmptyPlaceholderNode{}, parseScope(p).(*nodes.ScopeNode), nodes.MakeMetadata(ls, le))
 }
 
 func parseForLoop(p *Parser) nodes.TreeNode {
@@ -183,7 +178,7 @@ func parseForLoop(p *Parser) nodes.TreeNode {
 	condNode := parseExpression(p, 0)
 	le := p.tokenStream.ConsumeOnlyIf(lexer.SEMICOLON).LineNo()
 	updNode := parseExpression(p, 0)
-	return nodes.MakeLoopNode(varDecl, condNode, updNode, parseScope(p), nodes.MakeMetadata(ls, le))
+	return nodes.MakeLoopNode(varDecl, condNode, updNode, parseScope(p).(*nodes.ScopeNode), nodes.MakeMetadata(ls, le))
 }
 
 func parseStructType(p *Parser) *nodes.StructType {

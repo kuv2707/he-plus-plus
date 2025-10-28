@@ -51,6 +51,8 @@ func (p *Parser) initParselets() {
 	p.scopeParselets[lexer.WHILE] = parseLoopStatement
 	p.scopeParselets[lexer.RETURN] = parseReturnStatement
 	p.scopeParselets[lexer.STRUCT] = parseStructDefn
+	p.scopeParselets[lexer.LPAREN] = parseScope
+	
 
 }
 
