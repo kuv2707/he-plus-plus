@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"he++/utils"
 	"he++/lexer"
-	"os"
 )
 
 func debug(a ...any) {
@@ -16,8 +15,7 @@ func isPostfixOperator(op string) bool {
 }
 
 func parsingError(msg string, lineNo int) {
-	fmt.Println(utils.Red(fmt.Sprintf("Parsing error at line %d: %s\n", lineNo, msg)))
-	os.Exit(1)
+	panic(utils.Red(fmt.Sprintf("Parsing error at line %d: %s\n", lineNo, msg)))
 }
 
 func Contains(arr []interface{}, e interface{}) bool {
