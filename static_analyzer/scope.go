@@ -17,7 +17,7 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 					if op := tn.(*nodes.InfixOperatorNode); op.Op == lexer.ASSN {
 						varname := op.Left.(*nodes.IdentifierNode)
 						// todo: Check if v.DataT itself is valid
-						a.definedSyms[varname.Name()] = v.DataT
+						a.DefineSym(varname.Name(), v.DataT)
 						// rval should have same type
 						rvalType := computeType(op.Right, a)
 						if !rvalType.Equals(v.DataT) {
@@ -78,6 +78,10 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 				}
 
 			}
+		case *nodes.ScopeNode: {
+			a.PushScope(NESTED)
+			a.checkScope(v, returnType)
+		}
 		default:
 			a.AddError(
 				v.Range().Start,
@@ -86,5 +90,6 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 			)
 		}
 	}
+	a.PopScope()
 	return
 }

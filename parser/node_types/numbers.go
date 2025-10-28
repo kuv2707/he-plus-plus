@@ -4,7 +4,7 @@ package node_types
 // expression related nodes
 type NumberNode struct {
 	DataBytes []byte
-	NumType   string //todo: constrain to "int" and "float"
+	NumType   string //todo: constrain to "int" and "float" using enum etc
 	NodeMetadata
 }
 

@@ -7,21 +7,22 @@ import (
 )
 
 func (a *Analyzer) registerFunctionDecl(fnd *nodes.FuncNode) {
-	// todo: if supporting function overloading
-	// key should have args types too
-	a.definedSyms[fnd.Name] = computeType(fnd, a)
+	// todo: if supporting function overloading,
+	// then the key should have args types too
+	a.DefineSym(fnd.Name, computeType(fnd, a))
 }
 
 func (a *Analyzer) checkFunctionDef(fnd *nodes.FuncNode) {
+	a.PushScope(FUNCTION)
 	for _, arg := range fnd.ArgList {
-		a.definedSyms[arg.Name] = arg.DataT
+		a.DefineSym(arg.Name, arg.DataT)
 	}
 	// todo: instead of passing returnType, look up the scope stack
 	// to see what function we're inside. (todo: scope stack)
 	a.checkScope(fnd.Scope, fnd.ReturnType)
 	stmts := fnd.Scope.Children
 	returnFound := false
-	
+
 	for _, stmt := range stmts {
 		if stmt.Type() == nodes.RETURN {
 			returnFound = true

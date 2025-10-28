@@ -24,12 +24,12 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 	case *nodes.IdentifierNode:
 		{
 			varname := v.Name()
-			norm_tname, exists := a.definedSyms[varname]
+			s, exists := a.GetSym(varname)
 			if !exists {
 				a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Undefined identifier %s", utils.Green(varname)))
 				return &nodes.ErrorType{}
 			}
-			return norm_tname
+			return s
 		}
 	case *nodes.InfixOperatorNode:
 		{

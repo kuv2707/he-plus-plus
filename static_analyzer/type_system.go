@@ -3,6 +3,7 @@ package staticanalyzer
 import (
 	"he++/lexer"
 	nodes "he++/parser/node_types"
+	"he++/utils"
 )
 
 type DataTypeInfo interface {
@@ -40,23 +41,11 @@ func checkBool(n nodes.TreeNode) bool {
 	return ok
 }
 
-// func checkChar(n nodes.TreeNode) bool {
-// 	switch v := n.(type) {
-// 	case *nodes.CharNode:
-// 		return true
-// 	default:
-// 		return false
-// 	}
-// }
 
-func getPrimitiveTypeDefns() map[string]nodes.DataType {
-	definedTypes := make(map[string]nodes.DataType, 0)
-	definedTypes[lexer.INT] = &nodes.NamedType{Name: lexer.INT}
-	definedTypes[lexer.FLOAT] = &nodes.NamedType{Name: lexer.FLOAT}
-	definedTypes[lexer.BOOLEAN] = &nodes.NamedType{Name: lexer.BOOLEAN}
-	// definedTypes[lexer.CHAR] = &PrimitiveType{
-	// 	numBytes: 1,
-	// 	validator: checkChar,
-	// }
-	return definedTypes
+func addInbuiltDefinitions(a *Analyzer) {
+	definedTypes := make(map[string]utils.Stack[nodes.DataType], 0)
+
+	definedTypes[lexer.INT] = utils.MakeStack[nodes.DataType](&nodes.NamedType{Name: lexer.INT})
+	definedTypes[lexer.FLOAT] = utils.MakeStack[nodes.DataType](&nodes.NamedType{Name: lexer.FLOAT})
+	definedTypes[lexer.BOOLEAN] = utils.MakeStack[nodes.DataType](&nodes.NamedType{Name: lexer.BOOLEAN})
 }
