@@ -1,8 +1,10 @@
 package node_types
 
+import "he++/utils"
+
 type VariableDeclarationNode struct {
 	Declarations []TreeNode
-	DataT    DataType
+	DataT        DataType
 	NodeMetadata
 }
 
@@ -10,13 +12,14 @@ func MakeVariableDeclarationNode(decls []TreeNode, dt DataType, meta *NodeMetada
 	return &VariableDeclarationNode{decls, dt, *meta}
 }
 
-func (v *VariableDeclarationNode) String(ind string) string {
-	ret := ind + "var decl\n"
+func (v *VariableDeclarationNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine("VarDecl")
+	p.WriteLine("DataType: " + utils.Cyan(v.DataT.Text()))
 	for _, decl := range v.Declarations {
-		ret += decl.String(ind+TAB) + "\n"
+		decl.String(p)
 	}
-	ret += ind + "DataType: " + v.DataT.Text()
-	return ret
+	p.PopIndent()
 }
 
 func (v *VariableDeclarationNode) Type() TreeNodeType {

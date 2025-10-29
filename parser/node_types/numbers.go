@@ -9,8 +9,10 @@ type NumberNode struct {
 	NodeMetadata
 }
 
-func (n *NumberNode) String(ind string) string {
-	return ind + utils.Blue(string(n.DataBytes))
+func (n *NumberNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Blue(string(n.DataBytes)))
+	p.PopIndent()
 }
 
 func (n *NumberNode) Type() TreeNodeType {

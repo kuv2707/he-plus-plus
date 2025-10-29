@@ -1,17 +1,20 @@
 package node_types
 
+import "he++/utils"
+
 type ArrayDeclarationNode struct {
 	Elems []TreeNode
 	DataT DataType
 	NodeMetadata
 }
 
-func (ad *ArrayDeclarationNode) String(ind string) string {
-	result := ind + "ArrayDeclaration:\n"
+func (ad *ArrayDeclarationNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Underline("ArrayDeclaration:"))
 	for _, elem := range ad.Elems {
-		result += elem.String(ind+TAB) + "\n"
+		elem.String(p)
 	}
-	return result
+	p.PopIndent()
 }
 
 func (ad *ArrayDeclarationNode) Type() TreeNodeType {

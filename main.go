@@ -6,6 +6,7 @@ import (
 	"he++/lexer"
 	"he++/parser"
 	staticanalyzer "he++/static_analyzer"
+	"he++/utils"
 	"os"
 )
 
@@ -24,7 +25,9 @@ func main() {
 		lexer.PrintLexemes()
 	}
 	if os.Getenv("DEBUG_AST") == "1" {
-		fmt.Println(node.String(""))
+		p := utils.MakeASTPrinter()
+		node.String(&p)
+		fmt.Println(p.Builder.String())
 	}
 	analyzer := staticanalyzer.MakeAnalyzer()
 	analyzer.AnalyzeAST(node)

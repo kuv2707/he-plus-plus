@@ -1,10 +1,13 @@
 package node_types
 
-import "fmt"
+import (
+	"fmt"
+	"he++/utils"
+)
 
 type ConditionalBranch struct {
 	Condition TreeNode
-	Scope      *ScopeNode
+	Scope     *ScopeNode
 }
 
 type IfNode struct {
@@ -12,14 +15,16 @@ type IfNode struct {
 	NodeMetadata
 }
 
-func (i *IfNode) String(ind string) string {
-	result := ind + fmt.Sprintf("conditional branches (%d):", len(i.Branches))
+func (i *IfNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Underline(fmt.Sprintf("ConditionalBranches(%d):", len(i.Branches))))
+
 	for idx, branch := range i.Branches {
-		result += ind + "branch <" + fmt.Sprint(idx) + ">\n"
-		result += branch.Condition.String(ind+TAB) + "\n"
-		result += branch.Scope.String(ind + TAB)
+		p.WriteLine("branch <" + fmt.Sprint(idx) + ">")
+		branch.Condition.String(p)
+		branch.Scope.String(p)
 	}
-	return result
+	p.PopIndent()
 }
 
 func (i *IfNode) Type() TreeNodeType {

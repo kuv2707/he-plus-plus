@@ -1,8 +1,8 @@
 package node_types
 
-import "fmt"
-
-
+import (
+	"he++/utils"
+)
 
 const (
 	PREFIX  = "pre"
@@ -16,8 +16,11 @@ type PrePostOperatorNode struct {
 	NodeMetadata
 }
 
-func (o *PrePostOperatorNode) String(ind string) string {
-	return fmt.Sprintf("%s%s %s\n%s", ind, o.opType, o.Op, o.Operand.String(ind+TAB))
+func (o *PrePostOperatorNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Bold(o.opType) + " " + utils.Magenta(o.Op))
+	o.Operand.String(p)
+	p.PopIndent()
 }
 
 func (o *PrePostOperatorNode) Type() TreeNodeType {
@@ -35,8 +38,12 @@ type InfixOperatorNode struct {
 	NodeMetadata
 }
 
-func (o *InfixOperatorNode) String(ind string) string {
-	return ind + o.Op + "\n" + o.Left.String(ind+TAB) + "\n" + o.Right.String(ind+TAB)
+func (o *InfixOperatorNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Magenta(o.Op))
+	o.Left.String(p)
+	o.Right.String(p)
+	p.PopIndent()
 }
 
 func (o *InfixOperatorNode) Type() TreeNodeType {
@@ -54,8 +61,13 @@ type TernaryOperatorNode struct {
 	NodeMetadata
 }
 
-func (t *TernaryOperatorNode) String(ind string) string {
-	return ind + "ternary\n" + t.condition.String(ind+TAB) + "\n" + t.ifTrue.String(ind+TAB) + "\n" + t.ifFalse.String(ind+TAB)
+func (t *TernaryOperatorNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine("ternary")
+	t.condition.String(p)
+	t.ifTrue.String(p)
+	t.ifFalse.String(p)
+	p.PopIndent()
 }
 
 func (t *TernaryOperatorNode) Type() TreeNodeType {
@@ -64,4 +76,54 @@ func (t *TernaryOperatorNode) Type() TreeNodeType {
 
 func NewTernaryNode(condition TreeNode, ifTrue TreeNode, ifFalse TreeNode) *TernaryOperatorNode {
 	return &TernaryOperatorNode{condition, ifTrue, ifFalse, NodeMetadata{}}
+}
+
+type ArrIndNode struct {
+	ArrProvider TreeNode
+	Indexer     TreeNode
+	NodeMetadata
+}
+
+func (a *ArrIndNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Magenta("index"))
+	a.Indexer.String(p)
+	a.ArrProvider.String(p)
+	p.PopIndent()
+}
+
+func (f *ArrIndNode) Type() TreeNodeType {
+	return ARR_IND
+}
+
+func NewArrIndNode(arrProvider TreeNode, indexer TreeNode, meta *NodeMetadata) *ArrIndNode {
+	return &ArrIndNode{ArrProvider: arrProvider, Indexer: indexer, NodeMetadata: *meta}
+}
+
+type FuncCallNode struct {
+	Callee TreeNode
+	Args   []TreeNode
+	NodeMetadata
+}
+
+func (f *FuncCallNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Magenta("call"))
+	p.PushIndent()
+	p.WriteLine("callee:")
+	f.Callee.String(p)
+	p.WriteLine("args:")
+	for _, arg := range f.Args {
+		arg.String(p)
+	}
+	p.PopIndent()
+	p.PopIndent()
+}
+
+func (f *FuncCallNode) Type() TreeNodeType {
+	return FUNCTION_CALL
+}
+
+func NewFuncCallNode(name TreeNode, meta *NodeMetadata) *FuncCallNode {
+	return &FuncCallNode{name, make([]TreeNode, 0), *meta}
 }

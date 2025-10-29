@@ -1,6 +1,7 @@
 package node_types
 
 import (
+	"fmt"
 	"he++/utils"
 	_ "he++/utils"
 )
@@ -30,8 +31,15 @@ type LineRange struct {
 	End   int
 }
 
+// Color codes:
+// Data type names : cyan
+// Numbers & bools : blue
+// String literals : yellow
+// Ident names     : green
+// Operators       : magenta
+
 type TreeNode interface {
-	String(ind string) string
+	String(p *utils.ASTPrinter)
 	Type() TreeNodeType
 	Range() LineRange
 }
@@ -52,79 +60,19 @@ type EmptyPlaceholderNode struct {
 	NodeMetadata
 }
 
-func (e *EmptyPlaceholderNode) String(ind string) string {
-	return ind + "<empty>"
+func (e *EmptyPlaceholderNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine("<empty>")
+	p.PopIndent()
 }
 
 func (e *EmptyPlaceholderNode) Type() TreeNodeType {
 	return TreeNodeType("")
 }
 
-type BooleanNode struct {
-	dataBytes []byte
-	NodeMetadata
-}
-
-func (b *BooleanNode) String(ind string) string {
-	return ind + string(b.dataBytes)
-}
-
-func (b *BooleanNode) Type() TreeNodeType {
-	return VALUE
-}
-
-func NewBooleanNode(dataBytes []byte, meta *NodeMetadata) *BooleanNode {
-	return &BooleanNode{dataBytes, *meta}
-}
-
-type IdentifierNode struct {
-	name string
-	NodeMetadata
-}
-
-func (i *IdentifierNode) Name() string {
-	return i.name
-}
-
-func (i *IdentifierNode) String(ind string) string {
-	return ind + utils.Green(i.name)
-}
-
-func (i *IdentifierNode) Type() TreeNodeType {
-	return VALUE
-}
-
-func NewIdentifierNode(name string, meta *NodeMetadata) *IdentifierNode {
-	return &IdentifierNode{name, *meta}
-}
-
-type ArrIndNode struct {
-	ArrProvider TreeNode
-	Indexer     TreeNode
-	NodeMetadata
-}
-
-func (a *ArrIndNode) String(ind string) string {
-	ret := ind + " index\n"
-	ret += a.Indexer.String(ind + TAB)
-	ret += "\n"
-	ret += a.ArrProvider.String(ind + TAB)
-	return ret
-}
-
-func (f *ArrIndNode) Type() TreeNodeType {
-	return ARR_IND
-}
-
-func NewArrIndNode(arrProvider TreeNode, indexer TreeNode, meta *NodeMetadata) *ArrIndNode {
-	return &ArrIndNode{ArrProvider: arrProvider, Indexer: indexer, NodeMetadata: *meta}
-}
-
-// block related nodes
-
 type StatementsContainer interface {
 	AddChild(child TreeNode)
-	String(ind string) string
+	String(p *utils.ASTPrinter)
 }
 
 type ScopeNode struct {
@@ -136,12 +84,13 @@ func MakeScopeNode() *ScopeNode {
 	return &ScopeNode{make([]TreeNode, 0), NodeMetadata{}}
 }
 
-func (s *ScopeNode) String(ind string) string {
-	ret := ind + "scope\n"
+func (s *ScopeNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Underline("scope"))
 	for _, child := range s.Children {
-		ret += child.String(ind+TAB) + "\n"
+		child.String(p)
 	}
-	return ret
+	p.PopIndent()
 }
 
 func (s *ScopeNode) Type() TreeNodeType {
@@ -163,12 +112,13 @@ func MakeSourceFileNode(path string) *SourceFileNode {
 	return &SourceFileNode{FilePath: path, Children: make([]TreeNode, 0), NodeMetadata: NodeMetadata{}}
 }
 
-func (s *SourceFileNode) String(ind string) string {
-	ret := ind + "File: " + s.FilePath + "\n"
+func (s *SourceFileNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(fmt.Sprintf("%s %s", utils.Underline("File:"), utils.Underline(utils.BoldWhite(s.FilePath))))
 	for _, child := range s.Children {
-		ret += child.String(ind+TAB) + "\n"
+		child.String(p)
 	}
-	return ret
+	p.PopIndent()
 }
 
 func (s *SourceFileNode) Type() TreeNodeType {

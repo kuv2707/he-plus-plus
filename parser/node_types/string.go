@@ -10,8 +10,10 @@ type StringNode struct {
 	NodeMetadata
 }
 
-func (s *StringNode) String(ind string) string {
-	return ind + fmt.Sprintf("\"%s\"", utils.Yellow(string(s.DataBytes)))
+func (s *StringNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(fmt.Sprintf("\"%s\"", utils.Yellow(string(s.DataBytes))))
+	p.PopIndent()
 }
 
 func (s *StringNode) Type() TreeNodeType {

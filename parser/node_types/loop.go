@@ -1,5 +1,7 @@
 package node_types
 
+import "he++/utils"
+
 type LoopNode struct {
 	initializer TreeNode
 	condition   TreeNode
@@ -8,13 +10,17 @@ type LoopNode struct {
 	NodeMetadata
 }
 
-func (l *LoopNode) String(ind string) string {
-	ret := ind + "loop\n"
-	ret += l.initializer.String(ind+TAB) + "\n"
-	ret += l.condition.String(ind+TAB) + "\n"
-	ret += l.updater.String(ind+TAB) + "\n"
-	ret += l.scope.String(ind+TAB) + "\n"
-	return ret
+func (l *LoopNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(utils.Underline("loop"))
+	p.WriteLine("initializer:")
+	l.initializer.String(p)
+	p.WriteLine("condition:")
+	l.condition.String(p)
+	p.WriteLine("updater:")
+	l.updater.String(p)
+	l.scope.String(p)
+	p.PopIndent()
 }
 
 func (l *LoopNode) Type() TreeNodeType {

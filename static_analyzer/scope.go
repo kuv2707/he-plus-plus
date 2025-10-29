@@ -55,12 +55,15 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 					)
 					return
 				}
+				funcInf := utils.MakeASTPrinter()
+				v.Callee.String(&funcInf)
+				funcNameTreeStr := funcInf.Builder.String()
 
 				if len(v.Args) != len(ftyp.ArgTypes) {
 					a.AddError(
 						v.Range().Start,
 						utils.TypeError,
-						fmt.Sprintf("Function %s expects %s parameters, but supplied %s", utils.Blue(v.Callee.String("")), utils.Yellow(fmt.Sprint(len(ftyp.ArgTypes))), utils.Yellow(fmt.Sprint(len(v.Args)))),
+						fmt.Sprintf("Function %s expects %s parameters, but supplied %s", utils.Blue(funcNameTreeStr), utils.Yellow(fmt.Sprint(len(ftyp.ArgTypes))), utils.Yellow(fmt.Sprint(len(v.Args)))),
 					)
 					return
 				}
@@ -72,16 +75,17 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 						a.AddError(
 							v.Range().Start,
 							utils.TypeError,
-							fmt.Sprintf("%d th parameter to function %s should be of type %s, not %s", i, utils.Blue(v.Callee.String("")), utils.Cyan(expT.Text()), utils.Cyan(passedT.Text())),
+							fmt.Sprintf("%d th parameter to function %s should be of type %s, not %s", i, utils.Blue(funcNameTreeStr), utils.Cyan(expT.Text()), utils.Cyan(passedT.Text())),
 						)
 					}
 				}
 
 			}
-		case *nodes.ScopeNode: {
-			a.PushScope(NESTED)
-			a.checkScope(v, returnType)
-		}
+		case *nodes.ScopeNode:
+			{
+				a.PushScope(NESTED)
+				a.checkScope(v, returnType)
+			}
 		default:
 			a.AddError(
 				v.Range().Start,

@@ -17,14 +17,22 @@ type FuncNode struct {
 	NodeMetadata
 }
 
-func (f *FuncNode) String(ind string) string {
-	ret := fmt.Sprintf("%sfunc %s \n %s args:\n", ind, utils.Green(f.Name), ind)
-	for i := range f.ArgList {
-		ret += ind + TAB + utils.Green(f.ArgList[i].Name) + " " + utils.Cyan(f.ArgList[i].DataT.Text()) + "\n"
+func (f *FuncNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine(fmt.Sprintf("%s %s", utils.Underline("function"), utils.Green(f.Name)))
+	p.PushIndent()
+	p.WriteLine("returns: " + utils.Cyan(f.ReturnType.Text()))
+	if len(f.ArgList) > 0 {
+		p.WriteLine("arglist:")
+		p.PushIndent()
+		for i := range f.ArgList {
+			p.WriteLine(fmt.Sprintf("%s %s", utils.Green(f.ArgList[i].Name), utils.Cyan(f.ArgList[i].DataT.Text())))
+		}
+		p.PopIndent()
 	}
-	ret += f.Scope.String(ind + TAB)
-	ret += ind + "  return type: " + utils.Cyan(f.ReturnType.Text())
-	return ret
+	p.PopIndent()
+	f.Scope.String(p)
+	p.PopIndent()
 }
 
 func (f *FuncNode) Type() TreeNodeType {
@@ -40,8 +48,11 @@ type ReturnNode struct {
 	NodeMetadata
 }
 
-func (r *ReturnNode) String(ind string) string {
-	return ind + "return\n" + r.Value.String(ind+TAB)
+func (r *ReturnNode) String(p *utils.ASTPrinter) {
+	p.PushIndent()
+	p.WriteLine("return")
+	r.Value.String(p)
+	p.PopIndent()
 }
 
 func (r *ReturnNode) Type() TreeNodeType {
@@ -50,26 +61,4 @@ func (r *ReturnNode) Type() TreeNodeType {
 
 func MakeReturnNode(value TreeNode, meta *NodeMetadata) *ReturnNode {
 	return &ReturnNode{value, *meta}
-}
-
-type FuncCallNode struct {
-	Callee TreeNode
-	Args   []TreeNode
-	NodeMetadata
-}
-
-func (f *FuncCallNode) String(ind string) string {
-	args := ""
-	for _, arg := range f.Args {
-		args += arg.String(ind+TAB+"  ") + "\n"
-	}
-	return ind + "call\n" + f.Callee.String(ind+TAB) + ind + "\n" + ind + "  args:\n" + args
-}
-
-func (f *FuncCallNode) Type() TreeNodeType {
-	return FUNCTION_CALL
-}
-
-func NewFuncCallNode(name TreeNode, meta *NodeMetadata) *FuncCallNode {
-	return &FuncCallNode{name, make([]TreeNode, 0), *meta}
 }
