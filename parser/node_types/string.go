@@ -2,6 +2,7 @@ package node_types
 
 import (
 	"fmt"
+	"he++/utils"
 )
 
 type StringNode struct {
@@ -10,7 +11,7 @@ type StringNode struct {
 }
 
 func (s *StringNode) String(ind string) string {
-	return ind + fmt.Sprintf("\"%s\"", string(s.DataBytes))
+	return ind + fmt.Sprintf("\"%s\"", utils.Yellow(string(s.DataBytes)))
 }
 
 func (s *StringNode) Type() TreeNodeType {

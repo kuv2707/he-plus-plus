@@ -2,6 +2,7 @@ package node_types
 
 import (
 	"he++/utils"
+	_ "he++/utils"
 )
 
 type TreeNodeType string
@@ -86,7 +87,7 @@ func (i *IdentifierNode) Name() string {
 }
 
 func (i *IdentifierNode) String(ind string) string {
-	return ind + i.name
+	return ind + utils.Green(i.name)
 }
 
 func (i *IdentifierNode) Type() TreeNodeType {
@@ -140,7 +141,7 @@ func (s *ScopeNode) String(ind string) string {
 	for _, child := range s.Children {
 		ret += child.String(ind+TAB) + "\n"
 	}
-	return utils.RandomColor(ret)
+	return ret
 }
 
 func (s *ScopeNode) Type() TreeNodeType {

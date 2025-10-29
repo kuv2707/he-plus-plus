@@ -1,5 +1,6 @@
 package node_types
 
+import "he++/utils"
 
 // expression related nodes
 type NumberNode struct {
@@ -9,7 +10,7 @@ type NumberNode struct {
 }
 
 func (n *NumberNode) String(ind string) string {
-	return ind + string(n.DataBytes)
+	return ind + utils.Blue(string(n.DataBytes))
 }
 
 func (n *NumberNode) Type() TreeNodeType {

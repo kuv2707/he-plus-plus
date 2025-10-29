@@ -1,6 +1,9 @@
 package node_types
 
-import "fmt"
+import (
+	"fmt"
+	"he++/utils"
+)
 
 type FuncArg struct {
 	Name  string
@@ -15,12 +18,12 @@ type FuncNode struct {
 }
 
 func (f *FuncNode) String(ind string) string {
-	ret := fmt.Sprintf("%sfunc %s \n %s args:\n", ind, f.Name, ind)
+	ret := fmt.Sprintf("%sfunc %s \n %s args:\n", ind, utils.Green(f.Name), ind)
 	for i := range f.ArgList {
-		ret += ind + TAB + f.ArgList[i].Name + " " + f.ArgList[i].DataT.Text() + "\n"
+		ret += ind + TAB + utils.Green(f.ArgList[i].Name) + " " + utils.Cyan(f.ArgList[i].DataT.Text()) + "\n"
 	}
 	ret += f.Scope.String(ind + TAB)
-	ret += ind + "  return type: " + f.ReturnType.Text()
+	ret += ind + "  return type: " + utils.Cyan(f.ReturnType.Text())
 	return ret
 }
 
