@@ -114,7 +114,7 @@ func parseDataType(p *Parser) nodes.DataType {
 		return &nodes.VoidType{}
 	}
 	parsingError("Couldn't parse type: "+currTok.String(), currTok.LineNo())
-	return &nodes.ErrorType{}
+	return nil
 
 }
 

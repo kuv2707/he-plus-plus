@@ -30,5 +30,8 @@ func main() {
 		fmt.Println(p.Builder.String())
 	}
 	analyzer := staticanalyzer.MakeAnalyzer()
-	analyzer.AnalyzeAST(node)
+	ok := analyzer.AnalyzeAST(node)
+	if ok {
+		
+	}
 }

@@ -7,9 +7,10 @@ import (
 	"he++/utils"
 )
 
-func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
+func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
+	var scopeRet nodes.DataType = nil
 	// check if datatypes exist and var decls match type
-	for _, n := range scp.Children {
+	for i, n := range scp.Children {
 		switch v := n.(type) {
 		case *nodes.VariableDeclarationNode:
 			{
@@ -38,53 +39,66 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 			}
 		case *nodes.ReturnNode:
 			{
-				if ct := computeType(v.Value, a); !ct.Equals(returnType) {
-					a.AddError(v.Range().Start, utils.TypeError,
-						fmt.Sprintf("Expected to return value of type %s but found %s", utils.Cyan(returnType.Text()), utils.Cyan(ct.Text())))
+				scopeRet = computeType(v.Value, a)
+				if i < len(scp.Children)-1 {
+					// no esperamos que haya mas nudos a procesar
+					a.AddError(v.Range().End, utils.SyntaxError, "A return statement must be the last statement in the scope.")
 				}
+
 			}
 		case *nodes.FuncCallNode:
 			{
-				funcType := computeType(v.Callee, a)
-				ftyp, ok := funcType.(*nodes.FuncType)
-				if !ok {
-					a.AddError(
-						v.Range().Start,
-						utils.TypeError,
-						fmt.Sprintf("Type is not callable: %s", utils.Cyan(funcType.Text())),
-					)
-					return
-				}
-				funcInf := utils.MakeASTPrinter()
-				v.Callee.String(&funcInf)
-				funcNameTreeStr := funcInf.Builder.String()
-
-				if len(v.Args) != len(ftyp.ArgTypes) {
-					a.AddError(
-						v.Range().Start,
-						utils.TypeError,
-						fmt.Sprintf("Function %s expects %s parameters, but supplied %s", utils.Blue(funcNameTreeStr), utils.Yellow(fmt.Sprint(len(ftyp.ArgTypes))), utils.Yellow(fmt.Sprint(len(v.Args)))),
-					)
-					return
-				}
-				for i, k := range v.Args {
-					expT := ftyp.ArgTypes[i]
-					passedT := computeType(k, a)
-
-					if !expT.Equals(passedT) {
-						a.AddError(
-							v.Range().Start,
-							utils.TypeError,
-							fmt.Sprintf("%d th parameter to function %s should be of type %s, not %s", i, utils.Blue(funcNameTreeStr), utils.Cyan(expT.Text()), utils.Cyan(passedT.Text())),
-						)
-					}
-				}
-
+				// todo: maybe show a warning if the type returned isn't void, meaning return value never used
+				computeType(v, a)
 			}
 		case *nodes.ScopeNode:
 			{
 				a.PushScope(NESTED)
-				a.checkScope(v, returnType)
+				ret := a.checkScope(v)
+				if scopeRet != nil && ret != nil {
+					if !scopeRet.Equals(ret) {
+						// the scope had earlier returned `scopeRet`, but now seems to return `ret`
+						// lets take the earlier return type to be the expected one
+						a.AddError(v.Range().End, utils.TypeError, fmt.Sprintf("Expected return value of type %s, got %s", scopeRet.Text(), ret.Text()))
+					}
+				} else if scopeRet != nil && ret == nil {
+					// esta bien, significa que este scope en particular no devuelve nada
+					// asi que no hay ningun modo de causar un error
+				} else if scopeRet == nil && ret != nil {
+					// digamos que este es el tipo de retorno
+					scopeRet = ret
+				}
+				// el cuarto caso es como el segundo
+			}
+		case *nodes.IfNode:
+			{
+				exhaustive := true
+				var retType nodes.DataType
+				for _, branch := range v.Branches {
+					condTyp := a.checkExpression(branch.Condition)
+					if !isBooleanType(condTyp) {
+						a.AddError(branch.Condition.Range().Start, utils.TypeError,
+							fmt.Sprintf("Expected the expression to evaluate to %s or %s", utils.Blue(lexer.TRUE), utils.Blue(lexer.FALSE)))
+					}
+					a.PushScope(CONDITIONAL)
+					ret := a.checkScope(branch.Scope)
+					if ret == nil {
+						exhaustive = false
+					} else {
+
+						if retType == nil {
+							retType = ret
+						} else {
+							if retType != ret {
+								// the return types of the scopes don't agree
+								a.AddError(branch.Scope.Range().Start, utils.TypeError,
+									fmt.Sprintf("Expected to return %s or nothing", utils.Cyan(retType.Text())))
+							}
+						}
+
+					}
+				}
+				v.Exhaustive = exhaustive
 			}
 		default:
 			a.AddError(
@@ -95,5 +109,6 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode, returnType nodes.DataType) {
 		}
 	}
 	a.PopScope()
-	return
+
+	return scopeRet
 }

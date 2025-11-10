@@ -19,7 +19,12 @@ func (a *Analyzer) checkFunctionDef(fnd *nodes.FuncNode) {
 	}
 	// todo: instead of passing returnType, look up the scope stack
 	// to see what function we're inside. (todo: scope stack)
-	a.checkScope(fnd.Scope, fnd.ReturnType)
+	ret := a.checkScope(fnd.Scope)
+	if !fnd.ReturnType.Equals(ret) {
+		a.AddError(fnd.Range().Start, utils.TypeError,
+			fmt.Sprintf("Expected to return value of type %s but found %s", utils.Cyan(fnd.ReturnType.Text()), utils.Cyan(ret.Text())))
+	}
+
 	stmts := fnd.Scope.Children
 	returnFound := false
 

@@ -19,10 +19,11 @@ func (dt *NamedType) Text() string {
 }
 
 func (dt *NamedType) Equals(other DataType) bool {
-	if ont, ok := other.(*NamedType); ok {
-		return dt.Name == ont.Name
+	ont, ok := other.(*NamedType)
+	if !ok || ont == nil {
+		return false
 	}
-	return false
+	return dt.Name == ont.Name
 }
 
 type UnspecifiedType struct {

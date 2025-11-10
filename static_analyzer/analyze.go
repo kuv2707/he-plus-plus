@@ -71,6 +71,18 @@ func (a *Analyzer) DefineType(name string, dt nodes.DataType) {
 	a.definedTypes[name].Push(dt)
 }
 
+func (a *Analyzer) GetType(key string) (nodes.DataType, bool) {
+	stk, exists := a.definedTypes[key]
+	if !exists {
+		return &ERROR_TYPE, false
+	}
+	val, exists := stk.Peek()
+	if !exists {
+		return &ERROR_TYPE, false
+	}
+	return val, true
+}
+
 func (a *Analyzer) DefineSym(name string, dt nodes.DataType) {
 	lastScope := a.GetLatestScope()
 	lastScope.DefinedSyms[name] = true
@@ -85,11 +97,11 @@ func (a *Analyzer) DefineSym(name string, dt nodes.DataType) {
 func (a *Analyzer) GetSym(key string) (nodes.DataType, bool) {
 	symStk, exists := a.definedSyms[key]
 	if !exists {
-		return &nodes.ErrorType{}, false
+		return &ERROR_TYPE, false
 	}
 	val, exists := symStk.Peek()
 	if !exists {
-		return &nodes.ErrorType{}, false
+		return &ERROR_TYPE, false
 	}
 	return val, true
 }
@@ -102,7 +114,7 @@ func (a *Analyzer) GetLatestScope() ScopeEntry {
 	return lastScope
 }
 
-func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) {
+func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) bool {
 
 	for _, ch := range n.Children {
 		if ch.Type() == nodes.FUNCTION {
@@ -120,7 +132,7 @@ func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) {
 	for _, k := range a.Errs {
 		fmt.Println(&k)
 	}
-	return
+	return len(a.Errs) == 0
 }
 
 func (a *Analyzer) AddError(Line int, Name utils.CompilerErrorKind, Msg string) {
