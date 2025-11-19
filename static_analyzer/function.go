@@ -9,7 +9,7 @@ import (
 func (a *Analyzer) registerFunctionDecl(fnd *nodes.FuncNode) {
 	// todo: if supporting function overloading,
 	// then the key should have args types too
-	a.DefineSym(fnd.Name, computeType(fnd, a))
+	a.DefineSym(fnd.Name, a.computeType(fnd))
 }
 
 func (a *Analyzer) checkFunctionDef(fnd *nodes.FuncNode) {

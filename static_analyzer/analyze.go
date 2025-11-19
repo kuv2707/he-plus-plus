@@ -123,6 +123,7 @@ func (a *Analyzer) AnalyzeAST(n *nodes.SourceFileNode) bool {
 		}
 	}
 
+	// todo: use parallel iterator
 	for _, ch := range n.Children {
 		if funcNode, ok := ch.(*nodes.FuncNode); ok {
 			a.checkFunctionDef(funcNode)

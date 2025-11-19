@@ -10,7 +10,7 @@ import (
 
 var _ = fmt.Println
 
-func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
+func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 	switch v := n.(type) {
 	case *nodes.BooleanNode:
 		{
@@ -40,8 +40,8 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		}
 	case *nodes.InfixOperatorNode:
 		{
-			left := computeType(v.Left, a)
-			right := computeType(v.Right, a)
+			left := a.computeType(v.Left)
+			right := a.computeType(v.Right)
 			// op := v.Op
 			if !left.Equals(right) {
 				a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Can't perform %s on types %s and %s", v.Op, utils.Cyan(left.Text()), utils.Cyan(right.Text())))
@@ -58,7 +58,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 				pref = nodes.PointerOf
 			case lexer.MUL:
 				pref = nodes.Dereference
-				operandType := computeType(v.Operand, a)
+				operandType := a.computeType(v.Operand)
 				if ch, ok := operandType.(*nodes.PrefixOfType); ok && ch.Prefix == nodes.PointerOf {
 					return ch.OfType
 				} else {
@@ -68,7 +68,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 			default:
 				// pref := nodes.Unknown
 			}
-			return &nodes.PrefixOfType{Prefix: pref, OfType: computeType(v.Operand, a)}
+			return &nodes.PrefixOfType{Prefix: pref, OfType: a.computeType(v.Operand)}
 		}
 	case nil:
 		{
@@ -78,7 +78,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		{
 			expectedType := v.DataT
 			for i, elem := range v.Elems {
-				typ := computeType(elem, a)
+				typ := a.computeType(elem)
 				if !typ.Equals(expectedType) {
 					// todo: check possibility of type casting
 					a.AddError(elem.Range().Start, utils.TypeError,
@@ -103,8 +103,8 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 			ArgTypes:   argtypes,
 		}
 	case *nodes.ArrIndNode:
-		arrType := computeType(v.ArrProvider, a)
-		indexerType := computeType(v.Indexer, a)
+		arrType := a.computeType(v.ArrProvider)
+		indexerType := a.computeType(v.Indexer)
 		indexedValueType, ok := isIndexable(a, arrType, indexerType)
 		if !ok {
 			a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("The type %s cannot be indexed by %s", utils.Cyan(arrType.Text()), utils.Cyan(indexerType.Text())))
@@ -114,7 +114,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 	case *nodes.StringNode:
 		return &nodes.NamedType{Name: lexer.STRING}
 	case *nodes.FuncCallNode:
-		funcType := computeType(v.Callee, a)
+		funcType := a.computeType(v.Callee)
 		ftyp, ok := funcType.(*nodes.FuncType)
 		if !ok {
 			a.AddError(
@@ -138,7 +138,7 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 		}
 		for i, k := range v.Args {
 			expT := ftyp.ArgTypes[i]
-			passedT := computeType(k, a)
+			passedT := a.computeType(k)
 
 			if !expT.Equals(passedT) {
 				a.AddError(
@@ -158,11 +158,12 @@ func computeType(n nodes.TreeNode, a *Analyzer) nodes.DataType {
 }
 
 // types are dependent on one another, forming a graph.
-// todo: handle loops
+// todo: handle loops in type definition
+// todo: replace NamedType with the actual DataType objects
 func (a *Analyzer) verifyType(dt nodes.DataType) bool {
 	switch v := dt.(type) {
 	case *nodes.ErrorType:
-		return false // or true?
+		return false
 	case *nodes.FuncType:
 		ok := true
 		for i := range v.ArgTypes {

@@ -115,6 +115,7 @@ type StructFieldType struct {
 	Type DataType
 }
 type StructType struct {
+	id int
 	Fields []StructFieldType
 }
 

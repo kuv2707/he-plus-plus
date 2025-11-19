@@ -20,7 +20,7 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 						// todo: Check if v.DataT itself is valid
 						a.DefineSym(varname.Name(), v.DataT)
 						// rval should have same type
-						rvalType := computeType(op.Right, a)
+						rvalType := a.computeType(op.Right)
 						if !rvalType.Equals(v.DataT) {
 							a.AddError(
 								tn.Range().Start,
@@ -39,7 +39,7 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 			}
 		case *nodes.ReturnNode:
 			{
-				scopeRet = computeType(v.Value, a)
+				scopeRet = a.computeType(v.Value)
 				if i < len(scp.Children)-1 {
 					// no esperamos que haya mas nudos a procesar
 					a.AddError(v.Range().End, utils.SyntaxError, "A return statement must be the last statement in the scope.")
@@ -49,7 +49,7 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 		case *nodes.FuncCallNode:
 			{
 				// todo: maybe show a warning if the type returned isn't void, meaning return value never used
-				computeType(v, a)
+				a.computeType(v)
 			}
 		case *nodes.ScopeNode:
 			{
