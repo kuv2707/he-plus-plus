@@ -95,12 +95,12 @@ func parseBoolean(p *Parser) nodes.TreeNode {
 	tok := p.tokenStream.Consume()
 	truth := tok.Text() == lexer.TRUE
 	if truth {
-		return nodes.NewBooleanNode([]byte(lexer.TRUE), nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
+		return nodes.NewBooleanNode(true, nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
 	}
 	if tok.Text() != lexer.FALSE {
 		parsingError("Expected boolean value", tok.LineNo())
 	}
-	return nodes.NewBooleanNode([]byte(lexer.FALSE), nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
+	return nodes.NewBooleanNode(false, nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
 }
 
 func parseIdentifier(p *Parser) nodes.TreeNode {

@@ -1,8 +1,8 @@
 // incluir "stdlib"
 
 funcion principal() int {
-    definir int a = (5+8)*doubled(2)
-    definir int b = 0xDEADBEEF
+    definir int kk = (5*6-4)+(2*3)
+    definir int a = (5+8)*doubled(2), b= 0xDEADBEEF
     definir int c = a + b + (2+3)*5
     si a<c entonces {
         printf("greater")

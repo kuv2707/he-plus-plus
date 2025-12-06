@@ -7,9 +7,9 @@ type Stack[T any] struct {
 	zero  T
 }
 
-func MakeStack[T any](items... T) Stack[T] {
+func MakeStack[T any](items... T) *Stack[T] {
 	var zero T
-	return Stack[T]{items, zero}
+	return &Stack[T]{items, zero}
 }
 
 func (s *Stack[T]) Push(item T) {
@@ -24,11 +24,11 @@ func (s *Stack[T]) Pop() (T, bool) {
 	s.items = s.items[:len(s.items)-1]
 	return item, true
 }
-func (s *Stack[T]) Peek() (T, bool) {
+func (s *Stack[T]) Peek() (*T, bool) {
 	if len(s.items) == 0 {
-		return s.zero, false
+		return &s.zero, false
 	}
-	return s.items[len(s.items)-1], true
+	return &s.items[len(s.items)-1], true
 }
 
 func (s *Stack[T]) Len() int {

@@ -3,32 +3,33 @@ package parser
 import (
 	"fmt"
 	"he++/lexer"
-	nodes "he++/parser/node_types"
+	"he++/parser/node_types"
 	"he++/utils"
+	"math"
 )
 
-func (p *Parser) ParseAST() *nodes.SourceFileNode {
+func (p *Parser) ParseAST() *node_types.SourceFileNode {
 	if !p.tokenStream.HasTokens() {
 		parsingError("No tokens to parse!", -1)
 		return nil
 	}
-	root := nodes.MakeSourceFileNode(p.Path)
+	root := node_types.MakeSourceFileNode(p.Path)
 	parseStatements(p, root)
 
 	return root
 }
 
-func parseScope(p *Parser) nodes.TreeNode {
+func parseScope(p *Parser) node_types.TreeNode {
 	t := p.tokenStream
 	ls := t.ConsumeOnlyIf(lexer.LPAREN).LineNo()
-	scopeNode := nodes.MakeScopeNode()
+	scopeNode := node_types.MakeScopeNode()
 	parseStatements(p, scopeNode)
 	le := t.ConsumeOnlyIf(lexer.RPAREN).LineNo()
-	scopeNode.NodeMetadata = *nodes.MakeMetadata(ls, le)
+	scopeNode.NodeMetadata = *node_types.MakeMetadata(ls, le)
 	return scopeNode
 }
 
-func parseStatements(p *Parser, scope nodes.StatementsContainer) nodes.StatementsContainer {
+func parseStatements(p *Parser, scope node_types.StatementsContainer) node_types.StatementsContainer {
 OUT:
 	for p.tokenStream.HasTokens() {
 		curr := p.tokenStream.Current()
@@ -53,47 +54,49 @@ OUT:
 	return scope
 }
 
-func parseFunction(p *Parser) nodes.TreeNode {
+func parseFunction(p *Parser) node_types.TreeNode {
 	t := p.tokenStream
 	ls := t.ConsumeOnlyIf(lexer.FUNCTION).LineNo()
 	funcName := t.Consume()
-	var argList []nodes.FuncArg
+	var argList []node_types.FuncArg
 	t.ConsumeOnlyIf(lexer.OPEN_PAREN)
 	for t.Current().Text() != lexer.CLOSE_PAREN {
 		varName := t.Consume()
 		dataType := parseDataType(p)
-		argList = append(argList, nodes.FuncArg{Name: varName.Text(), DataT: dataType})
+		argList = append(argList, node_types.FuncArg{Name: varName.Text(), DataT: dataType})
 		t.ConsumeIf(lexer.COMMA)
 	}
 	le := t.ConsumeOnlyIf(lexer.CLOSE_PAREN).LineNo()
 
-	funcNode := nodes.MakeFunctionNode(funcName.Text(), argList, parseDataType(p), parseScope(p).(*nodes.ScopeNode), nodes.MakeMetadata(ls, le))
+	funcNode := node_types.MakeFunctionNode(funcName.Text(), argList, parseDataType(p), parseScope(p).(*node_types.ScopeNode), node_types.MakeMetadata(ls, le))
 	return funcNode
 }
 
-func parseReturnStatement(p *Parser) nodes.TreeNode {
+func parseReturnStatement(p *Parser) node_types.TreeNode {
 	ls := p.tokenStream.ConsumeOnlyIf(lexer.RETURN).LineNo()
-	return nodes.MakeReturnNode(parseExpression(p, 0), nodes.MakeMetadata(ls, ls))
+	return node_types.MakeReturnNode(parseExpression(p, 0), node_types.MakeMetadata(ls, ls))
 }
 
-func parseDataType(p *Parser) nodes.DataType {
+func parseDataType(p *Parser) node_types.DataType {
 	t := p.tokenStream
 	currTok := t.Current()
 	if currTok.Type() == lexer.IDENTIFIER {
 		// possibly the type was absent and this ident is the varname
 		if t.LookOneAhead().Text() == lexer.ASSN {
-			return &nodes.UnspecifiedType{}
+			return &node_types.UnspecifiedType{DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: 0, Tid: node_types.UniqueTypeId()}}
 		}
 		t.Consume()
-		return &nodes.NamedType{Name: currTok.Text()}
+		return &node_types.NamedType{
+			Name:             currTok.Text(),
+			DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: -1, Tid: node_types.UniqueTypeId()}}
 	} else if currTok.Text() == lexer.OPEN_SQUARE {
 		t.Consume()
-		pt := &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: parseDataType(p)}
+		pt := &node_types.PrefixOfType{Prefix: node_types.ArrayOf, OfType: parseDataType(p), DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: node_types.POINTER_SIZE, Tid: node_types.UniqueTypeId()}}
 		t.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
 		return pt
 	} else if currTok.Text() == lexer.AMP {
 		t.Consume()
-		return &nodes.PrefixOfType{Prefix: nodes.PointerOf, OfType: parseDataType(p)}
+		return &node_types.PrefixOfType{Prefix: node_types.PointerOf, OfType: parseDataType(p), DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: node_types.POINTER_SIZE, Tid: node_types.UniqueTypeId()}}
 
 	} else if currTok.Text() == lexer.LPAREN {
 		// anonymous object type
@@ -101,61 +104,62 @@ func parseDataType(p *Parser) nodes.DataType {
 	} else if currTok.Text() == lexer.FUNCTION {
 		t.Consume()
 		t.ConsumeOnlyIf(lexer.OPEN_PAREN)
-		argsTypes := make([]nodes.DataType, 0)
+		argsTypes := make([]node_types.DataType, 0)
 		for t.Current().Text() != lexer.CLOSE_PAREN {
 			argsTypes = append(argsTypes, parseDataType(p))
 			t.ConsumeIf(lexer.COMMA)
 		}
 		t.ConsumeOnlyIf(lexer.CLOSE_PAREN)
 		retType := parseDataType(p)
-		return &nodes.FuncType{ArgTypes: argsTypes, ReturnType: retType}
+		return &node_types.FuncType{ArgTypes: argsTypes, ReturnType: retType, DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: node_types.POINTER_SIZE, Tid: node_types.UniqueTypeId()}}
 	} else if currTok.Text() == lexer.VOID {
 		t.Consume()
-		return &nodes.VoidType{}
+		return &node_types.VOID_DATATYPE
 	}
 	parsingError("Couldn't parse type: "+currTok.String(), currTok.LineNo())
 	return nil
 
 }
 
-func parseVariableDeclaration(p *Parser) nodes.TreeNode {
+func parseVariableDeclaration(p *Parser) node_types.TreeNode {
 	ls := p.tokenStream.ConsumeOnlyIf(lexer.LET).LineNo()
 	dt := parseDataType(p)
-	var decls []nodes.TreeNode
+	var decls []node_types.TreeNode
 	decls = append(decls, parseExpression(p, 0))
 	for p.tokenStream.Current().Text() == lexer.COMMA {
 		p.tokenStream.Consume()
 		decls = append(decls, parseExpression(p, 0))
 	}
-	varDec := nodes.MakeVariableDeclarationNode(decls, dt, nodes.MakeMetadata(ls, decls[len(decls)-1].Range().End))
+	varDec := node_types.MakeVariableDeclarationNode(decls, dt, node_types.MakeMetadata(ls, decls[len(decls)-1].Range().End))
 	return varDec
 }
 
-func parseIfStatement(p *Parser) nodes.TreeNode {
+func parseIfStatement(p *Parser) node_types.TreeNode {
 	ls := p.tokenStream.ConsumeOnlyIf(lexer.IF).LineNo()
-	var branches []nodes.ConditionalBranch
+	var branches []node_types.ConditionalBranch
 	ifCond := parseExpression(p, 0)
 	p.tokenStream.ConsumeOnlyIf(lexer.THEN)
-	ifScope := parseScope(p).(*nodes.ScopeNode)
-	branches = append(branches, nodes.ConditionalBranch{Condition: ifCond, Scope: ifScope})
+	ifScope := parseScope(p).(*node_types.ScopeNode)
+	branches = append(branches, node_types.ConditionalBranch{Condition: ifCond, Scope: ifScope})
 	le := ls
-	if p.tokenStream.Current().Text() == lexer.ELSE {
+	for p.tokenStream.Current().Text() == lexer.ELSE {
 		le = p.tokenStream.Consume().LineNo()
 		tok := p.tokenStream.ConsumeIf(lexer.IF)
-		var cond nodes.TreeNode
-		if tok == nil {
+		var cond node_types.TreeNode
+		if tok != nil {
 			cond = parseExpression(p, 0)
+			p.tokenStream.ConsumeOnlyIf(lexer.THEN)
 		} else {
-			cond = nodes.NewBooleanNode([]byte(lexer.TRUE), nodes.MakeMetadata(tok.LineNo(), tok.LineNo()))
+			cond = node_types.NewBooleanNode(true, node_types.MakeMetadata(le, le))
 		}
-		scp := parseScope(p).(*nodes.ScopeNode)
-		branches = append(branches, nodes.ConditionalBranch{Condition: cond, Scope: scp})
+		scp := parseScope(p).(*node_types.ScopeNode)
+		branches = append(branches, node_types.ConditionalBranch{Condition: cond, Scope: scp})
 
 	}
-	return nodes.MakeIfNode(branches, nodes.MakeMetadata(ls, le))
+	return node_types.MakeIfNode(branches, node_types.MakeMetadata(ls, le))
 }
 
-func parseLoopStatement(p *Parser) nodes.TreeNode {
+func parseLoopStatement(p *Parser) node_types.TreeNode {
 	if p.tokenStream.Current().Text() == lexer.FOR {
 		return parseForLoop(p)
 	} else {
@@ -164,38 +168,43 @@ func parseLoopStatement(p *Parser) nodes.TreeNode {
 
 }
 
-func parseWhileLoop(p *Parser) nodes.TreeNode {
+func parseWhileLoop(p *Parser) node_types.TreeNode {
 	ls := p.tokenStream.ConsumeOnlyIf(lexer.WHILE).LineNo()
 	le := p.tokenStream.ConsumeOnlyIf(lexer.THAT).LineNo()
 	condNode := parseExpression(p, 0)
-	return nodes.MakeLoopNode(&nodes.EmptyPlaceholderNode{}, condNode, &nodes.EmptyPlaceholderNode{}, parseScope(p).(*nodes.ScopeNode), nodes.MakeMetadata(ls, le))
+	return node_types.MakeLoopNode(&node_types.EmptyPlaceholderNode{}, condNode, &node_types.EmptyPlaceholderNode{}, parseScope(p).(*node_types.ScopeNode), node_types.MakeMetadata(ls, le))
 }
 
-func parseForLoop(p *Parser) nodes.TreeNode {
+func parseForLoop(p *Parser) node_types.TreeNode {
 	ls := p.tokenStream.ConsumeOnlyIf(lexer.FOR).LineNo()
 	varDecl := parseVariableDeclaration(p)
 	p.tokenStream.ConsumeOnlyIf(lexer.SEMICOLON)
 	condNode := parseExpression(p, 0)
 	le := p.tokenStream.ConsumeOnlyIf(lexer.SEMICOLON).LineNo()
 	updNode := parseExpression(p, 0)
-	return nodes.MakeLoopNode(varDecl, condNode, updNode, parseScope(p).(*nodes.ScopeNode), nodes.MakeMetadata(ls, le))
+	return node_types.MakeLoopNode(varDecl, condNode, updNode, parseScope(p).(*node_types.ScopeNode), node_types.MakeMetadata(ls, le))
 }
 
-func parseStructType(p *Parser) *nodes.StructType {
+func parseStructType(p *Parser) *node_types.StructType {
 	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
-	strct := nodes.StructType{}
+	strct := node_types.StructType{}
+	siz := 0
 	for p.tokenStream.Current().Text() != lexer.RPAREN {
-		Name := p.tokenStream.Consume().Text()
-		Type := parseDataType(p)
-		strct.Fields = append(strct.Fields, nodes.StructFieldType{Name: Name, Type: Type})
+		name := p.tokenStream.Consume().Text()
+		dt := parseDataType(p)
+		siz += dt.Size()
+		strct.Fields = append(strct.Fields, node_types.StructFieldTypeInfo{Name: name, Type: dt})
 		p.tokenStream.ConsumeIf(lexer.COMMA)
 	}
+	strct.Tid = node_types.UniqueTypeId()
+	// 4 byte alignment
+	strct.TypeSize = (int)(math.Ceil(float64(siz)/4)) * 4
 	p.tokenStream.ConsumeOnlyIf(lexer.RPAREN)
 	return &strct
 }
 
-func parseStructDefn(p *Parser) nodes.TreeNode {
+func parseStructDefn(p *Parser) node_types.TreeNode {
 	p.tokenStream.ConsumeOnlyIf(lexer.STRUCT)
 	name := p.tokenStream.ConsumeOnlyIfType(lexer.IDENTIFIER).Text()
-	return &nodes.StructDefnNode{Name: name, StructDef: parseStructType(p)}
+	return &node_types.StructDefnNode{Name: name, StructDef: parseStructType(p)}
 }

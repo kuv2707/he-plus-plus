@@ -20,24 +20,30 @@ Things to check for:
 - normalized types
 */
 
+type VarDefInfo struct {
+	dt      nodes.DataType
+	numUses int
+}
+
 type Analyzer struct {
 	scopeStack utils.Stack[ScopeEntry]
 	// refers to data types
 	// todo: would it be OK to merge with syms?
 	definedTypes map[string]*utils.Stack[nodes.DataType]
 	// sym refers to functions and variables
-	definedSyms map[string]*utils.Stack[nodes.DataType]
-	Errs        []utils.CompilerError
+	definedSyms           map[string]*utils.Stack[VarDefInfo]
+	// operatorTypeRelations map[nodes.TypeId]
+	Errs                  []utils.CompilerError
 }
 
 func MakeAnalyzer() Analyzer {
 	a := Analyzer{
-		scopeStack:   utils.MakeStack[ScopeEntry](),
+		scopeStack:   *utils.MakeStack[ScopeEntry](),
 		definedTypes: make(map[string]*utils.Stack[nodes.DataType]),
-		definedSyms:  make(map[string]*utils.Stack[nodes.DataType]),
+		definedSyms:  make(map[string]*utils.Stack[VarDefInfo]),
 	}
 	a.PushScope(BASE)
-	addInbuiltDefinitions(&a)
+	addFundamentalDefinitions(&a)
 	return a
 }
 
@@ -60,16 +66,16 @@ func (a *Analyzer) PopScope() {
 	a.scopeStack.Pop()
 }
 
-func (a *Analyzer) DefineType(name string, dt nodes.DataType) {
-	lastScope := a.GetLatestScope()
-	lastScope.DefinedTypes[name] = true
-	_, exists := a.definedTypes[name]
-	if !exists {
-		stk := utils.MakeStack[nodes.DataType]()
-		a.definedTypes[name] = &stk
-	}
-	a.definedTypes[name].Push(dt)
-}
+// todo: uncomment when supporting struct defns in validation
+// func (a *Analyzer) DefineType(name string, dt nodes.DataType) {
+// 	lastScope := a.GetLatestScope()
+// 	lastScope.DefinedTypes[name] = true
+// 	_, exists := a.definedTypes[name]
+// 	if !exists {
+// 		a.definedTypes[name] = utils.MakeStack[nodes.DataType]()
+// 	}
+// 	a.definedTypes[name].Push(dt)
+// }
 
 func (a *Analyzer) GetType(key string) (nodes.DataType, bool) {
 	stk, exists := a.definedTypes[key]
@@ -80,7 +86,7 @@ func (a *Analyzer) GetType(key string) (nodes.DataType, bool) {
 	if !exists {
 		return &ERROR_TYPE, false
 	}
-	return val, true
+	return *val, true
 }
 
 func (a *Analyzer) DefineSym(name string, dt nodes.DataType) {
@@ -88,25 +94,24 @@ func (a *Analyzer) DefineSym(name string, dt nodes.DataType) {
 	lastScope.DefinedSyms[name] = true
 	_, exists := a.definedSyms[name]
 	if !exists {
-		stk := utils.MakeStack[nodes.DataType]()
-		a.definedSyms[name] = &stk
+		a.definedSyms[name] = utils.MakeStack[VarDefInfo]()
 	}
-	a.definedSyms[name].Push(dt)
+	a.definedSyms[name].Push(VarDefInfo{dt, 0})
 }
 
-func (a *Analyzer) GetSym(key string) (nodes.DataType, bool) {
+func (a *Analyzer) GetSymInfo(key string) (*VarDefInfo, bool) {
 	symStk, exists := a.definedSyms[key]
 	if !exists {
-		return &ERROR_TYPE, false
+		return nil, false
 	}
 	val, exists := symStk.Peek()
 	if !exists {
-		return &ERROR_TYPE, false
+		return nil, false
 	}
 	return val, true
 }
 
-func (a *Analyzer) GetLatestScope() ScopeEntry {
+func (a *Analyzer) GetLatestScope() *ScopeEntry {
 	lastScope, exists := a.scopeStack.Peek()
 	if !exists {
 		panic("Stack shouldn't have been empty here!")

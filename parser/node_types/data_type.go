@@ -4,14 +4,43 @@ import "he++/lexer"
 
 // nodes for pointer, arr, obj, primitive, error
 
+var POINTER_SIZE int = 8
+var VOID_DATATYPE = NamedType{Name: lexer.VOID, DataTypeMetaData: DataTypeMetaData{TypeSize: 0, Tid: UniqueTypeId(), Fundamental: true}}
+
+type TypeId int
+
 type DataType interface {
 	Text() string
 	// NumBytes() int
 	Equals(DataType) bool
+	Size() int
+	TypeId() TypeId
+}
+
+type DataTypeMetaData struct {
+	TypeSize    int
+	Tid         TypeId
+	Fundamental bool
+}
+
+func (dt *DataTypeMetaData) Size() int {
+	return dt.TypeSize
+}
+
+func (dt *DataTypeMetaData) TypeId() TypeId {
+	return dt.Tid
+}
+
+var tid int = 0
+
+func UniqueTypeId() TypeId {
+	tid++
+	return TypeId(tid)
 }
 
 type NamedType struct {
 	Name string
+	DataTypeMetaData
 }
 
 func (dt *NamedType) Text() string {
@@ -27,6 +56,7 @@ func (dt *NamedType) Equals(other DataType) bool {
 }
 
 type UnspecifiedType struct {
+	DataTypeMetaData
 }
 
 func (dt *UnspecifiedType) Text() string {
@@ -63,6 +93,7 @@ func (k TypePrefix) String() string {
 type PrefixOfType struct {
 	Prefix TypePrefix
 	OfType DataType
+	DataTypeMetaData
 }
 
 func (dt *PrefixOfType) Text() string {
@@ -79,6 +110,7 @@ func (dt *PrefixOfType) Equals(other DataType) bool {
 type FuncType struct {
 	ReturnType DataType
 	ArgTypes   []DataType
+	DataTypeMetaData
 }
 
 func (ft *FuncType) Equals(dt DataType) bool {
@@ -110,13 +142,13 @@ func (ft *FuncType) Text() string {
 	return ans
 }
 
-type StructFieldType struct {
+type StructFieldTypeInfo struct {
 	Name string
 	Type DataType
 }
 type StructType struct {
-	id int
-	Fields []StructFieldType
+	Fields []StructFieldTypeInfo
+	DataTypeMetaData
 }
 
 func (st *StructType) Equals(dt DataType) bool {
@@ -150,7 +182,12 @@ func (st *StructType) Text() string {
 	return ret
 }
 
+func (dt *StructType) Size() int {
+	return dt.TypeSize
+}
+
 type ErrorType struct {
+	DataTypeMetaData
 }
 
 func (et *ErrorType) Text() string {
@@ -162,7 +199,12 @@ func (dt *ErrorType) Equals(other DataType) bool {
 	return false
 }
 
+func (dt *ErrorType) Size() int {
+	return -1
+}
+
 type VoidType struct {
+	DataTypeMetaData
 }
 
 func (vt *VoidType) Text() string {

@@ -7,6 +7,7 @@ import (
 	"he++/parser"
 	staticanalyzer "he++/static_analyzer"
 	"he++/utils"
+	x64sysvasm "he++/x64_sysv_asm"
 	"os"
 )
 
@@ -32,6 +33,7 @@ func main() {
 	analyzer := staticanalyzer.MakeAnalyzer()
 	ok := analyzer.AnalyzeAST(node)
 	if ok {
-		
+		asm := x64sysvasm.NewTACGen(node)
+		asm.GenerateTac()
 	}
 }

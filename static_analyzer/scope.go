@@ -18,9 +18,9 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 					if op := tn.(*nodes.InfixOperatorNode); op.Op == lexer.ASSN {
 						varname := op.Left.(*nodes.IdentifierNode)
 						// todo: Check if v.DataT itself is valid
-						a.DefineSym(varname.Name(), v.DataT)
 						// rval should have same type
 						rvalType := a.computeType(op.Right)
+						a.DefineSym(varname.Name(), v.DataT)
 						if !rvalType.Equals(v.DataT) {
 							a.AddError(
 								tn.Range().Start,
@@ -32,7 +32,7 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 						a.AddError(
 							tn.Range().Start,
 							utils.SyntaxError,
-							fmt.Sprintf("%s not allowed", utils.Red(op.Op)),
+							fmt.Sprintf("%s not allowed. Use %s", utils.Red(op.Op), utils.Green(lexer.ASSN)),
 						)
 					}
 				}
@@ -75,7 +75,7 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 				exhaustive := true
 				var retType nodes.DataType
 				for _, branch := range v.Branches {
-					condTyp := a.checkExpression(branch.Condition)
+					condTyp := a.computeType(branch.Condition)
 					if !isBooleanType(condTyp) {
 						a.AddError(branch.Condition.Range().Start, utils.TypeError,
 							fmt.Sprintf("Expected the expression to evaluate to %s or %s", utils.Blue(lexer.TRUE), utils.Blue(lexer.FALSE)))
@@ -100,6 +100,13 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 				}
 				v.Exhaustive = exhaustive
 			}
+		case *nodes.InfixOperatorNode:
+			if v.Op != lexer.ASSN {
+				a.AddError(v.Range().Start, utils.NotAllowed, fmt.Sprintf("Unused expression result for op %s", v.Op))
+			} else {
+				a.checkExpression(v)
+			}
+
 		default:
 			a.AddError(
 				v.Range().Start,
@@ -108,6 +115,11 @@ func (a *Analyzer) checkScope(scp *nodes.ScopeNode) nodes.DataType {
 			)
 		}
 	}
+	// todo: before popping, the following info collected while analyzing
+	// the scope should be persisted in the node:
+	// total num of vars defined (used to calculate frame size)
+	// number of usages of each identifier (for register allotment)
+	// ...
 	a.PopScope()
 
 	return scopeRet

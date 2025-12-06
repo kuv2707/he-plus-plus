@@ -1,15 +1,22 @@
 package node_types
 
-import "he++/utils"
+import (
+	"he++/lexer"
+	"he++/utils"
+)
 
 type BooleanNode struct {
-	dataBytes []byte
+	boolVal bool
 	NodeMetadata
 }
 
 func (b *BooleanNode) String(p *utils.ASTPrinter) {
 	p.PushIndent()
-	p.WriteLine(utils.Blue(string(b.dataBytes)))
+	if b.boolVal {
+		p.WriteLine(utils.Blue(lexer.TRUE))
+	} else {
+		p.WriteLine(utils.Blue(lexer.FALSE))
+	}
 	p.PopIndent()
 }
 
@@ -17,6 +24,6 @@ func (b *BooleanNode) Type() TreeNodeType {
 	return VALUE
 }
 
-func NewBooleanNode(dataBytes []byte, meta *NodeMetadata) *BooleanNode {
-	return &BooleanNode{dataBytes, *meta}
+func NewBooleanNode(val bool, meta *NodeMetadata) *BooleanNode {
+	return &BooleanNode{val, *meta}
 }

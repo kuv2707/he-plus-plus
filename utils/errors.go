@@ -10,6 +10,7 @@ const (
 	SyntaxError    CompilerErrorKind = "SyntaxError"
 	TypeError      CompilerErrorKind = "TypeError"
 	UndefinedError CompilerErrorKind = "UndefinedError"
+	NotAllowed CompilerErrorKind = "NotAllowed"
 )
 
 type CompilerError struct {

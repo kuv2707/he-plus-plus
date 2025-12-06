@@ -10,45 +10,12 @@ import (
 
 var _ = fmt.Println
 
+// this function partners with checkExpression for checking that area of the tree
 func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 	switch v := n.(type) {
-	case *nodes.BooleanNode:
-		{
-			// todo: don't depend on lexer?
-			return &nodes.NamedType{Name: lexer.BOOLEAN}
-		}
-	case *nodes.NumberNode:
-		{
-			switch v.NumType {
-			case nodes.FLOAT_NUMBER:
-				return &FLOAT_DATATYPE
-			case nodes.INT32_NUMBER:
-				return &INT_DATATYPE
-			default:
-				return &ERROR_TYPE
-			}
-		}
-	case *nodes.IdentifierNode:
-		{
-			varname := v.Name()
-			s, exists := a.GetSym(varname)
-			if !exists {
-				a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Undefined identifier %s", utils.Green(varname)))
-				return &ERROR_TYPE
-			}
-			return s
-		}
-	case *nodes.InfixOperatorNode:
-		{
-			left := a.computeType(v.Left)
-			right := a.computeType(v.Right)
-			// op := v.Op
-			if !left.Equals(right) {
-				a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Can't perform %s on types %s and %s", v.Op, utils.Cyan(left.Text()), utils.Cyan(right.Text())))
-				return &ERROR_TYPE
-			}
-			return left
-		}
+	case *nodes.BooleanNode, *nodes.NumberNode, *nodes.IdentifierNode, *nodes.InfixOperatorNode:
+		return a.checkExpression(v)
+
 	case *nodes.PrePostOperatorNode:
 		{
 			// for now, `&` changes type
@@ -68,11 +35,11 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 			default:
 				// pref := nodes.Unknown
 			}
-			return &nodes.PrefixOfType{Prefix: pref, OfType: a.computeType(v.Operand)}
+			return &nodes.PrefixOfType{Prefix: pref, OfType: a.computeType(v.Operand), DataTypeMetaData: nodes.DataTypeMetaData{TypeSize: nodes.POINTER_SIZE, Tid: nodes.UniqueTypeId()}}
 		}
 	case nil:
 		{
-			return &nodes.VoidType{}
+			return &nodes.VOID_DATATYPE
 		}
 	case *nodes.ArrayDeclarationNode:
 		{
@@ -85,22 +52,25 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 						fmt.Sprintf("Element at index %d of type %s cannot be casted to %s", i, utils.Cyan(typ.Text()), utils.Cyan(expectedType.Text())))
 				}
 			}
-			return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: v.DataT}
+			return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: v.DataT, DataTypeMetaData: nodes.DataTypeMetaData{TypeSize: nodes.POINTER_SIZE, // todo: consider number of elems in type def
+				Tid: nodes.UniqueTypeId(),
+			}}
 		}
 	case *nodes.FuncNode:
 		argtypes := make([]nodes.DataType, 0)
 		for _, arg := range v.ArgList {
-			if !a.verifyType(arg.DataT) {
+			if !a.verifyAndNormalize(&arg.DataT) {
 				a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Arg type %s is undefined or depends on an undefined type", utils.Cyan(arg.DataT.Text())))
 			}
 			argtypes = append(argtypes, arg.DataT)
 		}
-		if !a.verifyType(v.ReturnType) {
+		if !a.verifyAndNormalize(&v.ReturnType) {
 			a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Return type %s is undefined or depends on an undefined type", utils.Cyan(v.ReturnType.Text())))
 		}
 		return &nodes.FuncType{
-			ReturnType: v.ReturnType,
-			ArgTypes:   argtypes,
+			ReturnType:       v.ReturnType,
+			ArgTypes:         argtypes,
+			DataTypeMetaData: nodes.DataTypeMetaData{TypeSize: nodes.POINTER_SIZE, Tid: nodes.UniqueTypeId()},
 		}
 	case *nodes.ArrIndNode:
 		arrType := a.computeType(v.ArrProvider)
@@ -112,7 +82,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 		}
 		return indexedValueType
 	case *nodes.StringNode:
-		return &nodes.NamedType{Name: lexer.STRING}
+		return &nodes.PrefixOfType{Prefix: nodes.ArrayOf, OfType: &BYTE_DATATYPE, DataTypeMetaData: nodes.DataTypeMetaData{TypeSize: nodes.POINTER_SIZE, Tid: nodes.UniqueTypeId()}}
 	case *nodes.FuncCallNode:
 		funcType := a.computeType(v.Callee)
 		ftyp, ok := funcType.(*nodes.FuncType)
@@ -159,28 +129,31 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 
 // types are dependent on one another, forming a graph.
 // todo: handle loops in type definition
-// todo: replace NamedType with the actual DataType objects
-func (a *Analyzer) verifyType(dt nodes.DataType) bool {
-	switch v := dt.(type) {
+// todo: replace NamedType with the actual DataType objects the name points to
+func (a *Analyzer) verifyAndNormalize(dt *nodes.DataType) bool {
+	switch v := (*dt).(type) {
 	case *nodes.ErrorType:
 		return false
 	case *nodes.FuncType:
 		ok := true
 		for i := range v.ArgTypes {
-			ok = ok && a.verifyType(v.ArgTypes[i])
+			ok = ok && a.verifyAndNormalize(&v.ArgTypes[i])
 		}
-		ok = ok && a.verifyType(v.ReturnType)
+		ok = ok && a.verifyAndNormalize(&v.ReturnType)
 		return ok
 	case *nodes.NamedType:
-		_, exists := a.GetType(v.Name)
+		baseT, exists := a.GetType(v.Name)
+		if exists {
+			*dt = baseT
+		}
 		return exists
 	case *nodes.PrefixOfType:
 		// todo: check if this type can be prefixed with this prefix
-		return a.verifyType(v.OfType)
+		return a.verifyAndNormalize(&v.OfType)
 	case *nodes.StructType:
 		ok := true
 		for i := range v.Fields {
-			ok = ok && a.verifyType(v.Fields[i].Type)
+			ok = ok && a.verifyAndNormalize(&v.Fields[i].Type)
 		}
 		return ok
 	case *nodes.UnspecifiedType:

@@ -1,7 +1,10 @@
 package lexer
 
 import (
-	"strings"
+	"bytes"
+	"encoding/binary"
+	"fmt"
+	"math"
 )
 
 func (l *Lexer) Lexify() {
@@ -61,20 +64,22 @@ func (l *Lexer) Lexify() {
 
 func lexNumber(l *Lexer) {
 	numType := INTEGER
-	numstr := strings.Builder{}
 
 	var digits map[byte]bool = nil
+	var base int64
 	if c := l.CharAtOffset(0); c == '0' {
 		switch nc := l.CharAtOffset(1); nc {
 		case 'x':
 			{
 				l.i += 2
 				digits = hexDigits
+				base = 16
 			}
 		case 'b':
 			{
 				l.i += 2
 				digits = binaryDigits
+				base = 2
 			}
 		default:
 			{
@@ -82,10 +87,11 @@ func lexNumber(l *Lexer) {
 				// handles corner case of the last char of source code being '0'
 				if l.CharAtOffset(1) == 0 {
 					digits = decimalDigits
+					base = 10
 				} else {
 					l.i++
 					digits = octalDigits
-					numstr.WriteByte('0')
+					base = 8
 				}
 			}
 		}
@@ -93,28 +99,48 @@ func lexNumber(l *Lexer) {
 		// todo: handle expo syntax
 		// base 10
 		digits = decimalDigits
+		base = 10
 
 	}
 
 	if l.CharAtOffset(0) == 0 {
 		return
 	}
+
+	var intPart int64 = 0
+	var decPart int64 = 0
+	scale := 0
 	for ; l.i < len(l.sourceCode); l.i++ {
 		c := l.CharAtOffset(0)
 		if _, ok := digits[c]; ok {
-			numstr.WriteByte(c)
+			if c >= 'A' {
+				c -= 'A'
+			} else {
+				c -= '0'
+			}
+			if numType == INTEGER {
+				intPart = intPart*base + int64(c)
+				fmt.Println(intPart)
+			} else {
+				decPart = decPart*int64(base) + int64(c)
+				scale++
+			}
 		} else if c == byte(MATH_DOT) && numType == INTEGER {
 			numType = FLOATINGPT
-			numstr.WriteByte(byte(MATH_DOT))
+
 		} else {
 			// erroneous state
 			// todo: show error
 			break
 		}
 	}
-	if numstr.Len() == 0 {
-		// todo: show error
-		return
+	fmt.Println(intPart, "---", decPart)
+	str := new(bytes.Buffer)
+	if numType == INTEGER {
+		binary.Write(str, binary.BigEndian, intPart)
+	} else {
+		var t float64 = float64(intPart) + float64(decPart)/(math.Pow10(scale))
+		binary.Write(str, binary.BigEndian, t)
 	}
-	l.addTokenAndClearWord(NewLexerToken(numType, numstr.String(), l.lineCnt))
+	l.addTokenAndClearWord(NewLexerToken(numType, str.String(), l.lineCnt))
 }

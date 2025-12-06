@@ -10,9 +10,11 @@ type ConditionalBranch struct {
 	Scope     *ScopeNode
 }
 
+var ifSeq int = 0
 type IfNode struct {
 	Branches []ConditionalBranch
 	Exhaustive bool
+	Seq int
 	NodeMetadata
 }
 
@@ -33,5 +35,6 @@ func (i *IfNode) Type() TreeNodeType {
 }
 
 func MakeIfNode(branches []ConditionalBranch, meta *NodeMetadata) *IfNode {
-	return &IfNode{branches, false, *meta}
+	ifSeq++
+	return &IfNode{branches, false, ifSeq, *meta}
 }

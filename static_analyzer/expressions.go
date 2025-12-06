@@ -6,7 +6,9 @@ import (
 	"he++/utils"
 )
 
+// partners with computeType
 func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
+	exp.String(&utils.ASTPrinter{})
 	switch v := exp.(type) {
 	case *nodes.NumberNode:
 		switch v.NumType {
@@ -14,20 +16,31 @@ func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
 			return &FLOAT_DATATYPE
 		case nodes.INT32_NUMBER:
 			return &INT_DATATYPE
+		default:
+			return &ERROR_TYPE
 		}
+	case *nodes.BooleanNode:
+		return &BOOLEAN_DATATYPE
 	case *nodes.InfixOperatorNode:
-		l := a.checkExpression(v.Left)
-		r := a.checkExpression(v.Right)
+		l := a.computeType(v.Left)
+		r := a.computeType(v.Right)
 		// todo: check if l and r are compatible under this optype
-		return a.operatorReturnType(v.Op, l, r)
+		ort := a.operatorReturnType(v.Op, l, r, v.Range().Start)
+		if isErrorType(ort) {
+			a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Can't perform %s on types %s and %s", v.Op, utils.Cyan(l.Text()), utils.Cyan(r.Text())))
+		}
+		return ort
 	case *nodes.IdentifierNode:
 		varname := v.Name()
-		s, exists := a.GetSym(varname)
+		s, exists := a.GetSymInfo(varname)
 		if !exists {
 			a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Undefined identifier %s in expression", utils.Green(varname)))
 			return &ERROR_TYPE
 		}
-		return s
+		s.numUses += 1
+		return s.dt
+	case *nodes.FuncCallNode:
+		a.computeType(v)
 	default:
 		a.AddError(
 			v.Range().Start,
