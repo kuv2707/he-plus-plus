@@ -3,7 +3,6 @@ package lexer
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"math"
 )
 
@@ -37,7 +36,7 @@ func (l *Lexer) Lexify() {
 			l.addTokenIfCan()
 			// comments
 			if l.CharAtOffset(1) == '/' {
-				for ; l.CharAtOffset(0) != '\n'; l.i++ {
+				for ; l.i < len(l.sourceCode) && l.CharAtOffset(0) != '\n'; l.i++ {
 				}
 				l.lineCnt++
 			} else {
@@ -120,7 +119,6 @@ func lexNumber(l *Lexer) {
 			}
 			if numType == INTEGER {
 				intPart = intPart*base + int64(c)
-				fmt.Println(intPart)
 			} else {
 				decPart = decPart*int64(base) + int64(c)
 				scale++
@@ -134,7 +132,6 @@ func lexNumber(l *Lexer) {
 			break
 		}
 	}
-	fmt.Println(intPart, "---", decPart)
 	str := new(bytes.Buffer)
 	if numType == INTEGER {
 		binary.Write(str, binary.BigEndian, intPart)

@@ -1,16 +1,18 @@
 funcion principal() vacio {
-    definir int a = 502
-    definir int b = 6
-    definir int c = a + doubled(a+b, a)
-    si a < b entonces {
-        a = a + 5
-    } o si a == b entonces {
-        a = a
-    } o {
-        a = a - 5
+    definir int c = 15
+    definir [int] arr = [int][c]
+    arr[0] = 0
+    arr[1] = 1
+    para definir int i=2;i<c;i=i+1 {
+        arr[i] = arr[i-1] + arr[i-2]
+        log(arr[i])
     }
 }
 
 funcion doubled(a int, b int) int {
     devolver 2*a
+}
+
+funcion log(c int) vacio {
+
 }

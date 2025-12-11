@@ -2,11 +2,14 @@ package node_types
 
 import "he++/utils"
 
+var loopSeq = 0
+
 type LoopNode struct {
-	initializer TreeNode
-	condition   TreeNode
-	updater     TreeNode
-	scope       *ScopeNode
+	Seq         int
+	Initializer TreeNode
+	Condition   TreeNode
+	Updater     TreeNode
+	Scope       *ScopeNode
 	NodeMetadata
 }
 
@@ -14,12 +17,12 @@ func (l *LoopNode) String(p *utils.ASTPrinter) {
 	p.PushIndent()
 	p.WriteLine(utils.Underline("loop"))
 	p.WriteLine("initializer:")
-	l.initializer.String(p)
+	l.Initializer.String(p)
 	p.WriteLine("condition:")
-	l.condition.String(p)
+	l.Condition.String(p)
 	p.WriteLine("updater:")
-	l.updater.String(p)
-	l.scope.String(p)
+	l.Updater.String(p)
+	l.Scope.String(p)
 	p.PopIndent()
 }
 
@@ -28,5 +31,6 @@ func (l *LoopNode) Type() TreeNodeType {
 }
 
 func MakeLoopNode(initializer TreeNode, condition TreeNode, updater TreeNode, scope *ScopeNode, meta *NodeMetadata) *LoopNode {
-	return &LoopNode{initializer, condition, updater, scope, *meta}
+	loopSeq++
+	return &LoopNode{loopSeq, initializer, condition, updater, scope, *meta}
 }

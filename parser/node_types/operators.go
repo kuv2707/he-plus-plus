@@ -4,13 +4,15 @@ import (
 	"he++/utils"
 )
 
+type OpType string
+
 const (
-	PREFIX  = "pre"
-	POSTFIX = "post"
+	PREFIX  OpType = "pre"
+	POSTFIX OpType = "post"
 )
 
 type PrePostOperatorNode struct {
-	opType  string
+	OpType  OpType
 	Op      string
 	Operand TreeNode
 	NodeMetadata
@@ -18,7 +20,7 @@ type PrePostOperatorNode struct {
 
 func (o *PrePostOperatorNode) String(p *utils.ASTPrinter) {
 	p.PushIndent()
-	p.WriteLine(utils.Bold(o.opType) + " " + utils.Magenta(o.Op))
+	p.WriteLine(utils.Bold(string(o.OpType)) + " " + utils.Magenta(o.Op))
 	o.Operand.String(p)
 	p.PopIndent()
 }
@@ -27,7 +29,7 @@ func (o *PrePostOperatorNode) Type() TreeNodeType {
 	return OPERATOR
 }
 
-func NewPrePostOperatorNode(opType string, op string, operand TreeNode, meta *NodeMetadata) *PrePostOperatorNode {
+func NewPrePostOperatorNode(opType OpType, op string, operand TreeNode, meta *NodeMetadata) *PrePostOperatorNode {
 	return &PrePostOperatorNode{opType, op, operand, *meta}
 }
 
@@ -81,6 +83,7 @@ func NewTernaryNode(condition TreeNode, ifTrue TreeNode, ifFalse TreeNode) *Tern
 type ArrIndNode struct {
 	ArrProvider TreeNode
 	Indexer     TreeNode
+	DataType    DataType // dt of arr[i]
 	NodeMetadata
 }
 

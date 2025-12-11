@@ -7,8 +7,6 @@ import (
 	// "he++/utils"
 )
 
-var _ = fmt.Println
-
 /**
 Things to check for:
 - idents not used before decl, no duplicate decl
@@ -31,9 +29,9 @@ type Analyzer struct {
 	// todo: would it be OK to merge with syms?
 	definedTypes map[string]*utils.Stack[nodes.DataType]
 	// sym refers to functions and variables
-	definedSyms           map[string]*utils.Stack[VarDefInfo]
+	definedSyms map[string]*utils.Stack[VarDefInfo]
 	// operatorTypeRelations map[nodes.TypeId]
-	Errs                  []utils.CompilerError
+	Errs []utils.CompilerError
 }
 
 func MakeAnalyzer() Analyzer {

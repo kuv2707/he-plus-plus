@@ -70,10 +70,11 @@ func (dt *UnspecifiedType) Equals(other DataType) bool {
 type TypePrefix int
 
 const (
-	ArrayOf = iota
+	Unknown = iota
+	ArrayOf
 	PointerOf
 	Dereference
-	Unknown
+	Negation
 )
 
 func (k TypePrefix) String() string {
@@ -85,6 +86,8 @@ func (k TypePrefix) String() string {
 	case Dereference:
 		// should distinguish between mul and deref ops at lexer level
 		return lexer.MUL
+	case Negation:
+		return lexer.SUB
 	default:
 		return "Unknown"
 	}

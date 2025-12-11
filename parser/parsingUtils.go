@@ -6,9 +6,7 @@ import (
 	"he++/lexer"
 )
 
-func debug(a ...any) {
-	fmt.Println(a...)
-}
+
 
 func isPostfixOperator(op string) bool {
 	return op == lexer.INC || op == lexer.DEC || op == lexer.OPEN_PAREN || op == lexer.OPEN_SQUARE

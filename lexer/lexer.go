@@ -101,7 +101,6 @@ func (l *Lexer) addTokenAndClearWord(token LexerToken) {
 	// todo: only append to l.tokens if in debug mode
 	l.tokens = append(l.tokens, token)
 	l.TokChan <- token
-	// fmt.Println("Published", token)
 	l.word.Reset()
 }
 

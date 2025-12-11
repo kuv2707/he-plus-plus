@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"he++/lexer"
 	nodes "he++/parser/node_types"
@@ -160,15 +162,32 @@ func parseArrayDeclaration(p *Parser) nodes.TreeNode {
 	ls := p.tokenStream.ConsumeOnlyIf(lexer.OPEN_SQUARE).LineNo()
 	dt := parseDataType(p)
 	p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE)
-	p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
-	elems := make([]nodes.TreeNode, 0)
-	for p.tokenStream.Current().Text() != lexer.RPAREN {
-		k := parseExpression(p, 0.0)
-		elems = append(elems, k)
-		p.tokenStream.ConsumeIf(lexer.COMMA)
+	if p.tokenStream.Current().Text() == lexer.OPEN_SQUARE {
+		p.tokenStream.Consume()
+		size := parseExpression(p, 0)
+		le := p.tokenStream.ConsumeOnlyIf(lexer.CLOSE_SQUARE).LineNo()
+		return nodes.MakeArrayDeclarationNode(size, nil, dt, nodes.MakeMetadata(ls, le))
+
+	} else {
+		p.tokenStream.ConsumeOnlyIf(lexer.LPAREN)
+		elems := make([]nodes.TreeNode, 0)
+		for p.tokenStream.Current().Text() != lexer.RPAREN {
+			k := parseExpression(p, 0.0)
+			elems = append(elems, k)
+			p.tokenStream.ConsumeIf(lexer.COMMA)
+		}
+		le := p.tokenStream.ConsumeOnlyIf(lexer.RPAREN).LineNo()
+		str := new(bytes.Buffer)
+		binary.Write(str, binary.BigEndian, int64(len(elems)))
+		return nodes.MakeArrayDeclarationNode(
+			nodes.NewNumberNode(
+				str.Bytes(),
+				nodes.INT32_NUMBER, nodes.MakeMetadata(ls, le),
+			),
+			elems, dt,
+			nodes.MakeMetadata(ls, le),
+		)
 	}
-	le := p.tokenStream.ConsumeOnlyIf(lexer.RPAREN).LineNo()
-	return nodes.MakeArrayDeclarationNode(elems, dt, nodes.MakeMetadata(ls, le))
 }
 
 func parseStructValue(p *Parser) nodes.TreeNode {

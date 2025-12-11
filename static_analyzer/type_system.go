@@ -86,6 +86,12 @@ func isBooleanType(typ nodes.DataType) bool {
 	return ok && nt.Name == lexer.BOOLEAN
 }
 
+func isNumericType(typ nodes.DataType) bool {
+	// todo: also consider aliases, when supported
+	nt, ok := typ.(*nodes.NamedType)
+	return ok && (nt.Name == lexer.INT || nt.Name == lexer.FLOAT)
+}
+
 func isErrorType(typ nodes.DataType) bool {
 	_, ok := typ.(*nodes.ErrorType)
 	return ok

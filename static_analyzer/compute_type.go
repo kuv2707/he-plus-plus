@@ -8,8 +8,6 @@ import (
 	// "runtime/debug"
 )
 
-var _ = fmt.Println
-
 // this function partners with checkExpression for checking that area of the tree
 func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 	switch v := n.(type) {
@@ -32,6 +30,14 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 					a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Cannot dereference type %s", utils.Cyan(operandType.Text())))
 					return &ERROR_TYPE
 				}
+			case lexer.SUB:
+				operandType := a.computeType(v.Operand)
+				if !isNumericType(operandType) {
+					a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Cannot negate value of type %s", utils.Cyan(operandType.Text())))
+				}
+				pref = nodes.Negation
+				return operandType
+
 			default:
 				// pref := nodes.Unknown
 			}
@@ -43,6 +49,11 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 		}
 	case *nodes.ArrayDeclarationNode:
 		{
+			sizeType := a.computeType(v.SizeNode)
+			if !isNumericType(sizeType) {
+				a.AddError(v.SizeNode.Range().Start, utils.TypeError, fmt.Sprintf("Size of array should be numeric"))
+			}
+			a.verifyAndNormalize(&v.DataT)
 			expectedType := v.DataT
 			for i, elem := range v.Elems {
 				typ := a.computeType(elem)
@@ -76,6 +87,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 		arrType := a.computeType(v.ArrProvider)
 		indexerType := a.computeType(v.Indexer)
 		indexedValueType, ok := isIndexable(a, arrType, indexerType)
+		v.DataType = indexedValueType
 		if !ok {
 			a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("The type %s cannot be indexed by %s", utils.Cyan(arrType.Text()), utils.Cyan(indexerType.Text())))
 			return &ERROR_TYPE

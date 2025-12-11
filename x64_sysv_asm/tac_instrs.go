@@ -20,7 +20,7 @@ func (b *TACBaseInstr) Labels() []string {
 }
 
 func LabInstrStr(k ThreeAddressInstr, s string) string {
-	return strings.Join(k.Labels(), ":\n") + s
+	return utils.BoldGreen(strings.Join(k.Labels(), ":\n")) + s
 }
 
 type BinaryOpInstr struct {
@@ -52,7 +52,7 @@ type JumpInstr struct {
 }
 
 func (j *JumpInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("jmp %v", j.jmpToLabel))
+	return LabInstrStr(j, fmt.Sprintf("jmp %v", utils.BoldGreen(j.jmpToLabel)))
 }
 
 type CJumpInstr struct {
@@ -65,7 +65,7 @@ type CJumpInstr struct {
 }
 
 func (j *CJumpInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("cjmp %s %s %s : %v", j.argL, j.op, j.argR, j.jmpToLabel))
+	return LabInstrStr(j, fmt.Sprintf("jmp_if_false %s %s %s , %v", j.argL, j.op, j.argR, utils.BoldGreen(j.jmpToLabel)))
 }
 
 type ParamInstr struct {
@@ -80,10 +80,11 @@ func (j *ParamInstr) String() string {
 type CallInstr struct {
 	TACBaseInstr
 	calleeAddr TACOpArg
+	retReg     TACOpArg
 }
 
 func (j *CallInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("call %v", j.calleeAddr))
+	return LabInstrStr(j, fmt.Sprintf("%s = call %v", j.retReg, j.calleeAddr))
 }
 
 type LoadLabelInstr struct {
@@ -93,5 +94,57 @@ type LoadLabelInstr struct {
 }
 
 func (j *LoadLabelInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("%v = load %v", j.to, utils.Green(j.loadeeLabel)))
+	return LabInstrStr(j, fmt.Sprintf("%v = load %v", j.to, utils.BoldGreen(j.loadeeLabel)))
+}
+
+type LabelPlaceholder struct {
+	TACBaseInstr
+}
+
+func (l *LabelPlaceholder) String() string {
+	return LabInstrStr(l, fmt.Sprintf(" PLACEHOLDER"))
+}
+
+func placeholderWithLabels(s ...string) *LabelPlaceholder {
+	return &LabelPlaceholder{TACBaseInstr{labels: s}}
+}
+
+type AllocType byte
+
+const (
+	STACK_ALLOC AllocType = 's'
+	HEAP_ALLOC  AllocType = 'h'
+)
+
+type AllocInstr struct {
+	TACBaseInstr
+	allocType  AllocType
+	sizeReg    TACOpArg
+	ptrToAlloc TACOpArg
+}
+
+func (a *AllocInstr) String() string {
+	return LabInstrStr(a, fmt.Sprintf("%v = alloc(%c, %v)", a.ptrToAlloc, a.allocType, a.sizeReg))
+}
+
+type MemStoreInstr struct {
+	TACBaseInstr
+	storeAt  TACOpArg
+	storeWhat TACOpArg
+	numBytes int
+}
+
+func (m *MemStoreInstr) String() string {
+	return fmt.Sprintf("store [%v], %v (%d bytes)", m.storeAt, m.storeWhat, m.numBytes)
+}
+
+type MemLoadInstr struct {
+	TACBaseInstr
+	loadFrom  TACOpArg
+	storeAt TACOpArg
+	numBytes int
+}
+
+func (m *MemLoadInstr) String() string {
+	return fmt.Sprintf("%v = load %v, %d bytes",m.storeAt, m.loadFrom, m.numBytes)
 }

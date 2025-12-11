@@ -35,6 +35,7 @@ func (p *Parser) initParselets() {
 	p.prefixParselets[lexer.INC] = parsePrefixOperator
 	p.prefixParselets[lexer.AMP] = parsePrefixOperator
 	p.prefixParselets[lexer.MUL] = parsePrefixOperator
+	p.prefixParselets[lexer.SUB] = parsePrefixOperator
 	p.prefixParselets[lexer.OPEN_PAREN] = parseBracketExpression
 	p.prefixParselets[lexer.OPEN_SQUARE] = parseArrayDeclaration
 	p.prefixParselets[lexer.LPAREN] = parseStructValue

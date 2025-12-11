@@ -35,7 +35,6 @@ func (ts *TokenStream) Consume() *lexer.LexerToken {
 		ts.endOfToks = true
 	}
 	ts.nextTok = &tok
-	// fmt.Println("Consumed ", tok, ts.endOfToks)
 	return curr
 }
 

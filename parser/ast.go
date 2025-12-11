@@ -78,6 +78,7 @@ func parseReturnStatement(p *Parser) node_types.TreeNode {
 }
 
 func parseDataType(p *Parser) node_types.DataType {
+	fmt.Println("PDT")
 	t := p.tokenStream
 	currTok := t.Current()
 	if currTok.Type() == lexer.IDENTIFIER {

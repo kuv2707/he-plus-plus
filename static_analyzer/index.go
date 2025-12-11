@@ -19,6 +19,7 @@ func isIndexable(a *Analyzer, dataT node_types.DataType, indexerT node_types.Dat
 	if indexerT.Text() != lexer.INT {
 		return nil, false
 	}
+	a.verifyAndNormalize(&arrT.OfType)
 	return arrT.OfType, true
 
 }
