@@ -1,4 +1,4 @@
-package x64sysvasm
+package backend
 
 import (
 	"bytes"
@@ -126,6 +126,7 @@ func (ag *TACHandler) GenerateTac() {
 				dataSectionAllocs: make([]DataSectionAllocEntry, 0)}
 			// todo: load func args
 			ftac.genScopeTAC(v.Scope)
+			ftac.condenseTAC()
 			fmt.Println("TAC for func", v.Name)
 			for _, k := range ftac.instrs {
 				fmt.Println(k)

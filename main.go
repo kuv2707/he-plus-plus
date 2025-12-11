@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	backend "he++/backend"
 	cmdlineutils "he++/cmdline_utils"
 	"he++/lexer"
 	"he++/parser"
 	staticanalyzer "he++/static_analyzer"
 	"he++/utils"
-	x64sysvasm "he++/x64_sysv_asm"
 	"os"
 )
 
@@ -33,7 +33,7 @@ func main() {
 	analyzer := staticanalyzer.MakeAnalyzer()
 	ok := analyzer.AnalyzeAST(node)
 	if ok {
-		asm := x64sysvasm.NewTACGen(node)
+		asm := backend.NewTACGen(node)
 		asm.GenerateTac()
 	}
 }
