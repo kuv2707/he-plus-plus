@@ -1,4 +1,4 @@
-package backend 
+package backend
 
 import (
 	"fmt"
@@ -37,13 +37,23 @@ func (b *BinaryOpInstr) String() string {
 
 type UnaryOpInstr struct {
 	TACBaseInstr
-	assTo TACOpArg
-	op    string // todo: use enum
-	arg1  TACOpArg
+	assnTo TACOpArg
+	op     string // todo: use enum
+	arg1   TACOpArg
 }
 
 func (u *UnaryOpInstr) String() string {
-	return LabInstrStr(u, fmt.Sprintf("%v = %s%v", utils.Cyan(u.assTo.String()), u.op, u.arg1))
+	return LabInstrStr(u, fmt.Sprintf("%v = %s %v", utils.Cyan(u.assnTo.String()), u.op, u.arg1))
+}
+
+type AssignInstr struct {
+	TACBaseInstr
+	assnTo TACOpArg
+	arg    TACOpArg
+}
+
+func (u *AssignInstr) String() string {
+	return LabInstrStr(u, fmt.Sprintf("%v = %v", utils.Cyan(u.assnTo.String()), u.arg))
 }
 
 type JumpInstr struct {
@@ -94,7 +104,7 @@ type LoadLabelInstr struct {
 }
 
 func (j *LoadLabelInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("%v = load %v", j.to, utils.BoldGreen(j.loadeeLabel)))
+	return LabInstrStr(j, fmt.Sprintf("%v = load [%v]", j.to, utils.BoldGreen(j.loadeeLabel)))
 }
 
 type LabelPlaceholder struct {
@@ -129,9 +139,9 @@ func (a *AllocInstr) String() string {
 
 type MemStoreInstr struct {
 	TACBaseInstr
-	storeAt  TACOpArg
+	storeAt   TACOpArg
 	storeWhat TACOpArg
-	numBytes int
+	numBytes  int
 }
 
 func (m *MemStoreInstr) String() string {
@@ -140,11 +150,11 @@ func (m *MemStoreInstr) String() string {
 
 type MemLoadInstr struct {
 	TACBaseInstr
-	loadFrom  TACOpArg
-	storeAt TACOpArg
+	loadFrom TACOpArg
+	storeAt  TACOpArg
 	numBytes int
 }
 
 func (m *MemLoadInstr) String() string {
-	return fmt.Sprintf("%v = load %v, %d bytes",m.storeAt, m.loadFrom, m.numBytes)
+	return fmt.Sprintf("%v = load %v, %d bytes", m.storeAt, m.loadFrom, m.numBytes)
 }
