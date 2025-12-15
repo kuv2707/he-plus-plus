@@ -80,12 +80,12 @@ func parseBracketExpression(p *Parser) nodes.TreeNode {
 
 func parseInteger(p *Parser) nodes.TreeNode {
 	t := p.tokenStream.Consume()
-	return nodes.NewNumberNode([]byte(t.Text()), nodes.INT32_NUMBER, nodes.MakeMetadata(t.LineNo(), t.LineNo()))
+	return nodes.NewNumberNode([]byte(t.Text()), nodes.INT_NUM, nodes.MakeMetadata(t.LineNo(), t.LineNo()))
 }
 
 func parseFloat(p *Parser) nodes.TreeNode {
 	t := p.tokenStream.Consume()
-	return nodes.NewNumberNode([]byte(t.Text()), nodes.FLOAT_NUMBER, nodes.MakeMetadata(t.LineNo(), t.LineNo()))
+	return nodes.NewNumberNode([]byte(t.Text()), nodes.FLOAT_NUM, nodes.MakeMetadata(t.LineNo(), t.LineNo()))
 }
 
 func parseString(p *Parser) nodes.TreeNode {
@@ -182,7 +182,7 @@ func parseArrayDeclaration(p *Parser) nodes.TreeNode {
 		return nodes.MakeArrayDeclarationNode(
 			nodes.NewNumberNode(
 				str.Bytes(),
-				nodes.INT32_NUMBER, nodes.MakeMetadata(ls, le),
+				nodes.INT_NUM, nodes.MakeMetadata(ls, le),
 			),
 			elems, dt,
 			nodes.MakeMetadata(ls, le),

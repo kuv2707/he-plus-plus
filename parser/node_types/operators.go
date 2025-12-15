@@ -11,10 +11,13 @@ const (
 	POSTFIX OpType = "post"
 )
 
+var NONE DataType = &UnspecifiedType{}
+
 type PrePostOperatorNode struct {
-	OpType  OpType
-	Op      string
-	Operand TreeNode
+	OpType   OpType
+	Op       string
+	Operand  TreeNode
+	ResultDT DataType
 	NodeMetadata
 }
 
@@ -30,13 +33,14 @@ func (o *PrePostOperatorNode) Type() TreeNodeType {
 }
 
 func NewPrePostOperatorNode(opType OpType, op string, operand TreeNode, meta *NodeMetadata) *PrePostOperatorNode {
-	return &PrePostOperatorNode{opType, op, operand, *meta}
+	return &PrePostOperatorNode{opType, op, operand, NONE, *meta}
 }
 
 type InfixOperatorNode struct {
-	Left  TreeNode
-	Op    string
-	Right TreeNode
+	Left     TreeNode
+	Op       string
+	Right    TreeNode
+	ResultDT DataType
 	NodeMetadata
 }
 
@@ -53,13 +57,14 @@ func (o *InfixOperatorNode) Type() TreeNodeType {
 }
 
 func NewInfixOperatorNode(left TreeNode, op string, right TreeNode, meta *NodeMetadata) *InfixOperatorNode {
-	return &InfixOperatorNode{left, op, right, *meta}
+	return &InfixOperatorNode{left, op, right, NONE, *meta}
 }
 
 type TernaryOperatorNode struct {
 	condition TreeNode
 	ifTrue    TreeNode
 	ifFalse   TreeNode
+	ResultDT  DataType
 	NodeMetadata
 }
 
@@ -77,7 +82,7 @@ func (t *TernaryOperatorNode) Type() TreeNodeType {
 }
 
 func NewTernaryNode(condition TreeNode, ifTrue TreeNode, ifFalse TreeNode) *TernaryOperatorNode {
-	return &TernaryOperatorNode{condition, ifTrue, ifFalse, NodeMetadata{}}
+	return &TernaryOperatorNode{condition, ifTrue, ifFalse, NONE, NodeMetadata{}}
 }
 
 type ArrIndNode struct {
@@ -106,6 +111,7 @@ func NewArrIndNode(arrProvider TreeNode, indexer TreeNode, meta *NodeMetadata) *
 type FuncCallNode struct {
 	Callee TreeNode
 	Args   []TreeNode
+	CalleeT *FuncType
 	NodeMetadata
 }
 
@@ -128,5 +134,5 @@ func (f *FuncCallNode) Type() TreeNodeType {
 }
 
 func NewFuncCallNode(name TreeNode, meta *NodeMetadata) *FuncCallNode {
-	return &FuncCallNode{name, make([]TreeNode, 0), *meta}
+	return &FuncCallNode{name, make([]TreeNode, 0), nil, *meta}
 }

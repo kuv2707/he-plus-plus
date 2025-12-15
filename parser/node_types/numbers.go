@@ -8,8 +8,8 @@ import (
 type NumberType string
 
 const (
-	FLOAT_NUMBER NumberType = "float32"
-	INT32_NUMBER NumberType = "int32"
+	FLOAT_NUM NumberType = "float"
+	INT_NUM   NumberType = "int"
 )
 
 // expression related nodes

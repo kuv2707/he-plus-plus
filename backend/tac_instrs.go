@@ -9,6 +9,7 @@ import (
 type ThreeAddressInstr interface {
 	String() string
 	Labels() []string
+	ThreeAdresses() (dest, src1, src2 *TACOpArg)
 }
 
 type TACBaseInstr struct {
@@ -32,7 +33,11 @@ type BinaryOpInstr struct {
 }
 
 func (b *BinaryOpInstr) String() string {
-	return LabInstrStr(b, fmt.Sprintf("%v = %v %s %v", utils.Cyan(b.assnTo.String()), b.arg1, b.op, b.arg2))
+	return LabInstrStr(b, fmt.Sprintf("%v = %v %s %v", b.assnTo, b.arg1, b.op, b.arg2))
+}
+
+func (b *BinaryOpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &b.assnTo, &b.arg1, &b.arg2
 }
 
 type UnaryOpInstr struct {
@@ -43,7 +48,11 @@ type UnaryOpInstr struct {
 }
 
 func (u *UnaryOpInstr) String() string {
-	return LabInstrStr(u, fmt.Sprintf("%v = %s %v", utils.Cyan(u.assnTo.String()), u.op, u.arg1))
+	return LabInstrStr(u, fmt.Sprintf("%v = %s %v", u.assnTo, u.op, u.arg1))
+}
+
+func (u *UnaryOpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &u.assnTo, &u.arg1, &NOWHERE
 }
 
 type AssignInstr struct {
@@ -53,7 +62,11 @@ type AssignInstr struct {
 }
 
 func (u *AssignInstr) String() string {
-	return LabInstrStr(u, fmt.Sprintf("%v = %v", utils.Cyan(u.assnTo.String()), u.arg))
+	return LabInstrStr(u, fmt.Sprintf("%v = %v", u.assnTo, u.arg))
+}
+
+func (a *AssignInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &a.assnTo, &a.arg, &NOWHERE
 }
 
 type JumpInstr struct {
@@ -63,6 +76,10 @@ type JumpInstr struct {
 
 func (j *JumpInstr) String() string {
 	return LabInstrStr(j, fmt.Sprintf("jmp %v", utils.BoldGreen(j.jmpToLabel)))
+}
+
+func (j *JumpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &NOWHERE, &NOWHERE, &NOWHERE
 }
 
 type CJumpInstr struct {
@@ -78,13 +95,21 @@ func (j *CJumpInstr) String() string {
 	return LabInstrStr(j, fmt.Sprintf("jmp_if_false %s %s %s , %v", j.argL, j.op, j.argR, utils.BoldGreen(j.jmpToLabel)))
 }
 
+func (j *CJumpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &NOWHERE, &j.argL, &j.argR
+}
+
 type ParamInstr struct {
 	TACBaseInstr
 	arg TACOpArg
 }
 
 func (j *ParamInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("param %v", j.arg))
+	return LabInstrStr(j, fmt.Sprintf("%s %v", utils.BoldCyan("param"), j.arg))
+}
+
+func (p *ParamInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &NOWHERE, &p.arg, &NOWHERE
 }
 
 type CallInstr struct {
@@ -94,7 +119,11 @@ type CallInstr struct {
 }
 
 func (j *CallInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("%s = call %v", j.retReg, j.calleeAddr))
+	return LabInstrStr(j, fmt.Sprintf("%s = %s %v", j.retReg, utils.BoldCyan("call"), j.calleeAddr))
+}
+
+func (c *CallInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &c.retReg, &c.calleeAddr, &NOWHERE
 }
 
 type LoadLabelInstr struct {
@@ -104,7 +133,11 @@ type LoadLabelInstr struct {
 }
 
 func (j *LoadLabelInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("%v = load [%v]", j.to, utils.BoldGreen(j.loadeeLabel)))
+	return LabInstrStr(j, fmt.Sprintf("%s %v [%v]", utils.BoldCyan("load"), j.to, utils.BoldGreen(j.loadeeLabel)))
+}
+
+func (l *LoadLabelInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &l.to, &NOWHERE, &NOWHERE
 }
 
 type LabelPlaceholder struct {
@@ -113,6 +146,10 @@ type LabelPlaceholder struct {
 
 func (l *LabelPlaceholder) String() string {
 	return LabInstrStr(l, fmt.Sprintf(" PLACEHOLDER"))
+}
+
+func (l *LabelPlaceholder) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &NOWHERE, &NOWHERE, &NOWHERE
 }
 
 func placeholderWithLabels(s ...string) *LabelPlaceholder {
@@ -137,6 +174,10 @@ func (a *AllocInstr) String() string {
 	return LabInstrStr(a, fmt.Sprintf("%v = alloc(%c, %v)", a.ptrToAlloc, a.allocType, a.sizeReg))
 }
 
+func (a *AllocInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &a.ptrToAlloc, &a.sizeReg, &NOWHERE
+}
+
 type MemStoreInstr struct {
 	TACBaseInstr
 	storeAt   TACOpArg
@@ -145,7 +186,11 @@ type MemStoreInstr struct {
 }
 
 func (m *MemStoreInstr) String() string {
-	return fmt.Sprintf("store [%v], %v (%d bytes)", m.storeAt, m.storeWhat, m.numBytes)
+	return fmt.Sprintf("%s [%v], %v (%d bytes)", utils.BoldCyan("store"), m.storeAt, m.storeWhat, m.numBytes)
+}
+
+func (m *MemStoreInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &NOWHERE, &m.storeAt, &m.storeWhat
 }
 
 type MemLoadInstr struct {
@@ -157,4 +202,32 @@ type MemLoadInstr struct {
 
 func (m *MemLoadInstr) String() string {
 	return fmt.Sprintf("%v = load %v, %d bytes", m.storeAt, m.loadFrom, m.numBytes)
+}
+
+func (m *MemLoadInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &m.storeAt, &m.loadFrom, &NOWHERE
+}
+
+var LOOP_START_PREFIX = "loop_start_"
+var LOOP_END_PREFIX = "loop_end_"
+
+func hasLoopLabel(v ThreeAddressInstr) (bool, bool) {
+	labels := v.Labels()
+	hasStart := false
+	hasEnd := false
+
+	for _, label := range labels {
+		if strings.HasPrefix(label, LOOP_START_PREFIX) {
+			hasStart = true
+		}
+		if strings.HasPrefix(label, LOOP_END_PREFIX) {
+			hasEnd = true
+		}
+	}
+	// todo assert both aren't simultaneously true
+	if !hasStart && !hasEnd {
+		return false, false
+	}
+
+	return true, hasStart
 }

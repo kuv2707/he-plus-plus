@@ -34,6 +34,3 @@ func (v *VariableDeclarationNode) SetDataType(dt DataType) {
 	v.DataT = dt
 }
 
-type PointerToType struct {
-	UnderlyingType TreeNode
-}

@@ -4,6 +4,7 @@ import "he++/utils"
 
 type IdentifierNode struct {
 	name string
+	DataT DataType
 	NodeMetadata
 }
 
@@ -22,5 +23,5 @@ func (i *IdentifierNode) Type() TreeNodeType {
 }
 
 func NewIdentifierNode(name string, meta *NodeMetadata) *IdentifierNode {
-	return &IdentifierNode{name, *meta}
+	return &IdentifierNode{name, nil, *meta}
 }

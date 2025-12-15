@@ -8,7 +8,8 @@ import (
 	// "runtime/debug"
 )
 
-// this function partners with checkExpression for checking that area of the tree
+// this function partners with checkExpression for checking that area of the tree.
+// Assume that the function is not idempotent.
 func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 	switch v := n.(type) {
 	case *nodes.BooleanNode, *nodes.NumberNode, *nodes.IdentifierNode, *nodes.InfixOperatorNode:
@@ -16,32 +17,37 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 
 	case *nodes.PrePostOperatorNode:
 		{
-			// for now, `&` changes type
-			var pref nodes.TypePrefix
+			dt := nodes.NONE
 			switch v.Op {
 			case lexer.AMP:
-				pref = nodes.PointerOf
+				dt = &nodes.PrefixOfType{
+					Prefix: nodes.PointerOf,
+					OfType: a.computeType(v.Operand),
+					DataTypeMetaData: nodes.DataTypeMetaData{
+						TypeSize: nodes.POINTER_SIZE,
+						Tid:      nodes.UniqueTypeId(),
+					},
+				}
 			case lexer.MUL:
-				pref = nodes.Dereference
 				operandType := a.computeType(v.Operand)
 				if ch, ok := operandType.(*nodes.PrefixOfType); ok && ch.Prefix == nodes.PointerOf {
-					return ch.OfType
+					dt = ch.OfType
 				} else {
 					a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Cannot dereference type %s", utils.Cyan(operandType.Text())))
-					return &ERROR_TYPE
+					dt = &ERROR_TYPE
 				}
 			case lexer.SUB:
 				operandType := a.computeType(v.Operand)
 				if !isNumericType(operandType) {
 					a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Cannot negate value of type %s", utils.Cyan(operandType.Text())))
 				}
-				pref = nodes.Negation
-				return operandType
+				dt = operandType
 
 			default:
-				// pref := nodes.Unknown
+				dt = &ERROR_TYPE
 			}
-			return &nodes.PrefixOfType{Prefix: pref, OfType: a.computeType(v.Operand), DataTypeMetaData: nodes.DataTypeMetaData{TypeSize: nodes.POINTER_SIZE, Tid: nodes.UniqueTypeId()}}
+			v.ResultDT = dt
+			return dt
 		}
 	case nil:
 		{
@@ -106,6 +112,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 			)
 			return &ERROR_TYPE
 		}
+		v.CalleeT = ftyp
 		funcInf := utils.MakeASTPrinter()
 		v.Callee.String(&funcInf)
 		funcNameTreeStr := funcInf.Builder.String()

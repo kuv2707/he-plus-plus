@@ -12,9 +12,9 @@ func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
 	switch v := exp.(type) {
 	case *nodes.NumberNode:
 		switch v.NumType {
-		case nodes.FLOAT_NUMBER:
+		case nodes.FLOAT_NUM:
 			return &FLOAT_DATATYPE
-		case nodes.INT32_NUMBER:
+		case nodes.INT_NUM:
 			return &INT_DATATYPE
 		default:
 			return &ERROR_TYPE
@@ -29,6 +29,7 @@ func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
 		if isErrorType(ort) {
 			a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Can't perform %s on types %s and %s", v.Op, utils.Cyan(l.Text()), utils.Cyan(r.Text())))
 		}
+		v.ResultDT = ort
 		return ort
 	case *nodes.IdentifierNode:
 		varname := v.Name()
@@ -38,6 +39,7 @@ func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
 			return &ERROR_TYPE
 		}
 		s.numUses += 1
+		v.DataT = s.dt
 		return s.dt
 	case *nodes.FuncCallNode:
 		a.computeType(v)
