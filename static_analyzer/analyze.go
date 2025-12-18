@@ -27,9 +27,9 @@ type Analyzer struct {
 	scopeStack utils.Stack[ScopeEntry]
 	// refers to data types
 	// todo: would it be OK to merge with syms?
-	definedTypes map[string]*utils.Stack[nodes.DataType]
+	definedTypes map[string]*nodes.DataType
 	// sym refers to functions and variables
-	definedSyms map[string]*utils.Stack[VarDefInfo]
+	definedSyms map[string]*VarDefInfo
 	// operatorTypeRelations map[nodes.TypeId]
 	Errs []utils.CompilerError
 }
@@ -37,8 +37,8 @@ type Analyzer struct {
 func MakeAnalyzer() Analyzer {
 	a := Analyzer{
 		scopeStack:   *utils.MakeStack[ScopeEntry](),
-		definedTypes: make(map[string]*utils.Stack[nodes.DataType]),
-		definedSyms:  make(map[string]*utils.Stack[VarDefInfo]),
+		definedTypes: make(map[string]*nodes.DataType),
+		definedSyms:  make(map[string]*VarDefInfo),
 	}
 	a.PushScope(BASE)
 	addFundamentalDefinitions(&a)
@@ -46,20 +46,17 @@ func MakeAnalyzer() Analyzer {
 }
 
 func (a *Analyzer) PushScope(st ScopeType) {
-	scopeEntry := ScopeEntry{ScopeType: st, DefinedSyms: make(map[string]bool), DefinedTypes: make(map[string]bool)}
+	scopeEntry := ScopeEntry{ScopeType: st, DefinedSyms: make(map[string]bool), DefinedTypes: make(map[string]bool), symRedirects: make(map[string]string)}
 	a.scopeStack.Push(scopeEntry)
 }
 
 func (a *Analyzer) PopScope() {
 	lastScope := a.GetLatestScope()
 	for k := range lastScope.DefinedSyms {
-		v := a.definedSyms[k]
-		v.Pop()
-		a.definedSyms[k] = v
+		delete(a.definedSyms, k)
 	}
 	for k := range lastScope.DefinedTypes {
-		k := a.definedTypes[k]
-		k.Pop()
+		delete(a.definedTypes, k)
 	}
 	a.scopeStack.Pop()
 }
@@ -76,39 +73,47 @@ func (a *Analyzer) PopScope() {
 // }
 
 func (a *Analyzer) GetType(key string) (nodes.DataType, bool) {
-	stk, exists := a.definedTypes[key]
+	val, exists := a.definedTypes[key]
 	if !exists {
-		return &ERROR_TYPE, false
+		return ERROR_TYPE, false
 	}
-	val, exists := stk.Peek()
-	if !exists {
-		return &ERROR_TYPE, false
-	}
+
 	return *val, true
 }
 
-func (a *Analyzer) DefineSym(name string, dt nodes.DataType) {
+func (a *Analyzer) DefineSym(name string, dt nodes.DataType) string {
 	// maybe instead of stack, just change the name of this var to sth unique
 	// and redirect all references in the scope to the new name
+
 	lastScope := a.GetLatestScope()
-	lastScope.DefinedSyms[name] = true
 	_, exists := a.definedSyms[name]
-	if !exists {
-		a.definedSyms[name] = utils.MakeStack[VarDefInfo]()
+	if exists {
+		// store it as a different name to avoid collision with previous definitions in outer scopes
+		// since it begins with a number, it won't collide with user defined vars
+		newName := fmt.Sprintf("%d%s", a.scopeStack.Len(), name)
+		lastScope.symRedirects[name] = newName
+		name = newName
 	}
-	a.definedSyms[name].Push(VarDefInfo{dt, 0})
+	lastScope.DefinedSyms[name] = true
+	a.definedSyms[name] = &VarDefInfo{dt, 0}
+	return name
 }
 
-func (a *Analyzer) GetSymInfo(key string) (*VarDefInfo, bool) {
-	symStk, exists := a.definedSyms[key]
-	if !exists {
-		return nil, false
+func (a *Analyzer) afterRedirect(key string) string {
+	lastScope := a.GetLatestScope()
+	if k, ex := lastScope.symRedirects[key]; ex {
+		return k
 	}
-	val, exists := symStk.Peek()
+	return key
+}
+
+func (a *Analyzer) GetSymInfo(key string) (*VarDefInfo, bool, string) {
+	key = a.afterRedirect(key)
+	symInfo, exists := a.definedSyms[key]
 	if !exists {
-		return nil, false
+		return nil, false, key
 	}
-	return val, true
+	return symInfo, true, key
 }
 
 func (a *Analyzer) GetLatestScope() *ScopeEntry {

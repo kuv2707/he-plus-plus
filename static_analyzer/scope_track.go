@@ -14,4 +14,5 @@ type ScopeEntry struct {
 	ScopeType ScopeType
 	DefinedTypes map[string]bool
 	DefinedSyms map[string]bool
+	symRedirects map[string]string
 }

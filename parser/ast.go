@@ -115,7 +115,7 @@ func parseDataType(p *Parser) node_types.DataType {
 		return &node_types.FuncType{ArgTypes: argsTypes, ReturnType: retType, DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: node_types.POINTER_SIZE, Tid: node_types.UniqueTypeId()}}
 	} else if currTok.Text() == lexer.VOID {
 		t.Consume()
-		return &node_types.VOID_DATATYPE
+		return node_types.VOID_DATATYPE
 	}
 	parsingError("Couldn't parse type: "+currTok.String(), currTok.LineNo())
 	return nil

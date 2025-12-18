@@ -35,8 +35,8 @@ func checkBoolNode(n nodes.TreeNode) bool {
 	return ok
 }
 
-var ERROR_TYPE = nodes.ErrorType{}
-var INT_DATATYPE = nodes.NamedType{
+var ERROR_TYPE nodes.DataType = &nodes.ErrorType{}
+var INT_DATATYPE nodes.DataType = &nodes.NamedType{
 	Name: lexer.INT,
 	DataTypeMetaData: nodes.DataTypeMetaData{
 		TypeSize:    4,
@@ -44,7 +44,7 @@ var INT_DATATYPE = nodes.NamedType{
 		Fundamental: true,
 	},
 }
-var FLOAT_DATATYPE = nodes.NamedType{
+var FLOAT_DATATYPE nodes.DataType = &nodes.NamedType{
 	Name: lexer.FLOAT,
 	DataTypeMetaData: nodes.DataTypeMetaData{
 		TypeSize:    4,
@@ -62,7 +62,7 @@ var BYTE_DATATYPE = nodes.NamedType{
 	},
 }
 
-var BOOLEAN_DATATYPE = nodes.NamedType{
+var BOOLEAN_DATATYPE nodes.DataType = &nodes.NamedType{
 	Name: lexer.BOOLEAN,
 	DataTypeMetaData: nodes.DataTypeMetaData{
 		TypeSize:    1,
@@ -72,10 +72,10 @@ var BOOLEAN_DATATYPE = nodes.NamedType{
 }
 
 func addFundamentalDefinitions(a *Analyzer) {
-	a.definedTypes[lexer.INT] = utils.MakeStack[nodes.DataType](&INT_DATATYPE)
-	a.definedTypes[lexer.FLOAT] = utils.MakeStack[nodes.DataType](&FLOAT_DATATYPE)
-	a.definedTypes[lexer.BOOLEAN] = utils.MakeStack[nodes.DataType](&BOOLEAN_DATATYPE)
-	a.definedTypes[lexer.VOID] = utils.MakeStack[nodes.DataType](&nodes.VOID_DATATYPE)
+	a.definedTypes[lexer.INT] = &INT_DATATYPE
+	a.definedTypes[lexer.FLOAT] = &FLOAT_DATATYPE
+	a.definedTypes[lexer.BOOLEAN] = &BOOLEAN_DATATYPE
+	a.definedTypes[lexer.VOID] = &nodes.VOID_DATATYPE
 
 	// a.operatorTypeRelations[&INT_DATATYPE][&INT_DATATYPE] = &INT_DATATYPE
 }
@@ -104,21 +104,21 @@ type OperatorSignature struct {
 }
 
 var BasicArithmeticOpSigs = []OperatorSignature{
-	{Left: &INT_DATATYPE, Right: &INT_DATATYPE, Ret: &INT_DATATYPE},
-	{Left: &FLOAT_DATATYPE, Right: &FLOAT_DATATYPE, Ret: &FLOAT_DATATYPE},
-	{Left: &INT_DATATYPE, Right: &FLOAT_DATATYPE, Ret: &FLOAT_DATATYPE},
-	{Left: &FLOAT_DATATYPE, Right: &INT_DATATYPE, Ret: &FLOAT_DATATYPE},
+	{Left: INT_DATATYPE, Right: INT_DATATYPE, Ret: INT_DATATYPE},
+	{Left: FLOAT_DATATYPE, Right: FLOAT_DATATYPE, Ret: FLOAT_DATATYPE},
+	{Left: INT_DATATYPE, Right: FLOAT_DATATYPE, Ret: FLOAT_DATATYPE},
+	{Left: FLOAT_DATATYPE, Right: INT_DATATYPE, Ret: FLOAT_DATATYPE},
 }
 
 var RelationOpSigs = []OperatorSignature{
-	{Left: &INT_DATATYPE, Right: &INT_DATATYPE, Ret: &BOOLEAN_DATATYPE},
-	{Left: &FLOAT_DATATYPE, Right: &FLOAT_DATATYPE, Ret: &BOOLEAN_DATATYPE},
-	{Left: &INT_DATATYPE, Right: &FLOAT_DATATYPE, Ret: &BOOLEAN_DATATYPE},
-	{Left: &FLOAT_DATATYPE, Right: &INT_DATATYPE, Ret: &BOOLEAN_DATATYPE},
+	{Left: INT_DATATYPE, Right: INT_DATATYPE, Ret: BOOLEAN_DATATYPE},
+	{Left: FLOAT_DATATYPE, Right: FLOAT_DATATYPE, Ret: BOOLEAN_DATATYPE},
+	{Left: INT_DATATYPE, Right: FLOAT_DATATYPE, Ret: BOOLEAN_DATATYPE},
+	{Left: FLOAT_DATATYPE, Right: INT_DATATYPE, Ret: BOOLEAN_DATATYPE},
 }
 
 var LogicalOpSigs = []OperatorSignature{
-	{Left: &BOOLEAN_DATATYPE, Right: &BOOLEAN_DATATYPE, Ret: &BOOLEAN_DATATYPE},
+	{Left: BOOLEAN_DATATYPE, Right: BOOLEAN_DATATYPE, Ret: BOOLEAN_DATATYPE},
 }
 
 // todo: shift inside Analyzer to make modifiable by src code
@@ -152,5 +152,5 @@ func (a *Analyzer) operatorReturnType(op string, lval nodes.DataType, rval nodes
 			}
 		}
 	}
-	return &ERROR_TYPE
+	return ERROR_TYPE
 }

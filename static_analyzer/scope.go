@@ -33,7 +33,7 @@ func (a *Analyzer) checkNode(n nodes.TreeNode, i int, scp *nodes.ScopeNode, scop
 					// todo: Check if v.DataT itself is valid
 					// rval should have same type
 					rvalType := a.computeType(op.Right)
-					a.DefineSym(varname.Name(), v.DataT)
+					varname.ChangeName(a.DefineSym(varname.Name(), v.DataT))
 					if !rvalType.Equals(v.DataT) {
 						a.AddError(
 							tn.Range().Start,

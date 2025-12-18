@@ -5,7 +5,7 @@ import "he++/lexer"
 // nodes for pointer, arr, obj, primitive, error
 
 var POINTER_SIZE int = 8
-var VOID_DATATYPE = NamedType{Name: lexer.VOID, DataTypeMetaData: DataTypeMetaData{TypeSize: 0, Tid: UniqueTypeId(), Fundamental: true}}
+var VOID_DATATYPE DataType = &NamedType{Name: lexer.VOID, DataTypeMetaData: DataTypeMetaData{TypeSize: 0, Tid: UniqueTypeId(), Fundamental: true}}
 
 type TypeId int
 

@@ -13,14 +13,14 @@ func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
 	case *nodes.NumberNode:
 		switch v.NumType {
 		case nodes.FLOAT_NUM:
-			return &FLOAT_DATATYPE
+			return FLOAT_DATATYPE
 		case nodes.INT_NUM:
-			return &INT_DATATYPE
+			return INT_DATATYPE
 		default:
-			return &ERROR_TYPE
+			return ERROR_TYPE
 		}
 	case *nodes.BooleanNode:
-		return &BOOLEAN_DATATYPE
+		return BOOLEAN_DATATYPE
 	case *nodes.InfixOperatorNode:
 		l := a.computeType(v.Left)
 		r := a.computeType(v.Right)
@@ -33,10 +33,11 @@ func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
 		return ort
 	case *nodes.IdentifierNode:
 		varname := v.Name()
-		s, exists := a.GetSymInfo(varname)
+		s, exists, readAs := a.GetSymInfo(varname)
+		v.ChangeName(readAs)
 		if !exists {
 			a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Undefined identifier %s in expression", utils.Green(varname)))
-			return &ERROR_TYPE
+			return ERROR_TYPE
 		}
 		s.numUses += 1
 		v.DataT = s.dt
@@ -50,5 +51,5 @@ func (a *Analyzer) checkExpression(exp nodes.TreeNode) nodes.DataType {
 			fmt.Sprintf("Can't check for expresion node %T", v),
 		)
 	}
-	return &ERROR_TYPE
+	return ERROR_TYPE
 }

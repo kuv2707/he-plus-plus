@@ -22,6 +22,10 @@ func (i *IdentifierNode) Type() TreeNodeType {
 	return VALUE
 }
 
+func (i *IdentifierNode) ChangeName(name string) {
+	i.name = name
+}
+
 func NewIdentifierNode(name string, meta *NodeMetadata) *IdentifierNode {
 	return &IdentifierNode{name, nil, *meta}
 }

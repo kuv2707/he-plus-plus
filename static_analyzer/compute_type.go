@@ -34,7 +34,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 					dt = ch.OfType
 				} else {
 					a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("Cannot dereference type %s", utils.Cyan(operandType.Text())))
-					dt = &ERROR_TYPE
+					dt = ERROR_TYPE
 				}
 			case lexer.SUB:
 				operandType := a.computeType(v.Operand)
@@ -44,14 +44,14 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 				dt = operandType
 
 			default:
-				dt = &ERROR_TYPE
+				dt = ERROR_TYPE
 			}
 			v.ResultDT = dt
 			return dt
 		}
 	case nil:
 		{
-			return &nodes.VOID_DATATYPE
+			return nodes.VOID_DATATYPE
 		}
 	case *nodes.ArrayDeclarationNode:
 		{
@@ -96,7 +96,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 		v.DataType = indexedValueType
 		if !ok {
 			a.AddError(v.Range().Start, utils.TypeError, fmt.Sprintf("The type %s cannot be indexed by %s", utils.Cyan(arrType.Text()), utils.Cyan(indexerType.Text())))
-			return &ERROR_TYPE
+			return ERROR_TYPE
 		}
 		return indexedValueType
 	case *nodes.StringNode:
@@ -110,7 +110,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 				utils.TypeError,
 				fmt.Sprintf("Type is not callable: %s", utils.Cyan(funcType.Text())),
 			)
-			return &ERROR_TYPE
+			return ERROR_TYPE
 		}
 		v.CalleeT = ftyp
 		funcInf := utils.MakeASTPrinter()
@@ -123,7 +123,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 				utils.TypeError,
 				fmt.Sprintf("Function %s expects %s parameters, but supplied %s", utils.Blue(funcNameTreeStr), utils.Yellow(fmt.Sprint(len(ftyp.ArgTypes))), utils.Yellow(fmt.Sprint(len(v.Args)))),
 			)
-			return &ERROR_TYPE
+			return ERROR_TYPE
 		}
 		for i, k := range v.Args {
 			expT := ftyp.ArgTypes[i]
@@ -142,7 +142,7 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 		return ftyp.ReturnType
 	default:
 		a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Can't compute type for %T", v))
-		return &ERROR_TYPE
+		return ERROR_TYPE
 	}
 }
 
