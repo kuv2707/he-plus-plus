@@ -88,7 +88,7 @@ func NewTernaryNode(condition TreeNode, ifTrue TreeNode, ifFalse TreeNode) *Tern
 type ArrIndNode struct {
 	ArrProvider TreeNode
 	Indexer     TreeNode
-	DataType    DataType // dt of arr[i]
+	DataType    DataType // dt of arr[i] not arr
 	NodeMetadata
 }
 

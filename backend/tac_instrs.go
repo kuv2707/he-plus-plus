@@ -154,6 +154,25 @@ func (l *LabelPlaceholder) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
 
 func placeholderWithLabels(s ...string) *LabelPlaceholder {
 	return &LabelPlaceholder{TACBaseInstr{labels: s}}
+
+}
+
+type LoopBoundary struct {
+	TACBaseInstr
+	loopNo   int
+	startEnd bool
+}
+
+func (l *LoopBoundary) String() string {
+	se := "end"
+	if l.startEnd {
+		se = "start"
+	}
+	return LabInstrStr(l, fmt.Sprintf("loop_boundary_%d %s", l.loopNo, se))
+}
+
+func (l *LoopBoundary) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &NOWHERE, &NOWHERE, &NOWHERE
 }
 
 type AllocType byte

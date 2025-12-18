@@ -97,8 +97,7 @@ func (ag *TACHandler) GenerateTac() {
 			// constant and copy propag would cause some data flow chains to be dangling
 			// which will then be eliminated by pruning, so we want purning to be after propag.
 			ftac.printInstrs()
-			ftac.PropagateRegs()
-			ftac.Prune()
+			ftac.Optimize()
 
 			ftac.printInstrs()
 
@@ -140,7 +139,7 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 				ret := ftac.assignVirtualReg(vname)
 				ftac.assignRegDataCategory(ret, dataCategoryForType(v.DataT))
 				r := ftac.genExprTAC(dcl.Right)
-				ftac.emitInstr(&AssignInstr{assnTo: TACOpArg{VReg, ret}, arg: TACOpArg{VReg, r}})
+				ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{ret}, arg: &VRegArg{r}})
 			}
 		}
 	case *node_types.IfNode:
@@ -171,13 +170,22 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 			ftac.genExprTAC(v.Condition)
 			lastInstr := ftac.instrs[len(ftac.instrs)-1]
 			condInstr := genCondInstr(lastInstr, loopEndLabel)
-			ftac.instrs[len(ftac.instrs)-1] = &condInstr
 
-			ftac.emitInstr(placeholderWithLabels(loopStartLabel))
+			ftac.instrs[len(ftac.instrs)-1] = &LoopBoundary{
+				loopNo:       v.Seq,
+				startEnd:     true,
+				TACBaseInstr: TACBaseInstr{labels: []string{loopStartLabel}},
+			}
+
+			ftac.emitInstr(&condInstr)
 			ftac.genScopeTAC(v.Scope)
 			ftac.genNodeTAC(v.Updater)
 			ftac.emitInstr(&JumpInstr{jmpToLabel: loopStartLabel})
-			ftac.emitInstr(placeholderWithLabels(loopEndLabel))
+			ftac.emitInstr(&LoopBoundary{
+				loopNo:       v.Seq,
+				startEnd:     false,
+				TACBaseInstr: TACBaseInstr{labels: []string{loopEndLabel}},
+			})
 		}
 	case *node_types.InfixOperatorNode:
 		{
@@ -208,22 +216,28 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 	switch v := n.(type) {
 	case *node_types.NumberNode:
 		{
-			var num int64
-			// var f float32
-			binary.Read(bytes.NewReader(v.RawNumBytes), binary.BigEndian, &num)
-			if reg, exists := ftac.nameToReg[fmt.Sprint(num)]; exists {
-				return reg
-			}
-			numReg := ftac.assignVirtualReg(fmt.Sprint(num))
-			// todo: currently we read floats as ints too - impl type tracking of registers (float or int)
-			ftac.emitInstr(&AssignInstr{assnTo: TACOpArg{VReg, numReg}, arg: TACOpArg{Imm, num}})
 			// todo: 16 vs 32 vs 64 bit distinction.
 			if v.NumType == node_types.INT_NUM {
+				var num int64
+				binary.Read(bytes.NewReader(v.RawNumBytes), binary.BigEndian, &num)
+				if reg, exists := ftac.nameToReg[fmt.Sprint(num)]; exists {
+					return reg
+				}
+				numReg := ftac.assignVirtualReg(fmt.Sprint(num))
+				ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{numReg}, arg: &ImmIntArg{num}})
 				ftac.assignRegDataCategory(numReg, I64)
+				return numReg
 			} else {
-				ftac.assignRegDataCategory(numReg, F64)
+				var num float64
+				binary.Read(bytes.NewReader(v.RawNumBytes), binary.BigEndian, &num)
+				if reg, exists := ftac.nameToReg[fmt.Sprint(num)]; exists {
+					return reg
+				}
+				numReg := ftac.assignVirtualReg(fmt.Sprint(num))
+				ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{numReg}, arg: &ImmFloatArg{num}})
+				ftac.assignRegDataCategory(numReg, I64)
+				return numReg
 			}
-			return numReg
 		}
 	case *node_types.InfixOperatorNode:
 		{
@@ -234,14 +248,14 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 					if vl, ok := v.Left.(*node_types.ArrIndNode); ok {
 						indexedElemAddrReg, _ := ftac.getArrIndPointingAt(vl)
 						ftac.emitInstr(&MemStoreInstr{
-							storeAt:   TACOpArg{VReg, indexedElemAddrReg},
-							storeWhat: TACOpArg{VReg, right},
-							numBytes:  8}, // todo: compute reqd size and remove hardcoding
+							storeAt:   &VRegArg{indexedElemAddrReg},
+							storeWhat: &VRegArg{right},
+							numBytes:  vl.DataType.Size()}, // todo: compute reqd size and remove hardcoding
 						)
 						return right // todo: decide semantics of a <binop> b = c
 					} else {
 						left := ftac.genExprTAC(v.Left)
-						ftac.emitInstr(&AssignInstr{assnTo: TACOpArg{VReg, left}, arg: TACOpArg{VReg, right}})
+						ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{left}, arg: &VRegArg{right}})
 						return left
 					}
 				}
@@ -253,10 +267,10 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 					// todo: short circuiting for || and &&
 					right := ftac.genExprTAC(v.Right)
 					ftac.emitInstr(&BinaryOpInstr{
-						assnTo: TACOpArg{VReg, retReg},
+						assnTo: &VRegArg{retReg},
 						op:     v.Op,
-						arg1:   TACOpArg{VReg, left},
-						arg2:   TACOpArg{VReg, right},
+						arg1:   &VRegArg{left},
+						arg2:   &VRegArg{right},
 					})
 					return retReg
 				}
@@ -271,7 +285,7 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 			switch v.Op {
 			case lexer.SUB:
 				{
-					ftac.emitInstr(&UnaryOpInstr{assnTo: TACOpArg{VReg, retReg}, op: v.Op, arg1: TACOpArg{VReg, operand}})
+					ftac.emitInstr(&UnaryOpInstr{assnTo: &VRegArg{retReg}, op: v.Op, arg1: &VRegArg{operand}})
 				}
 			default:
 				panic("Not impl for prepost op" + v.Op)
@@ -287,7 +301,7 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 				ftac.assignRegDataCategory(retReg, dataCategoryForType(v.DataT))
 				ftac.emitInstr(&LoadLabelInstr{
 					loadeeLabel: v.Name(),
-					to:          TACOpArg{VReg, retReg},
+					to:          &VRegArg{retReg},
 				})
 				return retReg
 			}
@@ -304,60 +318,61 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 			reqBytesReg := ftac.assignVirtualReg("")
 			ftac.assignRegDataCategory(reqBytesReg, ftac.getDataRegCategory(arrSizeReg))
 			ftac.emitInstr(&BinaryOpInstr{
-				assnTo: TACOpArg{
-					VReg,
-					reqBytesReg,
-				},
-				op: lexer.MUL,
-				arg1: TACOpArg{
-					VReg,
-					arrSizeReg,
-				},
-				arg2: TACOpArg{Imm, int64(elemSizeBytes)}})
+				assnTo: &VRegArg{reqBytesReg},
+				op:     lexer.MUL,
+				arg1:   &VRegArg{arrSizeReg},
+				arg2:   &ImmIntArg{int64(elemSizeBytes)}})
 
 			// todo: data section allocation should only be in case of const array, else alloc on stack
 			// ftac.dataSectionAllocs = append(ftac.dataSectionAllocs, DataSectionAllocEntry{label, TACOpArg{VirtualRegister, reqBytesReg}})
 			arrPtr := ftac.assignVirtualReg("")
 			ftac.assignRegDataCategory(arrPtr, PTR)
 			ftac.emitInstr(&AllocInstr{allocType: STACK_ALLOC,
-				sizeReg:    TACOpArg{VReg, reqBytesReg},
-				ptrToAlloc: TACOpArg{VReg, arrPtr},
+				sizeReg:    &VRegArg{reqBytesReg},
+				ptrToAlloc: &VRegArg{arrPtr},
 			})
 			memLocReg := ftac.assignVirtualReg("")
 			ftac.assignRegDataCategory(memLocReg, PTR)
-			ftac.emitInstr(&AssignInstr{assnTo: TACOpArg{VReg, memLocReg}, arg: TACOpArg{VReg, arrPtr}})
+			ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{memLocReg}, arg: &VRegArg{arrPtr}})
 			for _, entry := range v.Elems {
 				ftac.emitInstr(&BinaryOpInstr{op: lexer.ADD,
-					assnTo: TACOpArg{VReg, memLocReg},
-					arg1:   TACOpArg{VReg, memLocReg},
-					arg2:   TACOpArg{Imm, int64(elemSizeBytes)},
+					assnTo: &VRegArg{memLocReg},
+					arg1:   &VRegArg{memLocReg},
+					arg2:   &ImmIntArg{int64(elemSizeBytes)},
 				})
 				storeVal := ftac.genExprTAC(entry)
 				ftac.emitInstr(&MemStoreInstr{
-					storeAt:   TACOpArg{VReg, memLocReg},
-					storeWhat: TACOpArg{VReg, storeVal},
-					numBytes:  8, // todo: track size of var
+					storeAt:   &VRegArg{memLocReg},
+					storeWhat: &VRegArg{storeVal},
+					numBytes:  v.DataT.Size(),
 				})
 			}
 			return arrPtr
 		}
 	case *node_types.ArrIndNode:
 		{
-			indexedElemAddrReg, sizeBytes := ftac.getArrIndPointingAt(v)
-			ftac.emitInstr(&MemLoadInstr{loadFrom: TACOpArg{VReg, indexedElemAddrReg}, storeAt: TACOpArg{VReg, indexedElemAddrReg}, numBytes: sizeBytes})
+			indexedElemAddrReg, indexedElemType := ftac.getArrIndPointingAt(v)
+			ftac.assignRegDataCategory(indexedElemAddrReg, dataCategoryForType(indexedElemType))
+			ftac.emitInstr(&MemLoadInstr{
+				loadFrom: &VRegArg{indexedElemAddrReg},
+				storeAt:  &VRegArg{indexedElemAddrReg},
+				numBytes: indexedElemType.Size(),
+			})
 			return indexedElemAddrReg
 		}
 	case *node_types.FuncCallNode:
 		{
+			for _, arg := range v.Args {
+				areg := ftac.genExprTAC(arg)
+				ftac.emitInstr(&ParamInstr{arg: &VRegArg{areg}})
+			}
+
 			retReg := ftac.assignVirtualReg("")
 			ftac.assignRegDataCategory(retReg, dataCategoryForType(v.CalleeT.ReturnType))
 			callAddr := ftac.genExprTAC(v.Callee)
-
-			for _, arg := range v.Args {
-				areg := ftac.genExprTAC(arg)
-				ftac.emitInstr(&ParamInstr{arg: TACOpArg{locType: VReg, ival: areg}})
-			}
-			ftac.emitInstr(&CallInstr{retReg: TACOpArg{locType: VReg, ival: retReg}, calleeAddr: TACOpArg{locType: VReg, ival: callAddr}})
+			// if callee is a static label, have a separate instr for it instead of assigning
+			// label to vreg and then calling the vreg
+			ftac.emitInstr(&CallInstr{retReg: &VRegArg{retReg}, calleeAddr: &VRegArg{callAddr}})
 			return retReg
 		}
 	case *node_types.EmptyPlaceholderNode:
@@ -369,7 +384,7 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 		v.String(&p)
 		panic(fmt.Sprintf("TAC gen Not implemented for %s", p.Builder.String()))
 	}
-	return NOWHERE.ival
+	return 0
 }
 
 func genCondInstr(fromInstr ThreeAddressInstr, jmpToLabel string) CJumpInstr {
@@ -391,25 +406,25 @@ func genCondInstr(fromInstr ThreeAddressInstr, jmpToLabel string) CJumpInstr {
 	return condInstr
 }
 
-func (ftac *FunctionTAC) getArrIndPointingAt(v *node_types.ArrIndNode) (VirtualRegisterNumber, int) {
+func (ftac *FunctionTAC) getArrIndPointingAt(v *node_types.ArrIndNode) (VirtualRegisterNumber, node_types.DataType) {
 	arrBaseAddrReg := ftac.genExprTAC(v.ArrProvider)
 	indVarReg := ftac.genExprTAC(v.Indexer)
 	indReg := ftac.assignVirtualReg("")
-	ftac.assignRegDataCategory(indReg, ftac.getDataRegCategory(indVarReg))
-	ftac.emitInstr(&AssignInstr{assnTo: TACOpArg{VReg, indReg}, arg: TACOpArg{VReg, indVarReg}})
+	ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{indReg}, arg: &VRegArg{indVarReg}})
 	sizeBytes := v.DataType.Size()
 
 	ftac.emitInstr(&BinaryOpInstr{
-		assnTo: TACOpArg{VReg, indReg},
+		assnTo: &VRegArg{indReg},
 		op:     lexer.MUL,
-		arg1:   TACOpArg{VReg, indReg},
-		arg2:   TACOpArg{Imm, int64(sizeBytes)},
+		arg1:   &VRegArg{indReg},
+		arg2:   &ImmIntArg{int64(sizeBytes)},
 	})
 	ftac.emitInstr(&BinaryOpInstr{
-		assnTo: TACOpArg{VReg, indReg},
+		assnTo: &VRegArg{indReg},
 		op:     lexer.ADD,
-		arg1:   TACOpArg{VReg, arrBaseAddrReg},
-		arg2:   TACOpArg{VReg, indReg},
+		arg1:   &VRegArg{arrBaseAddrReg},
+		arg2:   &VRegArg{indReg},
 	})
-	return indReg, sizeBytes
+	ftac.assignRegDataCategory(indReg, PTR)
+	return indReg, v.DataType
 }

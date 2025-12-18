@@ -1,5 +1,5 @@
 funcion principal() vacio {
-    definir int c = 15
+    definir int c = 15*(4+1)
     definir int d = 15
     definir int e = 15
     definir int f = d + e

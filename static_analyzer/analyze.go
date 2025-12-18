@@ -88,6 +88,8 @@ func (a *Analyzer) GetType(key string) (nodes.DataType, bool) {
 }
 
 func (a *Analyzer) DefineSym(name string, dt nodes.DataType) {
+	// maybe instead of stack, just change the name of this var to sth unique
+	// and redirect all references in the scope to the new name
 	lastScope := a.GetLatestScope()
 	lastScope.DefinedSyms[name] = true
 	_, exists := a.definedSyms[name]

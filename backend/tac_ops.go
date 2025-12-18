@@ -30,16 +30,60 @@ const (
 	VOID
 )
 
-type TACOpArg struct {
-	locType TACLocationType
-	ival    int64
+type TACOpArg interface {
+	LocType() TACLocationType
+	String() string
 }
 
-func (arg TACOpArg) String() string {
-	return fmt.Sprintf("%s%d", utils.Yellow(arg.locType.String()), arg.ival)
+type VRegArg struct {
+	regNo VirtualRegisterNumber
 }
 
-var NOWHERE = TACOpArg{Null, 0}
+func (k *VRegArg) LocType() TACLocationType {
+	return VReg
+}
+
+func (arg *VRegArg) String() string {
+	return fmt.Sprintf("%s%d", utils.Yellow(VReg.String()), arg.regNo)
+}
+
+type ImmIntArg struct {
+	num int64
+	// size     int
+}
+
+func (k *ImmIntArg) LocType() TACLocationType {
+	return Imm
+}
+
+func (arg *ImmIntArg) String() string {
+	return fmt.Sprintf("%s%d", utils.Yellow("#"), arg.num)
+}
+
+type ImmFloatArg struct {
+	num float64
+	// size     int
+}
+
+func (k *ImmFloatArg) LocType() TACLocationType {
+	return Imm
+}
+
+func (arg *ImmFloatArg) String() string {
+	return fmt.Sprintf("%s%d", utils.Yellow("#"), arg.num)
+}
+
+type NULLOpArg struct{}
+
+func (k *NULLOpArg) LocType() TACLocationType {
+	return Null
+}
+
+func (arg *NULLOpArg) String() string {
+	return utils.Yellow("_")
+}
+
+var NOWHERE TACOpArg = &NULLOpArg{}
 
 func (t TACLocationType) String() string {
 	switch t {
