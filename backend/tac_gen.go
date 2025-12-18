@@ -351,14 +351,16 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 		}
 	case *node_types.ArrIndNode:
 		{
-			indexedElemAddrReg, indexedElemType := ftac.getArrIndPointingAt(v)
-			ftac.assignRegDataCategory(indexedElemAddrReg, dataCategoryForType(indexedElemType))
+			bytePosReg, indexedElemType := ftac.getArrIndPointingAt(v)
+			indexedElemReg := ftac.assignVirtualReg("")
+
+			ftac.assignRegDataCategory(indexedElemReg, dataCategoryForType(indexedElemType))
 			ftac.emitInstr(&MemLoadInstr{
-				loadFrom: &VRegArg{indexedElemAddrReg},
-				storeAt:  &VRegArg{indexedElemAddrReg},
+				loadFrom: &VRegArg{bytePosReg},
+				storeAt:  &VRegArg{indexedElemReg},
 				numBytes: indexedElemType.Size(),
 			})
-			return indexedElemAddrReg
+			return indexedElemReg
 		}
 	case *node_types.FuncCallNode:
 		{
@@ -412,19 +414,22 @@ func (ftac *FunctionTAC) getArrIndPointingAt(v *node_types.ArrIndNode) (VirtualR
 	indReg := ftac.assignVirtualReg("")
 	ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{indReg}, arg: &VRegArg{indVarReg}})
 	sizeBytes := v.DataType.Size()
-
+	byteOffsetReg := ftac.assignVirtualReg("")
+	ftac.assignRegDataCategory(byteOffsetReg, PTR)
 	ftac.emitInstr(&BinaryOpInstr{
-		assnTo: &VRegArg{indReg},
+		assnTo: &VRegArg{byteOffsetReg},
 		op:     lexer.MUL,
 		arg1:   &VRegArg{indReg},
 		arg2:   &ImmIntArg{int64(sizeBytes)},
 	})
+
+	bytePosReg := ftac.assignVirtualReg("")
+	ftac.assignRegDataCategory(bytePosReg, PTR)
 	ftac.emitInstr(&BinaryOpInstr{
-		assnTo: &VRegArg{indReg},
+		assnTo: &VRegArg{bytePosReg},
 		op:     lexer.ADD,
 		arg1:   &VRegArg{arrBaseAddrReg},
-		arg2:   &VRegArg{indReg},
+		arg2:   &VRegArg{byteOffsetReg},
 	})
-	ftac.assignRegDataCategory(indReg, PTR)
-	return indReg, v.DataType
+	return bytePosReg, v.DataType
 }

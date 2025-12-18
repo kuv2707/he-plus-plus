@@ -75,7 +75,7 @@ type JumpInstr struct {
 }
 
 func (j *JumpInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("jmp %v", utils.BoldGreen(j.jmpToLabel)))
+	return LabInstrStr(j, fmt.Sprintf("%s %v", utils.BoldCyan("jmp"), utils.BoldGreen(j.jmpToLabel)))
 }
 
 func (j *JumpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
@@ -164,11 +164,7 @@ type LoopBoundary struct {
 }
 
 func (l *LoopBoundary) String() string {
-	se := "end"
-	if l.startEnd {
-		se = "start"
-	}
-	return LabInstrStr(l, fmt.Sprintf("loop_boundary_%d %s", l.loopNo, se))
+	return LabInstrStr(l, fmt.Sprintf(" loop_boundary_%d", l.loopNo))
 }
 
 func (l *LoopBoundary) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
@@ -220,7 +216,7 @@ type MemLoadInstr struct {
 }
 
 func (m *MemLoadInstr) String() string {
-	return fmt.Sprintf("%v = load %v, %d bytes", m.storeAt, m.loadFrom, m.numBytes)
+	return fmt.Sprintf("%v = %s %v, %d bytes", m.storeAt, utils.BoldCyan("loadfrom"), m.loadFrom, m.numBytes)
 }
 
 func (m *MemLoadInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {

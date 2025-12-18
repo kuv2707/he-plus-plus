@@ -17,6 +17,9 @@ func (ftac *FunctionTAC) Optimize() {
 	ftac.Prune()
 
 	ftac.eliminateNilInstrs()
+	ctx = ftac.livenessAnalysis()
+	fmt.Println("Reglifetimes:", ctx.regLifetimes)
+	fmt.Println("looplifetimes:", ctx.loopLifetimes)
 }
 
 // constant and copy propagation
@@ -56,6 +59,14 @@ func (ftac *FunctionTAC) PropagateRegs(ctx *TACContext) {
 				assto, ok := (*dest).(*VRegArg)
 				if ok {
 					delete(propagMap, assto.regNo)
+					/**
+					if r1 = r2; r2 = 15; r3 = r1 + 3
+					then in 3rd instr we want r1 to be the value in r2 before 2nd instr
+					but since we've mapped r1 -> r2, we make 3rd instr: r3 = r2 + 1 == 17
+					*/
+					// currently it seems that the way we generate instructions avoids this failure mode
+					
+					// todo: remove those entries in the map which map to assto.regNo too!
 				}
 
 			}
@@ -263,8 +274,7 @@ func (ftac *FunctionTAC) livenessAnalysis() TACContext {
 			}
 		}
 	}
-	fmt.Println("Reglifetimes:", regLifetimes)
-	fmt.Println("looplifetimes:", loopLifetimes)
+
 	return TACContext{
 		regLifetimes:  regLifetimes,
 		loopLifetimes: loopLifetimes,
