@@ -14,12 +14,13 @@ type TACContext struct {
 func (ftac *FunctionTAC) Optimize() {
 	ctx := ftac.livenessAnalysis()
 	ftac.PropagateRegs(&ctx)
-	ftac.Prune()
+	eliminatedRegs := ftac.Prune()
 
 	ftac.eliminateNilInstrs()
 	ctx = ftac.livenessAnalysis()
 	fmt.Println("Reglifetimes:", ctx.regLifetimes)
 	fmt.Println("looplifetimes:", ctx.loopLifetimes)
+	fmt.Println("Eliminated regs: ", eliminatedRegs)
 }
 
 // constant and copy propagation
@@ -65,7 +66,7 @@ func (ftac *FunctionTAC) PropagateRegs(ctx *TACContext) {
 					but since we've mapped r1 -> r2, we make 3rd instr: r3 = r2 + 1 == 17
 					*/
 					// currently it seems that the way we generate instructions avoids this failure mode
-					
+
 					// todo: remove those entries in the map which map to assto.regNo too!
 				}
 
@@ -110,10 +111,11 @@ func canPropagateTo(arg *TACOpArg, currLoop int, ctx *TACContext) bool {
 	return true
 }
 
+// Dead code elimination
 // eliminating useless instrs and vregs ie, those whose data doesn't flow
 // into side-effect instrs which are `param`, `store`. `cjump` is kept as it
 // can affect memory state indirectly.
-func (ftac *FunctionTAC) Prune() {
+func (ftac *FunctionTAC) Prune() map[*VRegArg]bool {
 	depReg := make(map[VirtualRegisterNumber]map[VirtualRegisterNumber]bool) // edge directed from dest to srcs
 	usefulRegs := make(map[VirtualRegisterNumber]bool)
 	markUsefulReg := func(arg TACOpArg) {
@@ -128,7 +130,6 @@ func (ftac *FunctionTAC) Prune() {
 		switch v := instr.(type) {
 		case *MemStoreInstr:
 			{
-				fmt.Println("~!!!", v.storeAt, v.storeWhat)
 				markUsefulReg(v.storeAt)
 				markUsefulReg(v.storeWhat)
 
@@ -145,6 +146,10 @@ func (ftac *FunctionTAC) Prune() {
 		case *CallInstr:
 			{
 				markUsefulReg(v.calleeAddr)
+			}
+		case *FuncRetInstr:
+			{
+				markUsefulReg(v.retReg)
 			}
 		}
 	}
@@ -176,7 +181,7 @@ func (ftac *FunctionTAC) Prune() {
 		}
 	}
 
-	fmt.Println("Eliminated: ")
+	eliminatedRegs := make(map[*VRegArg]bool)
 	for i, instr := range ftac.instrs {
 		switch v := instr.(type) {
 		case *CallInstr:
@@ -192,12 +197,12 @@ func (ftac *FunctionTAC) Prune() {
 				dest, _, _ := instr.ThreeAdresses()
 				if v, ok := (*dest).(*VRegArg); ok && !usefulRegs[v.regNo] {
 					ftac.instrs[i] = nil
-					fmt.Print(*dest, " ")
+					eliminatedRegs[v] = true
 				}
 			}
 		}
 	}
-	fmt.Println()
+	return eliminatedRegs
 }
 
 func addDataFlowEntry(adj map[VirtualRegisterNumber]map[VirtualRegisterNumber]bool, edgeSrc TACOpArg,

@@ -10,10 +10,12 @@ func (ftac *FunctionTAC) simplifyInstr(tac ThreeAddressInstr) ThreeAddressInstr 
 				// no scope of simplif
 				return v
 			} else if ok1 && !ok2 {
-				// todo: impl x/2 -> x >> 1 and x*2 -> x<<1
+				// todo: impl x/2 -> x >> 1 and x*2 -> x<<1, x*0 -> 0
+				// maybe warn about x/0 in ast validation..
 				return v
 			} else if !ok1 && ok2 {
-				// num and reg, no optimization
+				// num and reg
+				// check if the number is 0 and simplify accordingly
 				return v
 			} else {
 				// both numeric, can be precomputed

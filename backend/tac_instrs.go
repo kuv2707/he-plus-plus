@@ -55,6 +55,7 @@ func (u *UnaryOpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
 	return &u.assnTo, &u.arg1, &NOWHERE
 }
 
+// special kind of UnaryOpInstr
 type AssignInstr struct {
 	TACBaseInstr
 	assnTo TACOpArg
@@ -69,6 +70,7 @@ func (a *AssignInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
 	return &a.assnTo, &a.arg, &NOWHERE
 }
 
+// Special kind of CJumpInstr
 type JumpInstr struct {
 	TACBaseInstr
 	jmpToLabel string
@@ -221,6 +223,33 @@ func (m *MemLoadInstr) String() string {
 
 func (m *MemLoadInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
 	return &m.storeAt, &m.loadFrom, &NOWHERE
+}
+
+type FuncRetInstr struct {
+	TACBaseInstr
+	retReg TACOpArg
+}
+
+func (f *FuncRetInstr) String() string {
+	return LabInstrStr(f, fmt.Sprintf("%s %v", utils.BoldCyan("ret"), f.retReg))
+}
+
+func (f *FuncRetInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &NOWHERE, &f.retReg, &NOWHERE
+}
+
+type FuncArgRecvInstr struct {
+	TACBaseInstr
+	argNo    int
+	recvInto TACOpArg
+}
+
+func (f *FuncArgRecvInstr) String() string {
+	return LabInstrStr(f, fmt.Sprintf("%v = %s %d", f.recvInto, utils.BoldCyan("arg"), f.argNo))
+}
+
+func (f *FuncArgRecvInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
+	return &f.recvInto, &NOWHERE, &NOWHERE
 }
 
 var LOOP_START_PREFIX = "loop_start_"

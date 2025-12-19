@@ -1,30 +1,19 @@
 funcion principal() vacio {
     definir int c = 15*(4+1)
-    // definir int d = 15
     definir int e = 15
-    definir int f = doubled(2,3)
-    e = f
-    {
-        definir int e = 56
-        log(e)
-    }
-    // f = 6
-    // definir [int] arr = [int][c]
-    // arr[0] = 0
-    // arr[1] = 1
+
+
+    definir [int] arr = [int][c]
+    arr[0] = 0
+    arr[1] = 1
     para definir int i=2;i<c;i=i+1 {
-        // arr[i] = arr[i-1] + arr[i-2]
-        // log(arr[i])
-        // e = e + 1
-        f = f+1
-        doubled(e,f)
-        // definir int k = i + 1
-        // doubled(e, k)
+        arr[i] = add(arr[i-1], arr[i-2])
+        
     }
 }
 
-funcion doubled(a int, b int) int {
-    devolver 2*a
+funcion add(a int, b int) int {
+    devolver a+b
 }
 
 funcion log(c int) vacio {

@@ -93,10 +93,11 @@ func (ag *TACHandler) GenerateTac() {
 				nameToReg:         make(map[string]VirtualRegisterNumber),
 				dataSectionAllocs: make([]DataSectionAllocEntry, 0)}
 			// todo: load func args
+			ftac.loadFuncArgs(v.ArgList)
 			ftac.genScopeTAC(v.Scope)
 			// constant and copy propag would cause some data flow chains to be dangling
 			// which will then be eliminated by pruning, so we want purning to be after propag.
-			ftac.printInstrs()
+			// ftac.printInstrs()
 			ftac.Optimize()
 
 			ftac.printInstrs()
@@ -121,6 +122,15 @@ func (ftac *FunctionTAC) printInstrs() {
 
 func (ag *FunctionTAC) emitInstr(tai ThreeAddressInstr) {
 	ag.instrs = append(ag.instrs, tai)
+}
+
+func (ftac *FunctionTAC) loadFuncArgs(arglist []node_types.FuncArg) {
+	for i := range arglist {
+		argReg := ftac.assignVirtualReg(arglist[i].Name)
+		ftac.assignRegDataCategory(argReg, dataCategoryForType(arglist[i].DataT))
+
+		ftac.emitInstr(&FuncArgRecvInstr{argNo: i, recvInto: &VRegArg{argReg}})
+	}
 }
 
 func (ftac *FunctionTAC) genScopeTAC(scp *node_types.ScopeNode) {
@@ -201,7 +211,8 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 		}
 	case *node_types.ReturnNode:
 		{
-
+			rValReg := ftac.genExprTAC(v.Value)
+			ftac.emitInstr(&FuncRetInstr{retReg: &VRegArg{rValReg}})
 		}
 	case *node_types.EmptyPlaceholderNode:
 		{
