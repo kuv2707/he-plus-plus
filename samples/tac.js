@@ -1,7 +1,6 @@
 funcion principal() vacio {
     definir int c = 15*(4+1)
-    definir int e = 15
-
+  
 
     definir [int] arr = [int][c]
     arr[0] = 0
@@ -16,6 +15,6 @@ funcion add(a int, b int) int {
     devolver a+b
 }
 
-funcion log(c int) vacio {
-
+funcion log(c int) int {
+    devolver c
 }

@@ -1,4 +1,4 @@
-package backend
+package tac
 
 import (
 	"bytes"
@@ -51,6 +51,10 @@ type FunctionTAC struct {
 	dataSectionAllocs []DataSectionAllocEntry
 }
 
+func (ft *FunctionTAC) Instrs() []ThreeAddressInstr {
+	return ft.instrs
+}
+
 func (ft *FunctionTAC) assignVirtualReg(name string) VirtualRegisterNumber {
 	ft.regCnt++
 	ft.nameToReg[name] = ft.regCnt
@@ -60,6 +64,9 @@ func (ft *FunctionTAC) assignVirtualReg(name string) VirtualRegisterNumber {
 
 func (ftac *FunctionTAC) assignRegDataCategory(r VirtualRegisterNumber, dc DataCategory) {
 	symDef := ftac.symTable[r]
+	if symDef.dt != VOID {
+		panic("Do not change symdef. Use a different register.")
+	}
 	symDef.dt = dc
 	ftac.symTable[r] = symDef
 }
@@ -98,6 +105,7 @@ func (ag *TACHandler) GenerateTac() {
 			// constant and copy propag would cause some data flow chains to be dangling
 			// which will then be eliminated by pruning, so we want purning to be after propag.
 			// ftac.printInstrs()
+			ftac.printInstrs()
 			ftac.Optimize()
 
 			ftac.printInstrs()
@@ -196,14 +204,6 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 				startEnd:     false,
 				TACBaseInstr: TACBaseInstr{labels: []string{loopEndLabel}},
 			})
-		}
-	case *node_types.InfixOperatorNode:
-		{
-			ftac.genExprTAC(v)
-		}
-	case *node_types.FuncCallNode:
-		{
-			ftac.genExprTAC(v)
 		}
 	case *node_types.ScopeNode:
 		{

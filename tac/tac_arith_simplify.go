@@ -1,4 +1,4 @@
-package backend
+package tac
 
 func (ftac *FunctionTAC) simplifyInstr(tac ThreeAddressInstr) ThreeAddressInstr {
 	switch v := tac.(type) {
