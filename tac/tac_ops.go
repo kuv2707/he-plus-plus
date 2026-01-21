@@ -9,6 +9,7 @@ import (
 
 type TACLocationType byte
 type VirtualRegisterNumber = int64
+type TACOperator string
 
 const (
 	VReg TACLocationType = iota
@@ -30,13 +31,34 @@ const (
 	VOID
 )
 
+func (dc DataCategory) IsFloating() bool {
+	return dc == F32 || dc == F64
+}
+
+func (dc DataCategory) SizeBytes() int {
+	switch dc {
+	case I16:
+		return 2
+	case I32, F32:
+		return 4
+	case I64, F64, PTR, AGGREGATE:
+		return 8
+	case BYTE:
+		return 1
+	case VOID:
+		return 0
+	default:
+		return 0
+	}
+}
+
 type TACOpArg interface {
 	LocType() TACLocationType
 	String() string
 }
 
 type VRegArg struct {
-	regNo VirtualRegisterNumber
+	RegNo VirtualRegisterNumber
 }
 
 func (k *VRegArg) LocType() TACLocationType {
@@ -44,12 +66,16 @@ func (k *VRegArg) LocType() TACLocationType {
 }
 
 func (arg *VRegArg) String() string {
-	return fmt.Sprintf("%s%d", utils.Yellow(VReg.String()), arg.regNo)
+	return fmt.Sprintf("%s%d", utils.Yellow(VReg.String()), arg.RegNo)
 }
 
 type ImmIntArg struct {
 	num int64
 	// size     int
+}
+
+func (k ImmIntArg) Num() int64 {
+	return k.num
 }
 
 func (k *ImmIntArg) LocType() TACLocationType {
@@ -65,12 +91,16 @@ type ImmFloatArg struct {
 	// size     int
 }
 
+func (k ImmFloatArg) Num() float64 {
+	return k.num
+}
+
 func (k *ImmFloatArg) LocType() TACLocationType {
 	return Imm
 }
 
 func (arg *ImmFloatArg) String() string {
-	return fmt.Sprintf("%s%d", utils.Yellow("#"), arg.num)
+	return fmt.Sprintf("%s%f", utils.Yellow("#"), arg.num)
 }
 
 type NULLOpArg struct{}
@@ -118,9 +148,9 @@ func dataCategoryForType(dt node_types.DataType) DataCategory {
 		return I16
 	case 4:
 		if dt.TypeId() == staticanalyzer.INT_DATATYPE.TypeId() {
-			return F32
-		} else {
 			return I32
+		} else {
+			return F32
 		}
 	case 8:
 		if dt.TypeId() == staticanalyzer.FLOAT_DATATYPE.TypeId() {

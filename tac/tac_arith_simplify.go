@@ -30,7 +30,7 @@ func (ftac *FunctionTAC) simplifyInstr(tac ThreeAddressInstr) ThreeAddressInstr 
 	return tac
 }
 
-func doArithmetic(a TACOpArg, b TACOpArg, op string) TACOpArg {
+func doArithmetic(a TACOpArg, b TACOpArg, op TACOperator) TACOpArg {
 	aInt, aIsInt := a.(*ImmIntArg)
 	aFloat, _ := a.(*ImmFloatArg)
 	bInt, bIsInt := b.(*ImmIntArg)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"he++/asm_gen"
 	cmdlineutils "he++/cmdline_utils"
 	"he++/lexer"
 	"he++/parser"
@@ -32,8 +33,12 @@ func main() {
 	}
 	analyzer := staticanalyzer.MakeAnalyzer()
 	ok := analyzer.AnalyzeAST(node)
-	if ok {
-		asm := tac.NewTACGen(node)
-		asm.GenerateTac()
+	if !ok {
+		println("Cannot proceed due to these errors")
+		return
 	}
+	tac := tac.NewTACGen(node)
+	tac.GenerateTac()
+	asm_gen := asm_gen.NewAsmGen(tac)
+	asm_gen.GenerateAsm()
 }

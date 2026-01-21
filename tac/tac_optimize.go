@@ -17,10 +17,12 @@ func (ftac *FunctionTAC) Optimize() {
 	eliminatedRegs := ftac.Prune()
 
 	ftac.eliminateNilInstrs()
+	ftac.removeRedundantInstrs()
 	ctx = ftac.livenessAnalysis()
 	fmt.Println("Reglifetimes:", ctx.regLifetimes)
 	fmt.Println("looplifetimes:", ctx.loopLifetimes)
 	fmt.Println("Eliminated regs: ", eliminatedRegs)
+	ftac.ctx = ctx
 }
 
 // constant and copy propagation
@@ -54,12 +56,12 @@ func (ftac *FunctionTAC) PropagateRegs(ctx *TACContext) {
 			simpInstr := ftac.simplifyInstr(ftac.instrs[i])
 			if assn, ok := simpInstr.(*AssignInstr); ok {
 				assto := assn.assnTo.(*VRegArg)
-				propagMap[assto.regNo] = &assn.arg
+				propagMap[assto.RegNo] = &assn.arg
 
 			} else {
 				assto, ok := (*dest).(*VRegArg)
 				if ok {
-					delete(propagMap, assto.regNo)
+					delete(propagMap, assto.RegNo)
 					/**
 					if r1 = r2; r2 = 15; r3 = r1 + 3
 					then in 3rd instr we want r1 to be the value in r2 before 2nd instr
@@ -78,7 +80,7 @@ func (ftac *FunctionTAC) PropagateRegs(ctx *TACContext) {
 
 func fold(arg *TACOpArg, propagMap map[VirtualRegisterNumber]*TACOpArg) {
 	if vregarg, ok := (*arg).(*VRegArg); ok {
-		if replace, ex := propagMap[vregarg.regNo]; ex {
+		if replace, ex := propagMap[vregarg.RegNo]; ex {
 			// assign replace to arg
 			*arg = *replace
 		}
@@ -95,12 +97,12 @@ func canPropagateTo(arg *TACOpArg, currLoop int, ctx *TACContext) bool {
 		// lifetime extends beyond the loop
 		// written to inside the loop
 		// read from inside the loop.
-		regLife, ex := ctx.regLifetimes[varg.regNo]
+		regLife, ex := ctx.regLifetimes[varg.RegNo]
 		if !ex {
 			panic("lifetime info should have existed for arg " + varg.String())
 		}
-		if regLife.start < loopLife.start || regLife.end > loopLife.end {
-			if hasBeenWritten(varg.regNo, currLoop, ctx.loopWritelog) {
+		if regLife.Start < loopLife.Start || regLife.End > loopLife.End {
+			if hasBeenWritten(varg.RegNo, currLoop, ctx.loopWritelog) {
 				return false
 			}
 		}
@@ -120,7 +122,7 @@ func (ftac *FunctionTAC) Prune() map[*VRegArg]bool {
 	usefulRegs := make(map[VirtualRegisterNumber]bool)
 	markUsefulReg := func(arg TACOpArg) {
 		if varg, ok := arg.(*VRegArg); ok {
-			usefulRegs[varg.regNo] = true
+			usefulRegs[varg.RegNo] = true
 		}
 	}
 	for _, instr := range ftac.instrs {
@@ -187,7 +189,7 @@ func (ftac *FunctionTAC) Prune() map[*VRegArg]bool {
 		case *CallInstr:
 			{
 				k := v.retReg.(*VRegArg) // should always be valid
-				if !usefulRegs[k.regNo] {
+				if !usefulRegs[k.RegNo] {
 					v.retReg = NOWHERE
 					ftac.instrs[i] = v // maybe unnecessary
 				}
@@ -195,7 +197,7 @@ func (ftac *FunctionTAC) Prune() map[*VRegArg]bool {
 		default:
 			{
 				dest, _, _ := instr.ThreeAdresses()
-				if v, ok := (*dest).(*VRegArg); ok && !usefulRegs[v.regNo] {
+				if v, ok := (*dest).(*VRegArg); ok && !usefulRegs[v.RegNo] {
 					ftac.instrs[i] = nil
 					eliminatedRegs[v] = true
 				}
@@ -212,19 +214,19 @@ func addDataFlowEntry(adj map[VirtualRegisterNumber]map[VirtualRegisterNumber]bo
 	if !ok1 || !ok2 {
 		return
 	}
-	if vesrc.regNo == vedst.regNo {
+	if vesrc.RegNo == vedst.RegNo {
 		return
 	}
 
-	if adj[vedst.regNo] == nil {
-		adj[vedst.regNo] = make(map[VirtualRegisterNumber]bool)
+	if adj[vedst.RegNo] == nil {
+		adj[vedst.RegNo] = make(map[VirtualRegisterNumber]bool)
 	}
-	adj[vedst.regNo][vesrc.regNo] = true
+	adj[vedst.RegNo][vesrc.RegNo] = true
 }
 
 type Life struct {
-	start int
-	end   int
+	Start int
+	End   int
 }
 
 func (ftac *FunctionTAC) livenessAnalysis() TACContext {
@@ -239,12 +241,12 @@ func (ftac *FunctionTAC) livenessAnalysis() TACContext {
 		if !ok {
 			return
 		}
-		if k, ex := regLifetimes[arg.regNo]; !ex {
-			regLifetimes[arg.regNo] = Life{i, i}
+		if k, ex := regLifetimes[arg.RegNo]; !ex {
+			regLifetimes[arg.RegNo] = Life{i, i}
 		} else {
-			k.end = max(k.end, i)
-			k.start = min(k.start, i)
-			regLifetimes[arg.regNo] = k
+			k.End = max(k.End, i)
+			k.Start = min(k.Start, i)
+			regLifetimes[arg.RegNo] = k
 		}
 
 	}
@@ -264,7 +266,7 @@ func (ftac *FunctionTAC) livenessAnalysis() TACContext {
 			// register it as being written to in this loop
 			lno, _ := loopStack.Peek() // assert that lno is not zero value
 			if *lno != -1 {
-				registerWriteInLoop(v.regNo, *lno)
+				registerWriteInLoop(v.RegNo, *lno)
 			}
 		}
 		if v, ok := instr.(*LoopBoundary); ok {
@@ -273,7 +275,7 @@ func (ftac *FunctionTAC) livenessAnalysis() TACContext {
 				loopStack.Push(v.loopNo)
 
 			} else {
-				k.start = min(k.start, i)
+				k.Start = min(k.Start, i)
 				loopLifetimes[v.loopNo] = k
 				loopStack.Pop()
 			}
@@ -305,5 +307,19 @@ func (ftac *FunctionTAC) eliminateNilInstrs() {
 }
 
 func (ftac *FunctionTAC) removeRedundantInstrs() {
+	pruned := make([]ThreeAddressInstr, 0)
+	for i, ins := range ftac.instrs {
+		if v, ok := ins.(*LabelPlaceholder); ok {
+			if i == len(ftac.instrs) {
+				pruned = append(pruned, ins)
+				continue
+			}
+			labs := ftac.instrs[i+1].Labels()
+			ftac.instrs[i+1].setLabels(append(labs, v.labels...))
+		} else {
+			pruned = append(pruned, ins)
+		}
+	}
+	ftac.instrs = pruned
 
 }

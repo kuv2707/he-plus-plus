@@ -9,6 +9,7 @@ import (
 type ThreeAddressInstr interface {
 	String() string
 	Labels() []string
+	setLabels(labs []string)
 	ThreeAdresses() (dest, src1, src2 *TACOpArg)
 }
 
@@ -20,16 +21,27 @@ func (b *TACBaseInstr) Labels() []string {
 	return b.labels
 }
 
+func (b *TACBaseInstr) setLabels(labs []string) {
+	b.labels = labs
+}
+
 func LabInstrStr(k ThreeAddressInstr, s string) string {
-	return utils.BoldGreen(strings.Join(k.Labels(), ":\n")) + s
+	if len(k.Labels()) == 0 {
+		return s
+	}
+	return utils.BoldGreen(strings.Join(k.Labels(), ":\n")) + ":\n\t" + s
 }
 
 type BinaryOpInstr struct {
 	TACBaseInstr
 	assnTo TACOpArg
-	op     string // todo: use enum
+	op     TACOperator
 	arg1   TACOpArg
 	arg2   TACOpArg
+}
+
+func (b *BinaryOpInstr) Operator() TACOperator {
+	return b.op
 }
 
 func (b *BinaryOpInstr) String() string {
@@ -86,15 +98,15 @@ func (j *JumpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
 
 type CJumpInstr struct {
 	TACBaseInstr
-	op   string
+	Op   TACOperator
 	argL TACOpArg
 	argR TACOpArg
 	// to jump to if the op yielded false
-	jmpToLabel string
+	JmpToLabel string
 }
 
 func (j *CJumpInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("jmp_if_false %s %s %s , %v", j.argL, j.op, j.argR, utils.BoldGreen(j.jmpToLabel)))
+	return LabInstrStr(j, fmt.Sprintf("jmp_if_false %s %s %s , %v", j.argL, j.Op, j.argR, utils.BoldGreen(j.JmpToLabel)))
 }
 
 func (j *CJumpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {

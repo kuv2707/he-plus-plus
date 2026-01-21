@@ -7,8 +7,8 @@ type Heap[T any] struct {
 	arr  []T
 }
 
-func MakeHeap[T any]() Heap[T] {
-	return Heap[T]{}
+func MakeHeap[T any](c Comparator[T]) Heap[T] {
+	return Heap[T]{comp: c}
 }
 
 func (h *Heap[T]) Push(k T) {

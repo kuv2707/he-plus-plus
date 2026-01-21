@@ -6,13 +6,13 @@ import (
 )
 
 type BooleanNode struct {
-	boolVal bool
+	BoolVal bool
 	NodeMetadata
 }
 
 func (b *BooleanNode) String(p *utils.ASTPrinter) {
 	p.PushIndent()
-	if b.boolVal {
+	if b.BoolVal {
 		p.WriteLine(utils.Blue(lexer.TRUE))
 	} else {
 		p.WriteLine(utils.Blue(lexer.FALSE))

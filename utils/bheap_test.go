@@ -4,8 +4,7 @@ package utils
 import "testing"
 
 func TestHeapPushMinHeap(t *testing.T) {
-	h := MakeHeap[int]()
-	h.SetComparator(func(a, b int) bool { return a < b })
+	h := MakeHeap(func(a, b int) bool { return a < b })
 
 	input := []int{5, 3, 8, 1, 4}
 	for _, v := range input {
@@ -18,8 +17,7 @@ func TestHeapPushMinHeap(t *testing.T) {
 }
 
 func TestHeapPopMinHeap(t *testing.T) {
-	h := MakeHeap[int]()
-	h.SetComparator(func(a, b int) bool { return a < b })
+	h := MakeHeap(func(a, b int) bool { return a < b })
 
 	input := []int{7, 2, 6, 1, 5}
 	for _, v := range input {
@@ -36,8 +34,7 @@ func TestHeapPopMinHeap(t *testing.T) {
 }
 
 func TestHeapInternalArrayInvariant(t *testing.T) {
-	h := MakeHeap[int]()
-	h.SetComparator(func(a, b int) bool { return a < b })
+	h := MakeHeap(func(a, b int) bool { return a < b })
 
 	h.arr = []int{1, 3, 2, 7, 6, 4}
 
@@ -53,8 +50,7 @@ func TestHeapInternalArrayInvariant(t *testing.T) {
 }
 
 func TestHeapifyFixesViolation(t *testing.T) {
-	h := MakeHeap[int]()
-	h.SetComparator(func(a, b int) bool { return a < b })
+	h := MakeHeap(func(a, b int) bool { return a < b })
 
 	// violate heap property at root
 	h.arr = []int{9, 2, 3, 4, 5}
@@ -66,8 +62,7 @@ func TestHeapifyFixesViolation(t *testing.T) {
 }
 
 func TestHeapSizeAndEmptyPop(t *testing.T) {
-	h := MakeHeap[int]()
-	h.SetComparator(func(a, b int) bool { return a < b })
+	h := MakeHeap(func(a, b int) bool { return a < b })
 
 	h.Push(3)
 	h.Push(1)

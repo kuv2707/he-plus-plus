@@ -46,6 +46,8 @@ func wrap(code, s string) string {
 	return code + s + "\033[0m"
 }
 
+// escape character is 0x1b or 033
+
 // --- Foreground colors ---
 func Black(s string) string   { return wrap("\033[30m", s) }
 func Red(s string) string     { return wrap("\033[31m", s) }
