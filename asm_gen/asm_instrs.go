@@ -61,16 +61,16 @@ var compOpsName = map[string]string{
 }
 
 func opInstrName(op tac.TACOperator) string {
-	switch op {
+	switch string(op) {
 
 	// Arithmetic
-	case "+":
+	case lexer.ADD:
 		return ADD
-	case "-":
+	case lexer.SUB:
 		return SUB
-	case "*":
+	case lexer.MUL:
 		return IMUL
-	case "/":
+	case lexer.DIV:
 		return IDIV
 	case "neg":
 		return NEG
@@ -80,15 +80,15 @@ func opInstrName(op tac.TACOperator) string {
 		return CMP
 
 	// Logical / bitwise
-	case "&":
+	case lexer.AMP:
 		return AND
-	case "|":
+	case lexer.PIPE:
 		return OR
 	case "^":
 		return XOR
-	case "<<":
+	case lexer.LSHIFT:
 		return SHL
-	case ">>":
+	case lexer.RSHIFT:
 		return SHR
 
 	// Calls
