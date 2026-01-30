@@ -121,8 +121,12 @@ func (fasm *FunctionAsm) instrParam(arg tac.TACOpArg) string {
 
 func (fasm *FunctionAsm) genAsmForAssign(v *tac.AssignInstr) {
 	vregTo, vregArg, _ := v.ThreeAdresses()
+	p1, p2 := fasm.instrParam(*vregTo), fasm.instrParam(*vregArg)
+	if p1 == p2 {
+		return
+	}
 	fasm.emitInstr(x86_64Instr{instrName: MOV,
-		params: []string{fasm.instrParam(*vregTo), fasm.instrParam(*vregArg)},
+		params: []string{p1, p2},
 		labels: v.Labels(),
 	})
 }
@@ -164,6 +168,7 @@ func (fasm *FunctionAsm) genAsmForCJump(v *tac.CJumpInstr) {
 }
 
 func (fasm *FunctionAsm) genAsmForMemStore(v *tac.MemStoreInstr) {
+	fmt.Println(v)
 	sat := fasm.VRegMapping[(v.StoreAt.(*tac.VRegArg)).RegNo]
 	swhat := fasm.instrParam(v.StoreWhat)
 	dest := sat.String()
