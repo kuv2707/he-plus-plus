@@ -6,8 +6,9 @@ funcion principal() vacio {
     arr[0] = 0
     arr[1] = 1
     para definir int i=0;i<c;i=i+1 {
-        si i < 2 entonces {
-            arr[i] = add(arr[i-1], arr[i-2])
+        si i > 1 entonces {
+            // arr[i] = (arr[i-1] + arr[i-2])
+            arr[i] = arr[i-1]
         }
         
     }

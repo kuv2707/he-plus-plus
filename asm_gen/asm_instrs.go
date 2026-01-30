@@ -25,6 +25,7 @@ func (ins x86_64Instr) String() string {
 
 const (
 	MOV  = "mov"
+	LEA  = "lea"
 	ADD  = "add"
 	SUB  = "sub"
 	IMUL = "imul"

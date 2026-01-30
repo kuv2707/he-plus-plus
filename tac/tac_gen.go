@@ -49,6 +49,7 @@ type FunctionTAC struct {
 	symTable          map[VirtualRegisterNumber]SymDef // todo: typeAsm stores the assembly-level type for instr selection, like int or float ...
 	nameToReg         map[string]VirtualRegisterNumber
 	dataSectionAllocs []DataSectionAllocEntry
+	allocCnt          int
 	ctx               TACContext
 }
 
@@ -108,7 +109,6 @@ func (ag *TACHandler) GenerateTac() {
 			ftac.loadFuncArgs(v.ArgList)
 			ftac.genScopeTAC(v.Scope)
 
-			ftac.printInstrs()
 			ftac.Optimize()
 
 			ftac.printInstrs()
@@ -177,7 +177,7 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 				condInstr := genCondInstr(lastInstr, fmt.Sprintf("cond_%d_brch_%d", v.Seq, i+1)) // jmp to next condn
 				ftac.instrs[len(ftac.instrs)-1] = &condInstr
 				ftac.genScopeTAC(branch.Scope)
-				ftac.emitInstr(&JumpInstr{jmpToLabel: ifEnd})
+				ftac.emitInstr(&JumpInstr{JmpToLabel: ifEnd})
 			}
 			ftac.emitInstr(placeholderWithLabels(ifEnd))
 		}
@@ -191,7 +191,7 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 			ftac.genExprTAC(v.Condition)
 			lastInstr := ftac.instrs[len(ftac.instrs)-1]
 			condInstr := genCondInstr(lastInstr, loopEndLabel)
-
+			condInstr.setLabels([]string{loopStartLabel})
 			ftac.instrs[len(ftac.instrs)-1] = &LoopBoundary{
 				loopNo:       v.Seq,
 				startEnd:     true,
@@ -201,7 +201,7 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 			ftac.emitInstr(&condInstr)
 			ftac.genScopeTAC(v.Scope)
 			ftac.genNodeTAC(v.Updater)
-			ftac.emitInstr(&JumpInstr{jmpToLabel: loopStartLabel})
+			ftac.emitInstr(&JumpInstr{JmpToLabel: loopStartLabel, TACBaseInstr: TACBaseInstr{labels: []string{loopEndLabel}}})
 			ftac.emitInstr(&LoopBoundary{
 				loopNo:       v.Seq,
 				startEnd:     false,
@@ -262,9 +262,9 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 					if vl, ok := v.Left.(*node_types.ArrIndNode); ok {
 						indexedElemAddrReg, _ := ftac.getArrIndPointingAt(vl)
 						ftac.emitInstr(&MemStoreInstr{
-							storeAt:   &VRegArg{indexedElemAddrReg},
-							storeWhat: &VRegArg{right},
-							numBytes:  vl.DataType.Size()}, // todo: compute reqd size and remove hardcoding
+							StoreAt:   &VRegArg{indexedElemAddrReg},
+							StoreWhat: &VRegArg{right},
+							NumBytes:  vl.DataType.Size()}, // todo: compute reqd size and remove hardcoding
 						)
 						return right // todo: decide semantics of a <binop> b = c
 					} else {
@@ -337,14 +337,15 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 				arg1:   &VRegArg{arrSizeReg},
 				arg2:   &ImmIntArg{int64(elemSizeBytes)}})
 
-			// todo: data section allocation should only be in case of const array, else alloc on stack
-			// ftac.dataSectionAllocs = append(ftac.dataSectionAllocs, DataSectionAllocEntry{label, TACOpArg{VirtualRegister, reqBytesReg}})
 			arrPtr := ftac.assignVirtualReg("")
 			ftac.assignRegDataCategory(arrPtr, PTR)
-			ftac.emitInstr(&AllocInstr{allocType: STACK_ALLOC,
-				sizeReg:    &VRegArg{reqBytesReg},
-				ptrToAlloc: &VRegArg{arrPtr},
+			ftac.emitInstr(&AllocInstr{AllocType: STACK_ALLOC,
+				SizeReg:    &VRegArg{reqBytesReg},
+				PtrToAlloc: &VRegArg{arrPtr},
+				AllocNo:    ftac.allocCnt,
 			})
+			ftac.allocCnt++
+
 			memLocReg := ftac.assignVirtualReg("")
 			ftac.assignRegDataCategory(memLocReg, PTR)
 			ftac.emitInstr(&AssignInstr{assnTo: &VRegArg{memLocReg}, arg: &VRegArg{arrPtr}})
@@ -356,9 +357,9 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 				})
 				storeVal := ftac.genExprTAC(entry)
 				ftac.emitInstr(&MemStoreInstr{
-					storeAt:   &VRegArg{memLocReg},
-					storeWhat: &VRegArg{storeVal},
-					numBytes:  v.DataT.Size(),
+					StoreAt:   &VRegArg{memLocReg},
+					StoreWhat: &VRegArg{storeVal},
+					NumBytes:  v.DataT.Size(),
 				})
 			}
 			return arrPtr
@@ -370,9 +371,9 @@ func (ftac *FunctionTAC) genExprTAC(n node_types.TreeNode) VirtualRegisterNumber
 
 			ftac.assignRegDataCategory(indexedElemReg, dataCategoryForType(indexedElemType))
 			ftac.emitInstr(&MemLoadInstr{
-				loadFrom: &VRegArg{bytePosReg},
-				storeAt:  &VRegArg{indexedElemReg},
-				numBytes: indexedElemType.Size(),
+				LoadFrom: &VRegArg{bytePosReg},
+				StoreAt:  &VRegArg{indexedElemReg},
+				NumBytes: indexedElemType.Size(),
 			})
 			return indexedElemReg
 		}

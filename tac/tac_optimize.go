@@ -132,8 +132,8 @@ func (ftac *FunctionTAC) Prune() map[*VRegArg]bool {
 		switch v := instr.(type) {
 		case *MemStoreInstr:
 			{
-				markUsefulReg(v.storeAt)
-				markUsefulReg(v.storeWhat)
+				markUsefulReg(v.StoreAt)
+				markUsefulReg(v.StoreWhat)
 
 			}
 		case *CJumpInstr:

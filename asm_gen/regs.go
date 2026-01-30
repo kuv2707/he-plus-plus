@@ -32,6 +32,7 @@ const (
 )
 
 func vRegComparator(ftac *tac.FunctionTAC, ra, rb tac.VirtualRegisterNumber) bool {
+	// decide priority based on lifetime, use frequency etc.
 	lifes := ftac.RegLifetimes()
 	l1, ex := lifes[ra]
 	if !ex {

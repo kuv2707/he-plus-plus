@@ -85,11 +85,11 @@ func (a *AssignInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
 // Special kind of CJumpInstr
 type JumpInstr struct {
 	TACBaseInstr
-	jmpToLabel string
+	JmpToLabel string
 }
 
 func (j *JumpInstr) String() string {
-	return LabInstrStr(j, fmt.Sprintf("%s %v", utils.BoldCyan("jmp"), utils.BoldGreen(j.jmpToLabel)))
+	return LabInstrStr(j, fmt.Sprintf("%s %v", utils.BoldCyan("jmp"), utils.BoldGreen(j.JmpToLabel)))
 }
 
 func (j *JumpInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
@@ -194,47 +194,48 @@ const (
 
 type AllocInstr struct {
 	TACBaseInstr
-	allocType  AllocType
-	sizeReg    TACOpArg
-	ptrToAlloc TACOpArg
+	AllocType  AllocType
+	SizeReg    TACOpArg
+	PtrToAlloc TACOpArg
+	AllocNo    int
 }
 
 func (a *AllocInstr) String() string {
-	return LabInstrStr(a, fmt.Sprintf("%v = alloc(%c, %v)", a.ptrToAlloc, a.allocType, a.sizeReg))
+	return LabInstrStr(a, fmt.Sprintf("%v = alloc_%d(%c, %v)", a.PtrToAlloc, a.AllocNo, a.AllocType, a.SizeReg))
 }
 
 func (a *AllocInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
-	return &a.ptrToAlloc, &a.sizeReg, &NOWHERE
+	return &a.PtrToAlloc, &a.SizeReg, &NOWHERE
 }
 
 type MemStoreInstr struct {
 	TACBaseInstr
-	storeAt   TACOpArg
-	storeWhat TACOpArg
-	numBytes  int
+	StoreAt   TACOpArg
+	StoreWhat TACOpArg
+	NumBytes  int
 }
 
 func (m *MemStoreInstr) String() string {
-	return fmt.Sprintf("%s [%v], %v (%d bytes)", utils.BoldCyan("store"), m.storeAt, m.storeWhat, m.numBytes)
+	return fmt.Sprintf("%s [%v], %v (%d bytes)", utils.BoldCyan("store"), m.StoreAt, m.StoreWhat, m.NumBytes)
 }
 
 func (m *MemStoreInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
-	return &NOWHERE, &m.storeAt, &m.storeWhat
+	return &NOWHERE, &m.StoreAt, &m.StoreWhat
 }
 
 type MemLoadInstr struct {
 	TACBaseInstr
-	loadFrom TACOpArg
-	storeAt  TACOpArg
-	numBytes int
+	LoadFrom TACOpArg
+	StoreAt  TACOpArg
+	NumBytes int
 }
 
 func (m *MemLoadInstr) String() string {
-	return fmt.Sprintf("%v = %s %v, %d bytes", m.storeAt, utils.BoldCyan("loadfrom"), m.loadFrom, m.numBytes)
+	return fmt.Sprintf("%v = %s %v, %d bytes", m.StoreAt, utils.BoldCyan("loadfrom"), m.LoadFrom, m.NumBytes)
 }
 
 func (m *MemLoadInstr) ThreeAdresses() (*TACOpArg, *TACOpArg, *TACOpArg) {
-	return &m.storeAt, &m.loadFrom, &NOWHERE
+	return &m.StoreAt, &m.LoadFrom, &NOWHERE
 }
 
 type FuncRetInstr struct {
