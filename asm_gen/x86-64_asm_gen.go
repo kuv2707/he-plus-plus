@@ -34,8 +34,8 @@ func (ag *AsmGen) GenerateAsm() {
 		fasm := MakeFunctionAsm(ftac)
 		fasm.GenerateAsm()
 		fmt.Println("asm for", fname)
-		for _, v := range fasm.instrs {
-			fmt.Println(v)
+		for i := range fasm.instrs {
+			fmt.Println(fasm.instrs[i])
 		}
 		fmt.Println()
 	}
@@ -73,8 +73,9 @@ func (fasm *FunctionAsm) GenerateAsm() {
 	for k, v := range fasm.VRegMapping {
 		fmt.Printf("VR: %v, Loc: %s\n", utils.Red(fmt.Sprint(k)), utils.Cyan(v.String()))
 	}
-	for _, ins := range fasm.ftac.Instrs() {
-		switch v := ins.(type) {
+	instrs := fasm.ftac.Instrs()
+	for i := range instrs {
+		switch v := instrs[i].(type) {
 		case *tac.AssignInstr:
 			fasm.genAsmForAssign(v)
 		case *tac.BinaryOpInstr:
@@ -96,7 +97,7 @@ func (fasm *FunctionAsm) GenerateAsm() {
 		case *tac.LoopBoundary:
 			// ignore
 		default:
-			fmt.Println("Not impl for", ins)
+			fmt.Println("Not impl for", instrs[i])
 		}
 	}
 }
