@@ -75,11 +75,11 @@ func (a *Analyzer) computeType(n nodes.TreeNode) nodes.DataType {
 		}
 	case *nodes.FuncNode:
 		argtypes := make([]nodes.DataType, 0)
-		for _, arg := range v.ArgList {
-			if !a.verifyAndNormalize(&arg.DataT) {
-				a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Arg type %s is undefined or depends on an undefined type", utils.Cyan(arg.DataT.Text())))
+		for i := range v.ArgList {
+			if !a.verifyAndNormalize(&v.ArgList[i].DataT) {
+				a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Arg type %s is undefined or depends on an undefined type", utils.Cyan(v.ArgList[i].DataT.Text())))
 			}
-			argtypes = append(argtypes, arg.DataT)
+			argtypes = append(argtypes, v.ArgList[i].DataT)
 		}
 		if !a.verifyAndNormalize(&v.ReturnType) {
 			a.AddError(v.Range().Start, utils.UndefinedError, fmt.Sprintf("Return type %s is undefined or depends on an undefined type", utils.Cyan(v.ReturnType.Text())))

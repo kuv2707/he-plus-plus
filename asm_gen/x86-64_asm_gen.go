@@ -3,11 +3,10 @@ package asm_gen
 import (
 	"fmt"
 	"he++/tac"
-	"he++/utils"
 )
 
 type Location struct {
-	reg    x86_64Reg
+	reg    *x86_64Reg
 	offset int // non zero offset means stack allocated
 }
 
@@ -15,7 +14,7 @@ func (l Location) String() string {
 	if l.offset != 0 {
 		return fmt.Sprintf("%s - %d", l.reg, l.offset)
 	}
-	return string(l.reg)
+	return string(l.reg.String())
 }
 
 // following SysV ABI
@@ -70,9 +69,9 @@ func (fasm *FunctionAsm) emitInstr(ins x86_64Instr) {
 
 func (fasm *FunctionAsm) GenerateAsm() {
 	fasm.createVregMapping()
-	for k, v := range fasm.VRegMapping {
-		fmt.Printf("VR: %v, Loc: %s\n", utils.Red(fmt.Sprint(k)), utils.Cyan(v.String()))
-	}
+	// for k, v := range fasm.VRegMapping {
+	// 	fmt.Printf("VR: %v, Loc: %s\n", utils.Red(fmt.Sprint(k)), utils.Cyan(v.String()))
+	// }
 	instrs := fasm.ftac.Instrs()
 	for i := range instrs {
 		switch v := instrs[i].(type) {
@@ -113,8 +112,11 @@ func (fasm *FunctionAsm) instrParam(arg tac.TACOpArg) string {
 		if !ex {
 			panic(fmt.Sprintf("Se esperaba un mapping para %s", v.String()))
 		}
-		// fmt.Println(arg, " : ", loc)
-		return loc.String()
+		if loc.offset != 0 {
+			return loc.String()
+		}
+		actualRegName := loc.reg.NameForSize(v.Category().SizeBytes())
+		return actualRegName
 	default:
 		return "<NULL>"
 	}
@@ -169,63 +171,73 @@ func (fasm *FunctionAsm) genAsmForCJump(v *tac.CJumpInstr) {
 }
 
 func (fasm *FunctionAsm) genAsmForMemStore(v *tac.MemStoreInstr) {
-	fmt.Println(v)
-	sat := fasm.VRegMapping[(v.StoreAt.(*tac.VRegArg)).RegNo]
-	swhat := fasm.instrParam(v.StoreWhat)
-	dest := sat.String()
-	if sat.offset != 0 {
+	width := ""
+	switch v.NumBytes {
+	case 1:
+		width = "byte"
+	case 4:
+		width = "dword"
+	case 8:
+		width = "qword"
+	}
+	width += " ptr "
+
+	if v.StoreWhat.LocType() == tac.Imm {
 		fasm.emitInstr(x86_64Instr{
 			instrName: MOV,
-			params:    []string{string(TEMPREG), sat.String()},
+			params:    []string{fmt.Sprintf("%s[%s]", width, fasm.instrParam(v.StoreAt)), fasm.instrParam(v.StoreWhat)},
+			labels:    v.Labels(),
+		})
+		return
+	}
+
+	dest := fasm.instrParam(v.StoreWhat)
+	destMapping := fasm.VRegMapping[(v.StoreWhat.(*tac.VRegArg)).RegNo]
+	if destMapping.offset != 0 {
+		fasm.emitInstr(x86_64Instr{
+			instrName: MOV,
+			params:    []string{string(TEMPREG.NameForSize(v.NumBytes)), dest},
+			labels:    v.Labels(),
+		})
+		fasm.emitInstr(x86_64Instr{
+			instrName: MOV,
+			params:    []string{fmt.Sprintf("%s[%s]", width, fasm.instrParam(v.StoreAt)), TEMPREG.NameForSize(v.NumBytes)},
+		})
+
+	} else {
+		fasm.emitInstr(x86_64Instr{
+			instrName: MOV,
+			params:    []string{fmt.Sprintf("%s[%s]", width, fasm.instrParam(v.StoreAt)), dest},
 			labels:    v.Labels(),
 		})
 
-		fasm.emitInstr(x86_64Instr{
-			instrName: MOV,
-			params:    []string{fmt.Sprintf("[%s]", TEMPREG), swhat},
-			labels:    v.Labels(),
-		})
-	} else {
-		width := ""
-		if v.StoreWhat.LocType() == tac.Imm {
-			switch v.NumBytes {
-			case 1:
-				width = "byte"
-			case 4:
-				width = "dword"
-			case 8:
-				width = "qword"
-			}
-			width += " ptr "
-		}
-		fasm.emitInstr(x86_64Instr{
-			instrName: MOV,
-			params:    []string{fmt.Sprintf("%s[%s]", width, dest), swhat},
-		})
 	}
 }
 
 func (fasm *FunctionAsm) genAsmForMemLoad(v *tac.MemLoadInstr) {
-	lfrom := fasm.VRegMapping[(v.LoadFrom.(*tac.VRegArg)).RegNo]
+	lfrom := fasm.instrParam(v.LoadFrom)
 	sat := fasm.VRegMapping[(v.StoreAt.(*tac.VRegArg)).RegNo]
 
 	if sat.offset != 0 {
+		// first load into temp, then move to stack
 		fasm.emitInstr(x86_64Instr{
 			instrName: MOV,
-			params:    []string{string(TEMPREG), fmt.Sprintf("[%s]", lfrom)},
+			params:    []string{TEMPREG.NameForSize(v.NumBytes), fmt.Sprintf("[%s]", lfrom)},
 			labels:    v.Labels(),
 		})
 		fasm.emitInstr(x86_64Instr{
 			instrName: MOV,
-			params:    []string{sat.String(), string(TEMPREG)},
+			params:    []string{fasm.instrParam(v.StoreAt), TEMPREG.NameForSize(v.NumBytes)},
 		})
+
 	} else {
 		fasm.emitInstr(x86_64Instr{
 			instrName: MOV,
-			params:    []string{sat.String(), fmt.Sprintf("[%s]", lfrom)},
+			params:    []string{fasm.instrParam(v.StoreAt), fmt.Sprintf("[%s]", lfrom)},
 			labels:    v.Labels(),
 		})
 	}
+
 }
 
 func (fasm *FunctionAsm) genAsmForFuncArgRecv(v *tac.FuncArgRecvInstr) {
@@ -253,7 +265,7 @@ func (fasm *FunctionAsm) genAsmForLoopBoundary(v *tac.LoopBoundary) {
 		fasm.emitInstr(x86_64Instr{
 			instrName: "",
 			params:    nil,
-			labels: v.Labels(),
+			labels:    v.Labels(),
 		})
 	}
 }

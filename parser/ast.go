@@ -78,7 +78,6 @@ func parseReturnStatement(p *Parser) node_types.TreeNode {
 }
 
 func parseDataType(p *Parser) node_types.DataType {
-	fmt.Println("PDT")
 	t := p.tokenStream
 	currTok := t.Current()
 	if currTok.Type() == lexer.IDENTIFIER {
@@ -89,7 +88,7 @@ func parseDataType(p *Parser) node_types.DataType {
 		t.Consume()
 		return &node_types.NamedType{
 			Name:             currTok.Text(),
-			DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: -1, Tid: node_types.UniqueTypeId()}}
+			DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: -1, Tid: -1}}
 	} else if currTok.Text() == lexer.OPEN_SQUARE {
 		t.Consume()
 		pt := &node_types.PrefixOfType{Prefix: node_types.ArrayOf, OfType: parseDataType(p), DataTypeMetaData: node_types.DataTypeMetaData{TypeSize: node_types.POINTER_SIZE, Tid: node_types.UniqueTypeId()}}

@@ -25,42 +25,41 @@ func (fasm *FunctionAsm) createVregMapping() {
 	// floatActiveUse := utils.MakeHeap(regComp)
 	mapping := make(map[tac.VirtualRegisterNumber]Location)
 	for _, evt := range events {
-		if fasm.ftac.GetDataRegCategory(evt.vregNo).IsFloating() {
-			// todo
-		} else {
-			if evt.kind {
-				reg, ex := intRegListOrdered.Pop()
-				if ex {
-					mapping[evt.vregNo] = Location{reg: reg, offset: 0}
-				} else {
-					vregsUsingRealRegs.Push(evt.vregNo)
-					leastImpReg, _ := vregsUsingRealRegs.Pop()
-					// we spill this reg to stack
-					if leastImpReg != evt.vregNo {
-						mappedReg, ex := mapping[leastImpReg] // supposed to be reg loc, not stack loc
-						if !ex {
-							panic(fmt.Sprintf("Se esperaba un mapping para %d", leastImpReg))
-						} else {
-							mapping[evt.vregNo] = mappedReg
-						}
-					}
-					// spill leastImpReg
-					mapping[leastImpReg] = Location{reg: RSP, offset: fasm.stackFrameSize}
-					fasm.stackFrameSize += fasm.ftac.GetDataRegCategory(leastImpReg).SizeBytes()
-				}
+		// todo: support floats
+		if evt.kind {
+			reg, ex := intRegListOrdered.Pop()
+			if ex {
+				mapping[evt.vregNo] = Location{reg: reg, offset: 0}
 			} else {
-				// reclaim the reg
-				mappedReg, ex := mapping[evt.vregNo]
-				if ex {
-					if mappedReg.offset == 0 {
-						intRegListOrdered.Push(mappedReg.reg)
-					} // else no reclamation
-				} else {
-					// logical error
-					panic(fmt.Sprintf("Se esperaba un mapping para %d", evt.vregNo))
+				vregsUsingRealRegs.Push(evt.vregNo)
+				leastImpReg, _ := vregsUsingRealRegs.Pop()
+				// we spill this reg to stack
+				if leastImpReg != evt.vregNo {
+					mappedReg, ex := mapping[leastImpReg] // supposed to be reg loc, not stack loc
+					if !ex {
+						panic(fmt.Sprintf("Se esperaba un mapping para %d", leastImpReg))
+					} else {
+						mapping[evt.vregNo] = mappedReg
+					}
 				}
+				// spill leastImpReg
+				mapping[leastImpReg] = Location{reg: RSP, offset: fasm.stackFrameSize}
+				// todo: wastage of space here
+				fasm.stackFrameSize += tac.PTR.SizeBytes()
+			}
+		} else {
+			// reclaim the reg
+			mappedReg, ex := mapping[evt.vregNo]
+			if ex {
+				if mappedReg.offset == 0 {
+					intRegListOrdered.Push(mappedReg.reg)
+				} // else no reclamation
+			} else {
+				// logical error
+				panic(fmt.Sprintf("Se esperaba un mapping para %d", evt.vregNo))
 			}
 		}
+
 	}
 	fasm.VRegMapping = mapping
 }

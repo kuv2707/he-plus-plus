@@ -55,14 +55,20 @@ func (dc DataCategory) SizeBytes() int {
 type TACOpArg interface {
 	LocType() TACLocationType
 	String() string
+	Category() DataCategory
 }
 
 type VRegArg struct {
 	RegNo VirtualRegisterNumber
+	dc    DataCategory
 }
 
 func (k *VRegArg) LocType() TACLocationType {
 	return VReg
+}
+
+func (k *VRegArg) Category() DataCategory {
+	return k.dc
 }
 
 func (arg *VRegArg) String() string {
@@ -71,7 +77,7 @@ func (arg *VRegArg) String() string {
 
 type ImmIntArg struct {
 	num int64
-	// size     int
+	dc  DataCategory
 }
 
 func (k ImmIntArg) Num() int64 {
@@ -82,13 +88,17 @@ func (k *ImmIntArg) LocType() TACLocationType {
 	return Imm
 }
 
+func (k *ImmIntArg) Category() DataCategory {
+	return k.dc
+}
+
 func (arg *ImmIntArg) String() string {
 	return fmt.Sprintf("%s%d", utils.Yellow("#"), arg.num)
 }
 
 type ImmFloatArg struct {
 	num float64
-	// size     int
+	dc  DataCategory
 }
 
 func (k ImmFloatArg) Num() float64 {
@@ -99,6 +109,10 @@ func (k *ImmFloatArg) LocType() TACLocationType {
 	return Imm
 }
 
+func (k *ImmFloatArg) Category() DataCategory {
+	return k.dc
+}
+
 func (arg *ImmFloatArg) String() string {
 	return fmt.Sprintf("%s%f", utils.Yellow("#"), arg.num)
 }
@@ -107,6 +121,10 @@ type NULLOpArg struct{}
 
 func (k *NULLOpArg) LocType() TACLocationType {
 	return Null
+}
+
+func (k *NULLOpArg) Category() DataCategory {
+	return VOID
 }
 
 func (arg *NULLOpArg) String() string {

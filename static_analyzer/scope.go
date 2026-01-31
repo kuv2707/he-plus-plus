@@ -27,10 +27,11 @@ func (a *Analyzer) checkNode(n nodes.TreeNode, i int, scp *nodes.ScopeNode, scop
 	switch v := n.(type) {
 	case *nodes.VariableDeclarationNode:
 		{
+			a.verifyAndNormalize(&v.DataT)
 			for _, tn := range v.Declarations {
 				if op := tn.(*nodes.InfixOperatorNode); op.Op == lexer.ASSN {
 					varname := op.Left.(*nodes.IdentifierNode)
-					// todo: Check if v.DataT itself is valid
+
 					// rval should have same type
 					rvalType := a.computeType(op.Right)
 					varname.ChangeName(a.DefineSym(varname.Name(), v.DataT))

@@ -52,7 +52,7 @@ func (dt *NamedType) Equals(other DataType) bool {
 	if !ok || ont == nil {
 		return false
 	}
-	return dt.Name == ont.Name
+	return dt.Name == ont.Name && dt.TypeId() == other.TypeId()
 }
 
 type UnspecifiedType struct {
