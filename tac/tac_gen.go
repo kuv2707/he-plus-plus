@@ -9,29 +9,6 @@ import (
 	"he++/utils"
 )
 
-/**
-Sample 3AC: Adding even elements in array:
-s = 0
-for i from 0 to n-1 {
-    if A[i] % 2 == 0 {
-        s += A[i]
-    }
-}
---
-i = 0
-s = 0
-L1:
-if i >= n goto L2
-t1 = A[i]
-t2 = t1 % 2
-if t2 != 0 goto L3
-s = s + t1
-L3:
-i = i + 1
-goto L1
-L2:
-*/
-
 type SymDef struct {
 	reg VirtualRegisterNumber
 	dt  DataCategory
@@ -168,16 +145,22 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 			ifEnd := fmt.Sprintf("cond_%d_brch_%d", v.Seq, len(v.Branches))
 			for i, branch := range v.Branches {
 				ftac.emitInstr(placeholderWithLabels(fmt.Sprintf("cond_%d_brch_%d", v.Seq, i)))
-				if bn, ok := branch.Condition.(*node_types.BooleanNode); ok && bn.BoolVal {
-					ftac.genScopeTAC(branch.Scope)
-					continue
+				if bn, ok := branch.Condition.(*node_types.BooleanNode); ok {
+					if bn.BoolVal {
+						ftac.genScopeTAC(branch.Scope)
+						break // since the next branches are dead code
+					} else {
+						// skip this dead code
+					}
 				}
 				ftac.genExprTAC(branch.Condition)
 				lastInstr := ftac.instrs[len(ftac.instrs)-1]
 				condInstr := genCondInstr(lastInstr, fmt.Sprintf("cond_%d_brch_%d", v.Seq, i+1)) // jmp to next condn
 				ftac.instrs[len(ftac.instrs)-1] = &condInstr
 				ftac.genScopeTAC(branch.Scope)
-				ftac.emitInstr(&JumpInstr{JmpToLabel: ifEnd})
+				if i < len(v.Branches)-1 {
+					ftac.emitInstr(&JumpInstr{JmpToLabel: ifEnd})
+				}
 			}
 			ftac.emitInstr(placeholderWithLabels(ifEnd))
 		}
@@ -194,17 +177,16 @@ func (ftac *FunctionTAC) genNodeTAC(k node_types.TreeNode) {
 			condInstr.setLabels([]string{loopStartLabel})
 			ftac.instrs[len(ftac.instrs)-1] = &LoopBoundary{
 				loopNo:       v.Seq,
-				startEnd:     true,
-				TACBaseInstr: TACBaseInstr{labels: []string{loopStartLabel}},
+				StartEnd:     true,
 			}
 
 			ftac.emitInstr(&condInstr)
 			ftac.genScopeTAC(v.Scope)
 			ftac.genNodeTAC(v.Updater)
-			ftac.emitInstr(&JumpInstr{JmpToLabel: loopStartLabel, TACBaseInstr: TACBaseInstr{labels: []string{loopEndLabel}}})
+			ftac.emitInstr(&JumpInstr{JmpToLabel: loopStartLabel})
 			ftac.emitInstr(&LoopBoundary{
 				loopNo:       v.Seq,
-				startEnd:     false,
+				StartEnd:     false,
 				TACBaseInstr: TACBaseInstr{labels: []string{loopEndLabel}},
 			})
 		}

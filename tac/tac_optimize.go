@@ -37,7 +37,7 @@ func (ftac *FunctionTAC) PropagateRegs(ctx *TACContext) {
 		switch v := ftac.instrs[i].(type) {
 		case *LoopBoundary:
 			{
-				if v.startEnd {
+				if v.StartEnd {
 					loopStack.Push(v.loopNo)
 				} else {
 					loopStack.Pop()

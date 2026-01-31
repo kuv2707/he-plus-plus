@@ -174,7 +174,7 @@ func placeholderWithLabels(s ...string) *LabelPlaceholder {
 type LoopBoundary struct {
 	TACBaseInstr
 	loopNo   int
-	startEnd bool
+	StartEnd bool
 }
 
 func (l *LoopBoundary) String() string {

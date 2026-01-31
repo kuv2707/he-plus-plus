@@ -95,7 +95,7 @@ func (fasm *FunctionAsm) GenerateAsm() {
 		case *tac.FuncArgRecvInstr:
 			fasm.genAsmForFuncArgRecv(v)
 		case *tac.LoopBoundary:
-			// ignore
+			fasm.genAsmForLoopBoundary(v)
 		default:
 			fmt.Println("Not impl for", instrs[i])
 		}
@@ -186,9 +186,21 @@ func (fasm *FunctionAsm) genAsmForMemStore(v *tac.MemStoreInstr) {
 			labels:    v.Labels(),
 		})
 	} else {
+		width := ""
+		if v.StoreWhat.LocType() == tac.Imm {
+			switch v.NumBytes {
+			case 1:
+				width = "byte"
+			case 4:
+				width = "dword"
+			case 8:
+				width = "qword"
+			}
+			width += " ptr "
+		}
 		fasm.emitInstr(x86_64Instr{
 			instrName: MOV,
-			params:    []string{fmt.Sprintf("[%s]", dest), swhat},
+			params:    []string{fmt.Sprintf("%s[%s]", width, dest), swhat},
 		})
 	}
 }
@@ -234,4 +246,14 @@ func (fasm *FunctionAsm) genAsmForAlloc(v *tac.AllocInstr) {
 
 func (fasm *FunctionAsm) genAsmForCall(v *tac.CallInstr) {
 
+}
+
+func (fasm *FunctionAsm) genAsmForLoopBoundary(v *tac.LoopBoundary) {
+	if !v.StartEnd {
+		fasm.emitInstr(x86_64Instr{
+			instrName: "",
+			params:    nil,
+			labels: v.Labels(),
+		})
+	}
 }
